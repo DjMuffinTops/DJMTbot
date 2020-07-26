@@ -13,7 +13,7 @@ import {
     sayCmd,
     setBruhCmd,
     setDotwCmd, setPrefixCmd,
-    setStarCmd, unregisterCmd, updateConfigJson
+    setStarCmd, setVcChannelPairs, unregisterCmd, updateConfigJson
 } from "./commands";
 
 import {GuildRegistry, GuildConfig} from "./types/types";
@@ -99,6 +99,9 @@ client.on("message", async (message: Message) => {
         }
         if (command === "setdotw") {
             await setDotwCmd(client, args, message);
+        }
+        if (command === "setvcpairs") {
+            await setVcChannelPairs(client, args, message);
         }
         if (command === "register") {
             await registerCmd(client, args, message);
