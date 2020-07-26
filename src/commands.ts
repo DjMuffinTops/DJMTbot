@@ -23,7 +23,7 @@ function insert (str: string, index: number, insert: string) {
 
 export async function updateConfigJson(message: Message) {
     let guildId: string | undefined = message?.guild?.id;
-    await FileSystem.writeFile('guildConfigs.json', JSON.stringify(gConfig,null, '\t'));
+    await FileSystem.writeFile('./json/guild/guildConfigs.json', JSON.stringify(gConfig,null, '\t'));
     console.log(`config.js updated`);
     if (guildId && gConfig[guildId].devMode){
         await message.channel.send(`\`\`\`json\n${JSON.stringify(gConfig[guildId],null, '\t')}\`\`\``);
@@ -32,7 +32,7 @@ export async function updateConfigJson(message: Message) {
 
 export async function updateGuildsJson(message: Message) {
     let guildId: string | undefined = message?.guild?.id;
-    await FileSystem.writeFile('guildRegistry.json', JSON.stringify(gRegistry,null, '\t'));
+    await FileSystem.writeFile('./json/guild/guildRegistry.json', JSON.stringify(gRegistry,null, '\t'));
     console.log(`guilds.js updated`);
     if (guildId && gConfig[guildId].devMode){
         await message.channel.send(`\`\`\`json\n${JSON.stringify(gRegistry[guildId],null, '\t')}\`\`\``);
