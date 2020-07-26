@@ -612,25 +612,22 @@ export async function setVcChannelPairs(client: Client, args: string[], message:
             return;
         }
         if (guild && guild.vcChannelPairs && guild.vcChannelPairs.length > 0) {
-            console.log('what about here');
             for (const presentPair of guild.vcChannelPairs) {
-                console.log(presentPair);
-                console.log(pair);
                if (presentPair[0] === pair[0] && presentPair[1] === pair[1]) {
                    guild.vcChannelPairs.splice(guild.vcChannelPairs.indexOf(pair), 1);
                    await updateGuildsJson(message);
                    await message.channel.send(`Removed ${pair} from VC Channels list!`);
+                   return;
                }
             }
         } else {
-            console.log(guild.vcChannelPairs.length);
             if (!guild.vcChannelPairs) {
                 guild.vcChannelPairs = [];
             }
-            guild.vcChannelPairs.push(pair);
-            await updateGuildsJson(message);
-            await message.channel.send(`Added ${pair} to the VC Channels list!`);
         }
+        guild.vcChannelPairs.push(pair);
+        await updateGuildsJson(message);
+        await message.channel.send(`Added ${pair} to the VC Channels list!`);
     } else {
         await message.channel.send(`Requires exactly two arguments, a voice channel id, and a text channel mention. You gave ${args}`);
 
