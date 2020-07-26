@@ -23,8 +23,8 @@ const client = new Discord.Client();
 
 // Here we load the guildConfigs.json file that contains our token and our prefix values.
 require('dotenv').config();
-const gRegistry = require("./json/guild/guildRegistry.json");
-const gConfig = require("./json/guild/guildConfigs.json");
+const gRegistry = require("../json/guild/guildRegistry.json");
+const gConfig = require("../json/guild/guildConfigs.json");
 const jobs = require("./cron");
 
 

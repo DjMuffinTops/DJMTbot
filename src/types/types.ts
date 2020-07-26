@@ -13,3 +13,8 @@ export interface GuildConfig {
 export interface BruhCommand {
     onCooldown: boolean;
 }
+
+export interface DayOfTheWeek {
+    day: string,
+    messages: string[]
+}

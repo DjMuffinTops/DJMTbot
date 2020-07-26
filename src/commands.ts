@@ -1,9 +1,8 @@
 import {promises as FileSystem} from "fs";
 import {Client, Message, MessageAttachment, TextChannel} from "discord.js";
-const gRegistry = require("./json/guild/guildRegistry.json");
-const gConfig = require("./json/guild/guildConfigs.json");
-const defaultConfig = require("./json/defaultConfig.json");
-const Discord = import("discord.js");
+const gRegistry = require("../json/guild/guildRegistry.json");
+const gConfig = require("../json/guild/guildConfigs.json");
+const defaultConfig = require("../json/defaultConfig.json");
 
 function isAdmin(message: Message) {
     return message?.member?.hasPermission("ADMINISTRATOR");
