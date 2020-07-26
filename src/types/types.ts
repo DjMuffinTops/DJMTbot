@@ -2,6 +2,7 @@ export interface GuildRegistry {
     bruhChannels: string[];
     starChannels: string[];
     dotwChannels: string[];
+    vcChannelPairs: string[][];
 }
 
 export interface GuildConfig {
