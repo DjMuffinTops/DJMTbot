@@ -244,21 +244,22 @@ export async function helpCmd(client: Client, args: string[], message: Message) 
     let prefix = gConfig[guildId].prefix;
     let helpCommands =
         `#FUN
-${prefix}cheems [text] -> Cheemsifies the given text.
-${prefix}b [text] -> Applies b-speak to the given text.
+${prefix}cheems [text] -> Cheemsifies the given text.\n
+${prefix}b [text] -> Applies b-speak to the given text.\n
 ${prefix}bruh -> Spits out a random message contained in marked bruh channels. Admins can mark channels to read from using the setbruh command.`;
     let helpAdminCommands =
         `#ADMIN ONLY
 --------------------------------------------------------------------------------------
 If the bot seems to not be responding, try using the resetconfig command (my bad ^^)
 --------------------------------------------------------------------------------------
-${prefix}prefix [text] -> Sets a new command prefix for this bot. Use this command without text to reset to the default: \`${process.env.DEFAULT_PREFIX}\`
-${prefix}register -> Registers this server to have data saved that is required for certain commands.
-${prefix}unregister -> Unregisters this server and deletes all register data saved.
-${prefix}resetconfig -> Restores the guild's config settings to the bot's default config.
-${prefix}dev -> When enabled, the bot will print out the states of the guild config, and guild registry.
-${prefix}setstar [Channel] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channel(s) to be auto starred by the bot. Use command without mentioning channels to see the list of marked channels.
-${prefix}setbruh [Channel] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channel(s) to be used by the bruh command. Use command without mentioning channels to see the list of marked channels.\n`;
+${prefix}prefix [text] -> Sets a new command prefix for this bot. Use this command without text to reset to the default: \`${process.env.DEFAULT_PREFIX}\`\n
+${prefix}register -> Registers this server to have data saved that is required for certain commands.\n
+${prefix}unregister -> Unregisters this server and deletes all register data saved.\n
+${prefix}resetconfig -> Restores the guild's config settings to the bot's default config.\n
+${prefix}dev -> When enabled, the bot will print out the states of the guild config, and guild registry.\n
+${prefix}setstar [Channel] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channel(s) to be auto starred by the bot. Use command without mentioning channels to see the list of marked channels.\n
+${prefix}setbruh [Channel] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channel(s) to be used by the bruh command. Use command without mentioning channels to see the list of marked channels.\n
+${prefix}setdotw [Channel] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channel to get Day of the Week messages. Will send a message to the channel at 11:59 EST everyday (does not account for daylight savings). Use command without mentioning channels to see the list of marked channels.\n\n`;
     let finishedMsg = `\`\`\`css\n${isAdmin(message) ? helpAdminCommands + helpCommands : helpCommands}\`\`\``;
     await message.channel.send(finishedMsg);
 }
