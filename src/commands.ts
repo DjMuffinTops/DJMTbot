@@ -346,10 +346,10 @@ export async function bruhCmd(client: Client, args: string[], message: Message) 
             // let iterations = (limit / 100) + (limit % 100 ? 1 : 0);
             do {
                 const options = {
-                    limit: 100,
-                    before: ''
+                    limit: 100
                 };
                 if (last_id.length > 0) {
+                    // @ts-ignore
                     options.before = last_id
                 }
                 messages = await channel?.messages?.fetch(options);
