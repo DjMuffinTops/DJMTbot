@@ -1,0 +1,25 @@
+{
+  "name": "DJMTbot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/app.ts",
+  "scripts": {
+    "build": "tsc --build tsconfig.json",
+    "start": "node dist/app.js",
+    "dev": "yarn build && yarn start"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^12.0.2",
+    "dotenv": "^8.2.0",
+    "node-cron": "^2.0.3"
+  },
+  "devDependencies": {
+    "@types/dotenv": "^8.2.0",
+    "@types/node": "^14.0.26",
+    "@types/node-cron": "^2.0.3",
+    "typescript": "^3.9.7"
+  }
+}
