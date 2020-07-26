@@ -257,11 +257,15 @@ ${prefix}register -> Registers this server to have data saved that is required f
 ${prefix}unregister -> Unregisters this server and deletes all register data saved.\n
 ${prefix}resetconfig -> Restores the guild's config settings to the bot's default config.\n
 ${prefix}dev -> When enabled, the bot will print out the states of the guild config, and guild registry.\n
-${prefix}setstar [Channel] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channel(s) to be auto starred by the bot. Use command without mentioning channels to see the list of marked channels.\n
-${prefix}setbruh [Channel] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channel(s) to be used by the bruh command. Use command without mentioning channels to see the list of marked channels.\n
-${prefix}setdotw [Channel] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channel to get Day of the Week messages. Will send a message to the channel at 11:59 EST everyday (does not account for daylight savings). Use command without mentioning channels to see the list of marked channels.\n\n`;
-    let finishedMsg = `\`\`\`css\n${isAdmin(message) ? helpAdminCommands + helpCommands : helpCommands}\`\`\``;
-    await message.channel.send(finishedMsg);
+${prefix}setstar [TextChannel Mention] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channel(s) to be auto starred by the bot. Use command without mentioning channels to see the list of marked channels.\n
+${prefix}setbruh [TextChannel Mention] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channel(s) to be used by the bruh command. Use command without mentioning channels to see the list of marked channels.\n
+${prefix}setdotw [TextChannel Mention] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channel to get Day of the Week messages. Will send a message to the channel at 11:59 EST everyday (does not account for daylight savings). Use command without mentioning channels to see the list of marked channels.\n
+${prefix}setvcpairs [VoiceChannelId] [TextChannel Mention] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channels as a pair. Will send occasional reminder messages to the vc text channel. Use command without mentioning channels to see the list of marked channel pairs.\n\n`;
+
+    if (isAdmin(message)) {
+        await message.channel.send(`\`\`\`css\n${helpAdminCommands}\`\`\``);
+    }
+    await message.channel.send(`\`\`\`css\n${helpCommands}\`\`\``);
 }
 
 export async function setStarCmd(client: Client, args: string[], message: Message) {
@@ -556,5 +560,79 @@ export async function setDotwCmd(client: Client, args: string[], message: Messag
                 await message.channel.send(`Set ${rawChannelId} as the Day of the Week Channel!`);
             }
         }
+    }
+}
+
+export async function setVcChannelPairs(client: Client, args: string[], message: Message) {
+    // Admin only
+    if (!isAdmin(message)) {
+        await message.channel.send(`This command requires administrator permissions.`);
+        return;
+    }
+
+    let guildId = message?.guild?.id;
+    if (!guildId) {
+        console.log('No guild Id found');
+        return;
+    }
+
+    if (!isGuildRegistered(guildId)) {
+        await message.channel.send(`Please register your guild to use this command.`);
+        return;
+    }
+
+    let guild = gRegistry[guildId];
+    if (args.length === 0) {
+        let channelString = "";
+        if (guild && guild.vcChannelPairs && guild.vcChannelPairs.length > 0) {
+            guild.vcChannelPairs.forEach((channelIdPair: string[]) => {
+                channelString += `| <#${channelIdPair[0]}> <#${channelIdPair[1]}> |`;
+            });
+            await message.channel.send(`VC Channels: ${channelString}`);
+        } else {
+            await message.channel.send(`No VC Channel Pairs have been set!`);
+        }
+    } else if (args.length === 2) {
+        const voiceChannelId = args[0]; // Voice channel must be raw due to lack of mention
+        const rawTextChannelId = args[1];
+        let textChannelId = rawTextChannelId.substring(2, rawTextChannelId.indexOf('>'));
+        const pair = [voiceChannelId, textChannelId];
+        let foundVoiceChannel = undefined;
+        let foundTextChannel = undefined;
+        try {
+            foundVoiceChannel = await client.channels.fetch(voiceChannelId);
+            foundTextChannel = await client.channels.fetch(textChannelId);
+        } catch (e) {
+            console.error(e);
+            await message.channel.send("The given channel is invalid! Make sure the given channels are the correct types (use help command for more info)");
+            return;
+        }
+        if (foundVoiceChannel.type !== "voice" && foundTextChannel.type !== "text") {
+            await message.channel.send(`The given channels are not the correct types`);
+            return;
+        }
+        if (guild && guild.vcChannelPairs && guild.vcChannelPairs.length > 0) {
+            console.log('what about here');
+            for (const presentPair of guild.vcChannelPairs) {
+                console.log(presentPair);
+                console.log(pair);
+               if (presentPair[0] === pair[0] && presentPair[1] === pair[1]) {
+                   guild.vcChannelPairs.splice(guild.vcChannelPairs.indexOf(pair), 1);
+                   await updateGuildsJson(message);
+                   await message.channel.send(`Removed ${pair} from VC Channels list!`);
+               }
+            }
+        } else {
+            console.log(guild.vcChannelPairs.length);
+            if (!guild.vcChannelPairs) {
+                guild.vcChannelPairs = [];
+            }
+            guild.vcChannelPairs.push(pair);
+            await updateGuildsJson(message);
+            await message.channel.send(`Added ${pair} to the VC Channels list!`);
+        }
+    } else {
+        await message.channel.send(`Requires exactly two arguments, a voice channel id, and a text channel mention. You gave ${args}`);
+
     }
 }
