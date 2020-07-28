@@ -6,7 +6,7 @@ import {vcRemindersJob} from "./jobs/vcReminders";
 async function start(client: Client) {
     console.log('Starting cron jobs');
     // at 10:59 and 11:59 during DST
-    cron.schedule('* 59 10 * * *', async () => {
+    cron.schedule('0 59 10 * * *', async () => {
         await dotwJob(client);
     });
 
