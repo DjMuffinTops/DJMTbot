@@ -23,7 +23,9 @@ export async function vcRemindersJob(client: Client) {
                 const voiceChannel = (await client.channels.fetch(voiceChannelId) as VoiceChannel);
                 const textChannel = (await client.channels.fetch(textChannelId) as TextChannel);
                 if (voiceChannel.members.size > 0) {
-                    await textChannel.send(`Don't forget to save your work and stay hydrated! (${consecutiveHours[guildId][pair.toString()]} ${consecutiveHours[guildId][pair.toString()] > 1 ? 'consecutive hours' : 'hour'}) `);
+                    await textChannel.send(`Don't forget to save your work and stay hydrated! (${consecutiveHours[guildId][pair.toString()]} ${consecutiveHours[guildId][pair.toString()] > 1 ? 'consecutive hours' : 'hour'})`);
+                    console.log(`Sent: Don't forget to save your work and stay hydrated! (${consecutiveHours[guildId][pair.toString()]} ${consecutiveHours[guildId][pair.toString()] > 1 ? 'consecutive hours' : 'hour'})`);
+
                 } else {
                     consecutiveHours[guildId][pair.toString()] = 0;
                 }
