@@ -15,7 +15,7 @@ export async function dotwJob(client: Client) {
                 const channel = (await client.channels.fetch(channelId) as TextChannel);
                 // Determine which dotw post to send
                 let randomMessage = today.messages[Math.floor(today.messages.length * Math.random())];
-                await channel.send(`${date.toLocaleTimeString()} ${randomMessage ? randomMessage : ''}`);
+                await channel.send(`${randomMessage ? randomMessage : ''}`);
                 console.log(`Sent: ${date.toLocaleTimeString()} ${randomMessage ? randomMessage : ''}` );
             }
         }
