@@ -25,7 +25,7 @@ const client = new Discord.Client();
 require('dotenv').config();
 const gRegistry = require("../json/guild/guildRegistry.json");
 const gConfig = require("../json/guild/guildConfigs.json");
-const jobs = require("./cron");
+import startCronJobs from "./cron";
 
 
 
@@ -35,7 +35,7 @@ client.on("ready", async () => {
     // Example of changing the bot's playing game to something useful. `client.user` is what the
     // docs refer to as the "ClientUser".
     client?.user?.setActivity(`@DJMTbot for help! | ${client.users.cache.size} users`);
-    await jobs.start(client);
+    await startCronJobs(client);
 
 });
 
@@ -125,19 +125,27 @@ client.on("message", async (message: Message) => {
             await bCmd(client, args, message);
         }
         if (command === "bruh") {
-            if (!gConfig[guildId].bruhCmd.onCooldown) {
-                gConfig[guildId].bruhCmd.onCooldown = true;
-                await updateConfigJson(message);
-                await bruhCmd(client, args, message);
-                setTimeout(async () => {
-                    // Removes the user from the set after a minute
-                    if (guildId) {
-                        gConfig[guildId].bruhCmd.onCooldown = false;
-                        await updateConfigJson(message);
-                    }
-                }, 2500);
+            const count: number = Number(args[0]);
+            if (!gConfig[guildId].bruhCmd) {
+                gConfig[guildId].bruhCmd = {}; // TODO: this probably shouldn't be done here
             } else {
-                await message.channel.send(`Please wait, the bruh command is on cooldown.`);
+                if (gConfig[guildId].bruhCmd.onCooldown) {
+                    await message.channel.send(`Please wait, the bruh command is on cooldown.`);
+                } else {
+                    gConfig[guildId].bruhCmd.onCooldown = true;
+                    await updateConfigJson(message);
+                    await bruhCmd(client, args, message);
+                    if (Number.isInteger(count) && count === 2) {
+                        await bruhCmd(client, args, message);
+                    }
+                    setTimeout(async () => {
+                        // Removes the user from the set after a minute
+                        if (guildId) {
+                            gConfig[guildId].bruhCmd.onCooldown = false; // TODO: no need to write this to a file
+                            await updateConfigJson(message);
+                        }
+                    }, 2500);
+                }
             }
         }
         if (command === "cheems") {
