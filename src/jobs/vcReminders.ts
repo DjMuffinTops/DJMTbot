@@ -4,6 +4,9 @@ const gRegistry = require("../../json/guild/guildRegistry.json");
 
 // This is local as its not very important to store
 let consecutiveHours: any = {};
+// TEMP FIX LOL (set this locally with a function in the future)
+consecutiveHours['683557579590467606'] = {};
+consecutiveHours['683557579590467606']['685387416416419860,685377830011666435'] = 107;
 
 export async function vcRemindersJob(client: Client) {
     console.log(`Running VC Reminder Job`);
@@ -24,8 +27,8 @@ export async function vcRemindersJob(client: Client) {
                 const textChannelId = pair[1];
                 const voiceChannel = (await client.channels.fetch(voiceChannelId) as VoiceChannel);
                 const textChannel = (await client.channels.fetch(textChannelId) as TextChannel);
-                // If someone is in the channel during the check, add an hour
-                if (voiceChannel.members.size > 0) {
+                // If someone is in the channel during the check and they are not a bot, add an hour
+                if (voiceChannel.members.size > 0 && !voiceChannel.members.some(member => member.user.bot)) {
                     const hoursSoFar = consecutiveHours[guildId][pair.toString()];
                     const hoursMsg = `${hoursSoFar > 0 ? `(${hoursSoFar} consecutive hours)` : ''}`;
                     await textChannel.send(`Don't forget to save your work and stay hydrated! ${hoursMsg}`);
