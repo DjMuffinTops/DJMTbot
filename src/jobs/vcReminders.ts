@@ -4,9 +4,15 @@ const gRegistry = require("../../json/guild/guildRegistry.json");
 
 // This is local as its not very important to store
 let consecutiveHours: any = {};
-// TEMP FIX LOL (set this locally with a function in the future)
-consecutiveHours['683557579590467606'] = {};
-consecutiveHours['683557579590467606']['685387416416419860,685377830011666435'] = 107;
+export async function setConsecutiveHours (guildId: any, voiceid: string, textid: string, hours: number) {
+    let pair = [voiceid, textid];
+    // Make an entry for this guild
+    if (!consecutiveHours[guildId]) {
+        consecutiveHours[guildId] = {}
+    }
+    consecutiveHours[guildId][pair.toString()] = hours;
+    return `${pair.toString()} set to  ${consecutiveHours[guildId][pair.toString()]}`;
+}
 
 export async function vcRemindersJob(client: Client) {
     console.log(`Running VC Reminder Job`);
@@ -31,14 +37,14 @@ export async function vcRemindersJob(client: Client) {
                 if (voiceChannel.members.size > 0 && !voiceChannel.members.some(member => member.user.bot)) {
                     const hoursSoFar = consecutiveHours[guildId][pair.toString()];
                     const hoursMsg = `${hoursSoFar > 0 ? `(${hoursSoFar} consecutive hours)` : ''}`;
-                    await textChannel.send(`Don't forget to save your work and stay hydrated! ${hoursMsg}`);
-                    console.log(`Sent: Don't forget to save your work and stay hydrated! ${hoursMsg}`);
+                    const finalMsg = `Don't forget to save your work and stay hydrated! ${hoursMsg}`;
+                    await textChannel.send(finalMsg);
+                    console.log(`Sent to ${pair.toString()} :${finalMsg}`);
                     consecutiveHours[guildId][pair.toString()] += 1;
                 } else {
                     consecutiveHours[guildId][pair.toString()] = 0;
                 }
             }
         }
-
     }
 }

@@ -12,6 +12,7 @@ import {
     registerCmd, resetConfig,
     sayCmd,
     setBruhCmd,
+    setHoursCmd,
     setDotwCmd, setPrefixCmd,
     setStarCmd, setVcChannelPairs, unregisterCmd, updateConfigJson
 } from "./commands";
@@ -91,6 +92,10 @@ client.on("message", async (message: Message) => {
 
     try {
         // Admin Commands
+        if (command === "sethours") {
+            console.log('hi');
+            await setHoursCmd(client, args, message);
+        }
         if (command === "setstar") {
             await setStarCmd(client, args, message);
         }

@@ -1,5 +1,6 @@
 import {promises as FileSystem} from "fs";
 import {Client, Message, MessageAttachment, TextChannel} from "discord.js";
+import {setConsecutiveHours} from "./jobs/vcReminders";
 const gRegistry = require("../json/guild/guildRegistry.json");
 const gConfig = require("../json/guild/guildConfigs.json");
 const defaultConfig = require("../json/defaultConfig.json");
@@ -39,6 +40,20 @@ export async function updateGuildsJson(message: Message) {
     }
 }
 
+export async function setHoursCmd(client: Client, args: string[], message: Message) {
+    // Admin only
+    if (!isAdmin(message)) {
+        await message.channel.send(`This command requires administrator permissions.`);
+        return;
+    }
+    if (args.length == 3) {
+        let guildId = message?.guild?.id;
+        const res = await setConsecutiveHours(guildId, args[0], args[1], Number(args[2]));
+        await message.channel.send(`${res}`);
+    } else {
+        await message.channel.send(`Can't set hours, needs two ids, voice and then text channel id`);
+    }
+}
 export async function setPrefixCmd(client: Client, args: string[], message: Message) {
     // Admin only
     if (!isAdmin(message)) {
@@ -260,7 +275,8 @@ ${prefix}dev -> When enabled, the bot will print out the states of the guild con
 ${prefix}setstar [TextChannel Mention] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channel(s) to be auto starred by the bot. Use command without mentioning channels to see the list of marked channels.\n
 ${prefix}setbruh [TextChannel Mention] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channel(s) to be used by the bruh command. Use command without mentioning channels to see the list of marked channels.\n
 ${prefix}setdotw [TextChannel Mention] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channel to get Day of the Week messages. Will send a message to the channel at 11:59 EST everyday (does not account for daylight savings). Use command without mentioning channels to see the list of marked channels.\n
-${prefix}setvcpairs [VoiceChannelId] [TextChannel Mention] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channels as a pair. Will send occasional reminder messages to the vc text channel. Use command without mentioning channels to see the list of marked channel pairs.\n\n`;
+${prefix}setvcpairs [VoiceChannelId] [TextChannel Mention] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channels as a pair. Will send occasional reminder messages to the vc text channel. Use command without mentioning channels to see the list of marked channel pairs.\n
+${prefix}sethours [VoiceChannelId] [TextChannelId] -> {REGISTER REQUIRED} Manually sets the hour count for a given vc text channel pair.\n\n`;
 
     if (isAdmin(message)) {
         await message.channel.send(`\`\`\`css\n${helpAdminCommands}\`\`\``);
