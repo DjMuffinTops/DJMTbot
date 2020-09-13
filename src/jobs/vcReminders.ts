@@ -34,7 +34,7 @@ export async function vcRemindersJob(client: Client) {
                 const voiceChannel = (await client.channels.fetch(voiceChannelId) as VoiceChannel);
                 const textChannel = (await client.channels.fetch(textChannelId) as TextChannel);
                 // If someone is in the channel during the check and they are not a bot, add an hour
-                if (voiceChannel.members.size > 0 && !voiceChannel.members.some(member => member.user.bot)) {
+                if (voiceChannel.members.size > 0 && !voiceChannel.members.every(member => member.user.bot)) {
                     const hoursSoFar = consecutiveHours[guildId][pair.toString()];
                     const hoursMsg = `${hoursSoFar > 0 ? `(${hoursSoFar} consecutive hours)` : ''}`;
                     const finalMsg = `Don't forget to save your work and stay hydrated! ${hoursMsg}`;
