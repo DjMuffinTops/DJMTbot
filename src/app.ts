@@ -14,7 +14,7 @@ import {
     setBruhCmd,
     setHoursCmd,
     setDotwCmd, setPrefixCmd,
-    setStarCmd, setVcChannelPairs, unregisterCmd, updateConfigJson
+    setStarCmd, setVcChannelPairs, unregisterCmd, updateConfigJson, exportConfig, exportRegistry
 } from "./commands";
 
 import {GuildRegistry, GuildConfig} from "./types/types";
@@ -120,6 +120,12 @@ client.on("message", async (message: Message) => {
         if (command === "prefix") {
             await setPrefixCmd(client, args, message);
         }
+        if (command === "exportregistry") {
+            await exportRegistry(client, args, message);
+        }
+        if (command === "exportconfig") {
+            await exportConfig(client, args, message);
+        }
         if (command === "resetconfig") {
             await resetConfig(client, message);
         }
@@ -171,4 +177,4 @@ client.on("message", async (message: Message) => {
         console.log(e);
     }
 });
-client.login(process.env.TOKEN);
+client.login(process.env.DEV_TOKEN);

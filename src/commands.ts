@@ -94,6 +94,36 @@ export async function devModeCmd(client: Client, args: string[], message: Messag
     await message.channel.send(`Dev Mode ${gConfig[guildId].devMode ? "enabled" : "disabled" }.`);
 }
 
+export async function exportRegistry(client: Client, args:string [], message: Message) {
+    // Admin only
+    if (!isAdmin(message)) {
+        await message.channel.send(`This command requires administrator permissions.`);
+        return;
+    }
+    let guildId = message?.guild?.id;
+    if (!guildId) {
+        console.log('No guild Id found');
+        return;
+    }
+    const jsonString = `"${guildId}": ${JSON.stringify(gRegistry[guildId],null, '\t')}`;
+    await message.channel.send(`\`\`\`json\n${jsonString}\n\`\`\``);
+}
+
+export async function exportConfig(client: Client, args:string [], message: Message) {
+    // Admin only
+    if (!isAdmin(message)) {
+        await message.channel.send(`This command requires administrator permissions.`);
+        return;
+    }
+    let guildId = message?.guild?.id;
+    if (!guildId) {
+        console.log('No guild Id found');
+        return;
+    }
+    const jsonString = `"${guildId}": ${JSON.stringify(gConfig[guildId],null, '\t')}`;
+    await message.channel.send(`\`\`\`json\n${jsonString}\n\`\`\``);
+}
+
 export async function resetConfig(client: Client, message: Message, adminOverride: boolean = false) {
     // Admin only
     if (!adminOverride && !isAdmin(message)) {
