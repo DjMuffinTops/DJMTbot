@@ -1,7 +1,6 @@
 {
 	"devMode": false,
 	"prefix": "djmt!",
-	"bruhCmd": {
-		"onCooldown": false
-	}
+	"registered": false,
+	"register": {}
 }

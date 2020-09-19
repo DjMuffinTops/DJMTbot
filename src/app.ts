@@ -3,30 +3,34 @@ import * as Discord from 'discord.js';
 // This is your client. Some people call it `bot`, some people call it `self`,
 // some might call it `cootchie`. Either way, when you see `client.something`, or `bot.something`,
 // this is what we're refering to. Your client.
-import {
-    bCmd,
-    bruhCmd,
-    cheemsCmd, devModeCmd,
-    helpCmd,
-    pingCmd,
-    registerCmd, resetConfig,
-    sayCmd,
-    setBruhCmd,
-    setHoursCmd,
-    setDotwCmd, setPrefixCmd,
-    setStarCmd, setVcChannelPairs, unregisterCmd, updateConfigJson, exportConfig, exportRegistry
-} from "./commands";
-
-import {GuildRegistry, GuildConfig} from "./types/types";
+import {Register, GuildConfig} from "./types/types";
 import {Message} from "discord.js";
 
 const client = new Discord.Client();
 
 // Here we load the guildConfigs.json file that contains our token and our prefix values.
 require('dotenv').config();
-const gRegistry = require("../json/guild/guildRegistry.json");
-const gConfig = require("../json/guild/guildConfigs.json");
+// const gConfig = require("../json/guilds/guildConfigs.json");
 import startCronJobs from "./cron";
+import {
+    devModeCmd,
+    exportConfig,
+    getConfig, registerCmd,
+    resetConfig,
+    unregisterCmd
+} from "./commands/config";
+import {helpCmd, pingCmd, sayCmd} from "./commands/utility";
+import {
+    setBruhCmd,
+    setDotwCmd, setHoursCmd,
+    setPrefixCmd,
+    setStarCmd,
+    setVcChannelPairs
+} from "./commands/setters";
+import {cheemsCmd} from "./commands/cheems";
+import {bCmd} from "./commands/bSpeak";
+import {bruhCmd} from "./commands/bruh";
+import {autoStar} from "./listeners/autostar";
 
 
 
@@ -52,48 +56,46 @@ client.on("guildDelete", guild => {
     client?.user?.setActivity(`@DJMTbot for help! | ${client.users.cache.size} users`);
 });
 
-function checkStarChannel(guild: GuildRegistry, channelId: string, message: Message) {
-    if (guild?.starChannels?.includes(channelId)) {
-        message.react('⭐');
-    }
-}
 
 client.on("message", async (message: Message) => {
+    // Ignore bot messages
+    if (message.author.bot) return;
     let guildId: string | undefined = message?.guild?.id;
     if (!guildId) {
         console.log('No guild id found');
         return;
     }
-    let guildPrefix = gConfig[guildId]?.prefix ? gConfig[guildId].prefix : process.env.DEFAULT_PREFIX;
-    let channelId = message.channel.id;
-    let guild = gRegistry[guildId];
-    // This event will run on every single message received, from any channel or DM.
-
-    // It's good practice to ignore other bots. This also makes your bot ignore itself
-    // and not get into a spam loop (we call that "botception").
-    if (message.author.bot) return;
-    if (!gConfig[guildId]) {
+    let gConfig: GuildConfig | undefined = undefined;
+    try {
+        gConfig = await getConfig(message);
+    } catch (e) {
+        // @ts-ignore
         await resetConfig(client, message, true); // admin override
+        gConfig = await getConfig(message);
     }
+    let args: string[] = message.content.trim().split(/ +/g);
+    // Listeners
+    await autoStar(client, args, message);
+    // @ts-ignore
+    let guildPrefix = gConfig?.prefix ? gConfig.prefix : process.env.DEFAULT_PREFIX as string;
+    // Display the prefix when mentioned
     if (client?.user && message.mentions.has(client.user)) {
-        await message.channel.send(`Type \`\`${gConfig[guildId].prefix}help\`\` to see my commands!`);
+        // @ts-ignore
+        await message.channel.send(`Type \`\`${gConfig.prefix}help\`\` to see my commands!`);
     }
-    checkStarChannel(guild, channelId, message);
-    // Also good practice to ignore any message that does not start with our prefix,
-    // which is set in the configuration file.
+    // Ignore if it doesn't start with our prefix
     if (message.content.indexOf(guildPrefix) !== 0) return;
 
     // Here we separate our "command" name, and our "arguments" for the command.
     // e.g. if we have the message "+say Is this the real life?" , we'll get the following:
     // command = say
     // args = ["Is", "this", "the", "real", "life?"]
-    const args: string[] = message.content.slice(guildPrefix.length).trim().split(/ +/g);
+    args = message.content.slice(guildPrefix.length).trim().split(/ +/g);
     const command = args?.shift()?.toLowerCase();
 
     try {
         // Admin Commands
         if (command === "sethours") {
-            console.log('hi');
             await setHoursCmd(client, args, message);
         }
         if (command === "setstar") {
@@ -120,9 +122,6 @@ client.on("message", async (message: Message) => {
         if (command === "prefix") {
             await setPrefixCmd(client, args, message);
         }
-        if (command === "exportregistry") {
-            await exportRegistry(client, args, message);
-        }
         if (command === "exportconfig") {
             await exportConfig(client, args, message);
         }
@@ -136,28 +135,7 @@ client.on("message", async (message: Message) => {
             await bCmd(client, args, message);
         }
         if (command === "bruh") {
-            const count: number = Number(args[0]);
-            if (!gConfig[guildId].bruhCmd) {
-                gConfig[guildId].bruhCmd = {}; // TODO: this probably shouldn't be done here
-            } else {
-                if (gConfig[guildId].bruhCmd.onCooldown) {
-                    await message.channel.send(`Please wait, the bruh command is on cooldown.`);
-                } else {
-                    gConfig[guildId].bruhCmd.onCooldown = true;
-                    await updateConfigJson(message);
-                    await bruhCmd(client, args, message);
-                    if (Number.isInteger(count) && count === 2) {
-                        await bruhCmd(client, args, message);
-                    }
-                    setTimeout(async () => {
-                        // Removes the user from the set after a minute
-                        if (guildId) {
-                            gConfig[guildId].bruhCmd.onCooldown = false; // TODO: no need to write this to a file
-                            await updateConfigJson(message);
-                        }
-                    }, 2500);
-                }
-            }
+            await bruhCmd(client, args, message);
         }
         if (command === "cheems") {
             await cheemsCmd(client, args, message);

@@ -1,4 +1,5 @@
-export interface GuildRegistry {
+export interface Register {
+    bruhCooldown: boolean;
     bruhChannels: string[];
     starChannels: string[];
     dotwChannels: string[];
@@ -8,11 +9,8 @@ export interface GuildRegistry {
 export interface GuildConfig {
     "devMode": boolean,
     "prefix": string,
-    "bruhCmd": BruhCommand;
-}
-
-export interface BruhCommand {
-    onCooldown: boolean;
+    "registered": boolean,
+    "register": Register;
 }
 
 export interface DayOfTheWeek {

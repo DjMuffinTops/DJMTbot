@@ -22,8 +22,7 @@ export const dayOfTheWeek: any = {
     },
     "5": {
         day: "Friday",
-        messages: ["https://cdn.discordapp.com/attachments/688848577212317744/736226163873021972/video0.mp4",
-            "https://cdn.discordapp.com/attachments/696275411478249483/745822196093681764/fridaynight.mp4"]
+        messages: ["https://cdn.discordapp.com/attachments/696275411478249483/745822196093681764/fridaynight.mp4"]
     },
     "6": {
         day: "Saturday",
