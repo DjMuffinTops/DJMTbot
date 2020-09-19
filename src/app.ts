@@ -155,4 +155,4 @@ client.on("message", async (message: Message) => {
         console.log(e);
     }
 });
-client.login(process.env.DEV_TOKEN);
+client.login(process.env.TOKEN);
