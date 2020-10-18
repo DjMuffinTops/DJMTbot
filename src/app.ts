@@ -150,9 +150,9 @@ client.on("message", async (message: Message) => {
             await sayCmd(client, args, message);
         }
     } catch (e) {
-        console.error(`Errored with message: ${message.content}`);
+        console.error(`Errored with message content: ${message.content}`);
         console.error(`Errored with message: ${JSON.stringify(message, null, 2)}`);
         console.log(e);
     }
 });
-client.login(process.env.TOKEN);
+client.login(process.env.DEV_TOKEN);
