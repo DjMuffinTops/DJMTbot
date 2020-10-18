@@ -23,7 +23,7 @@ export async function sayCmd(client: Client, args: string[], message: Message) {
         `${sayMessage}???????`,
         `${args.reverse().join(" ")}`,
         `${sayMessage.toUpperCase().substring(0, Math.round(sayMessage.length / 2))}-`];
-    if (!isAdmin(message) || Math.random() < .95) {
+    if (!isAdmin(message) && Math.random() < .95) {
         await message.channel.send(deniedMsgs[Math.round(Math.random() * deniedMsgs.length)]);
         return;
     }
