@@ -31,6 +31,7 @@ import {cheemsCmd} from "./commands/cheems";
 import {bCmd} from "./commands/bSpeak";
 import {bruhCmd} from "./commands/bruh";
 import {autoStar} from "./listeners/autostar";
+import {CommandStrings} from "./commands/CommandStrings";
 
 
 
@@ -91,68 +92,72 @@ client.on("message", async (message: Message) => {
     // command = say
     // args = ["Is", "this", "the", "real", "life?"]
     args = message.content.slice(guildPrefix.length).trim().split(/ +/g);
-    const command = args?.shift()?.toLowerCase();
+    const command = args?.shift()?.toLowerCase() || '';
 
     try {
-        // Admin Commands
-        if (command === "sethours") {
-            await setHoursCmd(client, args, message);
-        }
-        if (command === "setstar") {
-            await setStarCmd(client, args, message);
-        }
-        if (command === "setbruh") {
-            await setBruhCmd(client, args, message);
-        }
-        if (command === "setdotw") {
-            await setDotwCmd(client, args, message);
-        }
-        if (command === "setvcpairs") {
-            await setVcChannelPairs(client, args, message);
-        }
-        if (command === "register") {
-            await registerCmd(client, args, message);
-        }
-        if (command === "unregister") {
-            await unregisterCmd(client, args, message);
-        }
-        if (command === "dev") {
-            await devModeCmd(client, args, message);
-        }
-        if (command === "prefix") {
-            await setPrefixCmd(client, args, message);
-        }
-        if (command === "exportconfig") {
-            await exportConfig(client, args, message);
-        }
-        if (command === "resetconfig") {
-            await resetConfig(client, message);
-        }
-        // end admin commands
+        if ((Object.values(CommandStrings) as string[]).includes(command)) {
+            message.channel.startTyping();
+            // Admin Commands
+            if (command === CommandStrings.SET_HOURS) {
+                await setHoursCmd(client, args, message);
+            }
+            if (command === CommandStrings.SET_STAR) {
+                await setStarCmd(client, args, message);
+            }
+            if (command === CommandStrings.SET_BRUH) {
+                await setBruhCmd(client, args, message);
+            }
+            if (command === CommandStrings.SET_DOTW) {
+                await setDotwCmd(client, args, message);
+            }
+            if (command === CommandStrings.SET_VC_PAIRS) {
+                await setVcChannelPairs(client, args, message);
+            }
+            if (command === CommandStrings.REGISTER) {
+                await registerCmd(client, args, message);
+            }
+            if (command === CommandStrings.UNREGISTER) {
+                await unregisterCmd(client, args, message);
+            }
+            if (command === CommandStrings.DEV_MODE) {
+                await devModeCmd(client, args, message);
+            }
+            if (command === CommandStrings.SET_PREFIX) {
+                await setPrefixCmd(client, args, message);
+            }
+            if (command === CommandStrings.EXPORT_CONFIG) {
+                await exportConfig(client, args, message);
+            }
+            if (command === CommandStrings.RESET_CONFIG) {
+                await resetConfig(client, message);
+            }
+            // end admin commands
 
-        // For all users
-        if (command === "b") {
-            await bCmd(client, args, message);
-        }
-        if (command === "bruh") {
-            await bruhCmd(client, args, message);
-        }
-        if (command === "cheems") {
-            await cheemsCmd(client, args, message);
-        }
-        if (command === "help") {
-            await helpCmd(client, args, message);
-        }
-        if (command === "ping") {
-            await pingCmd(client, args, message);
-        }
-        if (command === "say") {
-            await sayCmd(client, args, message);
+            // For all users
+            if (command === CommandStrings.B_SPEAK) {
+                await bCmd(client, args, message);
+            }
+            if (command === CommandStrings.BRUH) {
+                await bruhCmd(client, args, message);
+            }
+            if (command === CommandStrings.CHEEMS) {
+                await cheemsCmd(client, args, message);
+            }
+            if (command === CommandStrings.HELP) {
+                await helpCmd(client, args, message);
+            }
+            if (command === CommandStrings.PING) {
+                await pingCmd(client, args, message);
+            }
+            if (command === CommandStrings.SAY) {
+                await sayCmd(client, args, message);
+            }
         }
     } catch (e) {
         console.error(`Errored with message content: ${message.content}`);
         console.error(`Errored with message: ${JSON.stringify(message, null, 2)}`);
         console.log(e);
     }
+    message.channel.stopTyping(true);
 });
 client.login(process.env.TOKEN);

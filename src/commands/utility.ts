@@ -15,7 +15,7 @@ export async function sayCmd(client: Client, args: string[], message: Message) {
     const deniedMsgs = [
         `Sorry ${userId}, there\'s a 5% chance i\'ll actually say that.`,
         'Reh',
-        ':RioluUgh:',
+        ':RioluUgh:767528910065762315',
         `I\'m gonna send you to the ranch, ${userId}`,
         `You have no power over me, ${userId}`,
         `I\'m not gonna say that ${userId}...`,
