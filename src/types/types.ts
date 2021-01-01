@@ -4,6 +4,7 @@ export interface Register {
     starChannels: string[];
     dotwChannels: string[];
     vcChannelPairs: string[][];
+    emoteChannelPairs: (string | (string|number)[])[][];
 }
 
 export interface GuildConfig {

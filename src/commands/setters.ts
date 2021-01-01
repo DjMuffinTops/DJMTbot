@@ -153,6 +153,7 @@ export async function setStarCmd(client: Client, args: string[], message: Messag
     }
 }
 
+
 export async function setVcChannelPairs(client: Client, args: string[], message: Message) {
     // Admin only
     if (!isAdmin(message)) {

@@ -4,6 +4,7 @@ export enum CommandStrings {
     SET_BRUH = "setbruh",
     SET_DOTW = "setdotw",
     SET_VC_PAIRS = "setvcpairs",
+    SET_REACT_PAIRS = "setreactpairs",
     REGISTER = "register",
     UNREGISTER = "unregister",
     DEV_MODE = "dev",
