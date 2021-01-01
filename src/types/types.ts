@@ -4,7 +4,13 @@ export interface Register {
     starChannels: string[];
     dotwChannels: string[];
     vcChannelPairs: string[][];
-    emoteChannelPairs: (string | (string|number)[])[][];
+    reactBoards: ReactBoardEntry[];
+}
+
+export interface ReactBoardEntry {
+    rawEmoteId: string,
+    channelId: string,
+    threshold: number,
 }
 
 export interface GuildConfig {
