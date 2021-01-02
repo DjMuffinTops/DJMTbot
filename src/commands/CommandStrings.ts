@@ -1,6 +1,6 @@
 export enum CommandStrings {
     SET_HOURS = "sethours",
-    SET_STAR = "setstar",
+    SET_AUTO_REACT = "setautoreact",
     SET_BRUH = "setbruh",
     SET_DOTW = "setdotw",
     SET_VC_PAIRS = "setvcpairs",

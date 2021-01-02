@@ -6,7 +6,7 @@ import * as Discord from 'discord.js';
 import {Register, GuildConfig} from "./types/types";
 import {Message} from "discord.js";
 
-const client = new Discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'] });
+export const client = new Discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'] });
 let reactBoard: ReactBoard;
 // Here we load the guildConfigs.json file that contains our token and our prefix values.
 require('dotenv').config();
@@ -25,7 +25,6 @@ import {
     setBruhCmd,
     setDotwCmd, setHoursCmd,
     setPrefixCmd,
-    setStarCmd,
     setVcChannelPairs
 } from "./commands/setters";
 import {cheemsCmd} from "./commands/cheems";
@@ -43,7 +42,7 @@ client.on("ready", async () => {
     // Example of changing the bot's playing game to something useful. `client.user` is what the
     // docs refer to as the "ClientUser".
     client?.user?.setActivity(`@DJMTbot for help! | ${client.users.cache.size} users`);
-    reactBoard = await ReactBoard.CreateReactBoard(client);
+    reactBoard = await ReactBoard.getInstance();
     await startCronJobs(client);
 
 });
@@ -125,8 +124,8 @@ client.on("message", async (message: Message) => {
             if (command === CommandStrings.SET_HOURS) {
                 await setHoursCmd(client, args, message);
             }
-            if (command === CommandStrings.SET_STAR) {
-                await setStarCmd(client, args, message);
+            if (command === CommandStrings.SET_AUTO_REACT) {
+                await reactBoard.setAutoReactCmd(client, args, message);
             }
             if (command === CommandStrings.SET_BRUH) {
                 await setBruhCmd(client, args, message);

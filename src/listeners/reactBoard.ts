@@ -1,4 +1,4 @@
-import {GuildConfig, ReactBoardEntry} from "../types/types";
+import {autoReactEntry, GuildConfig, ReactBoardEntry} from "../types/types";
 import {getConfig, updateConfig} from "../commands/config";
 import {Client, Message, MessageAttachment, MessageReaction, TextChannel} from "discord.js";
 import {promises as FileSystem} from "fs";
@@ -11,12 +11,22 @@ interface ReactBoardMapValue {
 }
 
 export default class ReactBoard {
+    private static instance: ReactBoard;
     private emoteReactBoardMap: Map<string, ReactBoardMapValue>;
+    private autoReactMap: Map<string, string[]>;
 
-    constructor() {
+    private constructor() {
         this.emoteReactBoardMap = new Map();
+        this.autoReactMap = new Map();
     }
-    public static CreateReactBoard = async (client: Client) => {
+    public static async getInstance(): Promise<ReactBoard> {
+        if (!ReactBoard.instance) {
+            ReactBoard.instance = await this.CreateReactBoard();
+        }
+        return ReactBoard.instance;
+    }
+
+    private static CreateReactBoard = async () => {
         const me = new ReactBoard();
         me.emoteReactBoardMap = new Map<string, ReactBoardMapValue>();
         const files = await FileSystem.readdir('./json/guilds');
@@ -25,16 +35,26 @@ export default class ReactBoard {
             const gConfig: GuildConfig = await getConfig(id);
             const register = gConfig.register;
             const reactBoards: ReactBoardEntry[] = register?.reactBoards;
+            const autoReactChannels: autoReactEntry[] = register?.autoReacts;
             if (reactBoards) {
                 for (const reactBoard of reactBoards) {
-                    let emoteIdNumber = reactBoard.rawEmoteId.substring(reactBoard.rawEmoteId.lastIndexOf(':') + 1, reactBoard.rawEmoteId.indexOf('>'));
-                    me.emoteReactBoardMap.set(emoteIdNumber, {threshold: reactBoard.threshold, channelId: reactBoard.channelId, recentMsgIds: []});
+                    // let emoteIdNumber = reactBoard.rawEmoteId.substring(reactBoard.rawEmoteId.lastIndexOf(':') + 1, reactBoard.rawEmoteId.indexOf('>'));
+                    me.emoteReactBoardMap.set(reactBoard.rawEmoteId,
+                        {
+                            threshold: reactBoard.threshold,
+                            channelId: reactBoard.channelId,
+                            recentMsgIds: [],
+                        });
+                }
+            }
+            if (autoReactChannels) {
+                for (const autoReactChannel of autoReactChannels) {
+                    me.autoReactMap.set(autoReactChannel.rawEmoteId, autoReactChannel.channelIds);
                 }
             }
         }
         return me;
     };
-
 
     async reactBoardCheck(client: Client, reaction: MessageReaction) {
         // let channelId = reaction.message.channel.id;
@@ -60,7 +80,8 @@ export default class ReactBoard {
                     timestamp: message.createdAt,
                     fields: [
                         { name: 'Channel', value: message.channel.toString(), inline: true },
-                        { name: 'Message', value: message.content || '\u200b', inline: true }
+                        { name: 'Message', value: message.content || '\u200b', inline: true },
+                        { name: 'Media URL', value: message.attachments.first()?.url || '\u200b'}
                     ],
                     thumbnail: {
                         url: message.author.displayAvatarURL({size: 128, dynamic: true}),
@@ -69,7 +90,7 @@ export default class ReactBoard {
                         width: 128
                     },
                     image: {
-                        url: attachmentList[0]?.attachment || null
+                        url: attachmentList[0]?.attachment|| null
                     },
                     // video: null,
                     author: {
@@ -109,7 +130,8 @@ export default class ReactBoard {
             if (this.emoteReactBoardMap.size > 0) {
                 let msg = '';
                 this.emoteReactBoardMap.forEach((value, key) => {
-                    const emoji = client.emojis.cache.get(key);
+                    const emoteId = key.substring(key.lastIndexOf(':') + 1, key.indexOf('>'));
+                    const emoji = client.emojis.cache.get(emoteId);
                     msg += `${emoji?.toString()} => <#${value.channelId}> (threshold: ${value.threshold})\n`;
                 });
                 await message.channel.send(`React Channels:\n${msg}`);
@@ -151,11 +173,12 @@ export default class ReactBoard {
 
             if (register?.reactBoards?.length > 0) {
                 for (const reactBoard of register.reactBoards) {
+                    // If we have a match delete it from the map and the config
                     if (reactBoard.rawEmoteId === reactBoardEntry.rawEmoteId && reactBoard.channelId === reactBoardEntry.channelId) {
                         register.reactBoards.splice(register.reactBoards.indexOf(reactBoard), 1);
                         this.emoteReactBoardMap.delete(reactBoardEntry.rawEmoteId);
                         await updateConfig(gConfig, message);
-                        await message.channel.send(`Removed ${reactBoard} from React Channels list!`);
+                        await message.channel.send(`Removed ${JSON.stringify(reactBoard)} from React Channels list!`);
                         return;
                     }
                 }
@@ -180,6 +203,110 @@ export default class ReactBoard {
 
         } else {
             await message.channel.send(`Requires exactly three arguments, an emote, and a text channel mention, and an integer threshold for the react. You gave ${args}`);
+
+        }
+    }
+
+    async checkAutoReact(client: Client, args: string[], message: Message) {
+        let channelId = message.channel.id;
+        this.autoReactMap.forEach((channelIds, rawEmojiId) => {
+            const emoteId = rawEmojiId.substring(rawEmojiId.lastIndexOf(':') + 1, rawEmojiId.indexOf('>'));
+            const foundEmote = client.emojis.cache.get(emoteId);
+            channelIds.forEach(async mapChannelId => { // TODO: async might be weird here
+                if (foundEmote && channelId === mapChannelId) {
+                    await message.react(foundEmote);
+                    return
+                }
+            });
+        });
+    }
+
+    async setAutoReactCmd(client: Client, args: string[], message: Message) {
+        // Admin only
+        if (!isAdmin(message)) {
+            await message.channel.send(`This command requires administrator permissions.`);
+            return;
+        }
+
+        const gConfig = await getConfig(message);
+        if (!gConfig.registered) {
+            await message.channel.send(`Please register your guild to use this command.`);
+            return;
+        }
+        let register = gConfig.register;
+        if (args.length === 0) {
+            let msg = "";
+
+            if (this.autoReactMap.size > 0) {
+                let msg = '';
+                this.autoReactMap.forEach((channelIds, rawEmojiId) => {
+                    channelIds.forEach(channelId => {
+                        msg += `${rawEmojiId} => <#${channelId}>\n`;
+                    });
+                });
+                await message.channel.send(`Auto React Channels:\n${msg}`);
+            } else {
+                await message.channel.send(`No Auto React Channels have been set!`);
+            }
+        } else if (args.length === 2) {
+            const rawEmote = args[0];
+            const rawChannelId = args[1];
+            let emoteId = rawEmote.substring(rawEmote.lastIndexOf(':') + 1, rawEmote.indexOf('>'));
+            let foundEmote = undefined;
+            // let foundTextChannel = undefined;
+            foundEmote = client.emojis.cache.get(emoteId);
+            if (!foundEmote) {
+                await message.channel.send(`The given emote is invalid, is it in this server?`);
+                return;
+            }
+            let channelId = rawChannelId.substring(2, rawChannelId.indexOf('>'));
+            try {
+                const foundChannel = await client.channels.fetch(channelId);
+            } catch (e) {
+                console.error(e);
+                await message.channel.send("The given channel is invalid!");
+                return;
+            }
+            // If our map has it, we gotta look for it in our register and remove it
+            if (this.autoReactMap.has(rawEmote)) {
+                if (this.autoReactMap.get(rawEmote)?.includes(channelId)) {
+                    for (const autoReact of register.autoReacts) {
+                        // If we have a match delete it from the map and the config
+                        if (autoReact.rawEmoteId === rawEmote) {
+                            // @ts-ignore
+                            this.autoReactMap.get(rawEmote).splice(this.autoReactMap.get(rawEmote).indexOf(channelId), 1);
+                            autoReact.channelIds.splice(autoReact.channelIds.indexOf(channelId), 1);
+                            await updateConfig(gConfig, message);
+                            await message.channel.send(`Removed <#${rawChannelId}> from the auto react list for ${rawEmote}`);
+                        }
+                    }
+                } else {
+                    // Update the right emote in the register
+                    for (const autoReact of register.autoReacts) {
+                        if (autoReact.rawEmoteId === rawEmote) {
+                            this.autoReactMap.get(rawEmote)?.push(channelId);
+                            autoReact.channelIds.push(channelId);
+                            await updateConfig(gConfig, message);
+                            await message.channel.send(`Added ${rawChannelId} to the auto react list for ${rawEmote}!`);
+                        }
+                    }
+
+                }
+            } else {
+                if (!register?.autoReacts) {
+                    register.autoReacts = [];
+                }
+                const autoReactEntry: autoReactEntry = {
+                    rawEmoteId: rawEmote,
+                    channelIds: [channelId]
+                }
+                this.autoReactMap.set(rawEmote, autoReactEntry.channelIds);
+                register.autoReacts.push(autoReactEntry);
+                await updateConfig(gConfig, message);
+                await message.channel.send(`Added ${rawChannelId} to the auto react list for ${rawEmote}!`);
+            }
+        } else {
+            await message.channel.send(`Requires exactly two arguments, the raw emote and a channel mention. You gave ${args}`);
 
         }
     }

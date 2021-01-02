@@ -54,7 +54,9 @@ ${prefix}register -> Registers this server to have data saved that is required f
 ${prefix}unregister -> Unregisters this server and deletes all register data saved.\n
 ${prefix}resetconfig -> Restores the guild's config settings to the bot's default config.\n
 ${prefix}dev -> When enabled, the bot will print out the states of the guild config, and guild registry.\n
-${prefix}setstar [TextChannel Mention] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channel(s) to be auto starred by the bot. Use command without mentioning channels to see the list of marked channels.\n
+${prefix}setautoreact [Emoji] [TextChannel Mention] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channel(s) to be auto starred with the given emoji by the bot. Use command without mentioning channels to see the list of marked channels.\n`;
+let helpAdminCommands2 =
+`${prefix}setreactpairs [Emoji] [TextChannel Mention] [Threshold for ReactionBoard]-> {REGISTER REQUIRED} Marks/unmarks the mentioned channel to be act as a starboard for the given emoji after threshold reacts is reached on a msg. Use command without mentioning channels to see the list of marked channels.\n
 ${prefix}setbruh [TextChannel Mention] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channel(s) to be used by the bruh command. Use command without mentioning channels to see the list of marked channels.\n
 ${prefix}setdotw [TextChannel Mention] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channel to get Day of the Week messages. Will send a message to the channel at 11:59 EST everyday (does not account for daylight savings). Use command without mentioning channels to see the list of marked channels.\n
 ${prefix}setvcpairs [VoiceChannelId] [TextChannel Mention] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channels as a pair. Will send occasional reminder messages to the vc text channel. Use command without mentioning channels to see the list of marked channel pairs.\n
@@ -62,6 +64,7 @@ ${prefix}sethours [VoiceChannelId] [TextChannelId] -> {REGISTER REQUIRED} Manual
 
     if (isAdmin(message)) {
         await message.channel.send(`\`\`\`css\n${helpAdminCommands}\`\`\``);
+        await message.channel.send(`\`\`\`css\n${helpAdminCommands2}\`\`\``);
     }
     await message.channel.send(`\`\`\`css\n${helpCommands}\`\`\``);
 }
