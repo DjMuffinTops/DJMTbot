@@ -72,10 +72,6 @@ client.on('messageReactionAdd', async (reaction, user) => {
         }
     }
     await reactBoard.reactBoardCheck(client, reaction);
-    // Now the message has been cached and is fully available
-    console.log(`${reaction.message.author}'s message "${reaction.message.content}" gained a reaction!`);
-    // The reaction is now also fully available and the properties will be reflected accurately:
-    console.log(`${reaction.count} user(s) have given the same reaction to this message!`);
 });
 
 client.on("message", async (message: Message) => {
@@ -183,4 +179,4 @@ client.on("message", async (message: Message) => {
     }
     message.channel.stopTyping(true);
 });
-client.login(process.env.DEV_TOKEN);
+client.login(process.env.TOKEN);
