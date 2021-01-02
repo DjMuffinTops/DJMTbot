@@ -54,6 +54,7 @@ ${prefix}register -> Registers this server to have data saved that is required f
 ${prefix}unregister -> Unregisters this server and deletes all register data saved.\n
 ${prefix}resetconfig -> Restores the guild's config settings to the bot's default config.\n
 ${prefix}dev -> When enabled, the bot will print out the states of the guild config, and guild registry.\n
+${prefix}setstar [TextChannel Mention] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channel(s) to be auto starred by the bot. Use command without mentioning channels to see the list of marked channels.\n
 ${prefix}setautoreact [Emoji] [TextChannel Mention] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channel(s) to be auto starred with the given emoji by the bot. Use command without mentioning channels to see the list of marked channels.\n`;
 let helpAdminCommands2 =
 `${prefix}setreactpairs [Emoji] [TextChannel Mention] [Threshold for ReactionBoard]-> {REGISTER REQUIRED} Marks/unmarks the mentioned channel to be act as a starboard for the given emoji after threshold reacts is reached on a msg. Use command without mentioning channels to see the list of marked channels.\n

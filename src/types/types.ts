@@ -1,6 +1,7 @@
 export interface Register {
     bruhCooldown: boolean;
     bruhChannels: string[];
+    starChannels: string[];
     autoReacts: autoReactEntry[];
     dotwChannels: string[];
     vcChannelPairs: string[][];

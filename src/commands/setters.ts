@@ -55,6 +55,54 @@ export async function setBruhCmd(client: Client, args: string[], message: Messag
         }
     }
 }
+export async function setStarCmd(client: Client, args: string[], message: Message) {
+    // Admin only
+    if (!isAdmin(message)) {
+        await message.channel.send(`This command requires administrator permissions.`);
+        return;
+    }
+
+    const gConfig = await getConfig(message);
+    if (!gConfig.registered) {
+        await message.channel.send(`Please register your guild to use this command.`);
+        return;
+    }
+    let register = gConfig.register;
+    if (args.length === 0) {
+        let channelString = "";
+        if (register?.starChannels?.length > 0) {
+            register.starChannels.forEach((channelId: string) => {
+                channelString += `<#${channelId}> `;
+            });
+            await message.channel.send(`Star Channels: ${channelString}`);
+        } else {
+            await message.channel.send(`No Star Channels have been set!`);
+        }
+    } else {
+        for (const rawChannelId of args) {
+            let channelId = rawChannelId.substring(2, rawChannelId.indexOf('>'));
+            try {
+                const foundChannel = await client.channels.fetch(channelId);
+            } catch (e) {
+                console.error(e);
+                await message.channel.send("The given channel is invalid!");
+                continue;
+            }
+            if (register?.starChannels?.includes(channelId)) {
+                register.starChannels.splice(register.starChannels.indexOf(channelId), 1);
+                await updateConfig(gConfig, message);
+                await message.channel.send(`Removed ${rawChannelId} from the star channels list!`);
+            } else {
+                if (!register?.starChannels) {
+                    register.starChannels = [];
+                }
+                register.starChannels.push(channelId);
+                await updateConfig(gConfig, message);
+                await message.channel.send(`Added ${rawChannelId} to the star channels list!`);
+            }
+        }
+    }
+}
 
 export async function setDotwCmd(client: Client, args: string[], message: Message) {
     // Admin only
