@@ -31,10 +31,7 @@
 			"autoReacts": [
 				{
 					"rawEmoteId": "<:starA:794834813877878804>",
-					"channelIds": [
-						"683557850454556675",
-						"683557873686806528"
-					]
+					"channelIds": []
 				},
 				{
 					"rawEmoteId": "<:starM:794834814154833930>",
@@ -51,11 +48,6 @@
 			],
 			"reactBoards": [
 				{
-					"rawEmoteId": "<:starA:794834813877878804>",
-					"channelId": "692290853145673750",
-					"threshold": 20
-				},
-				{
 					"rawEmoteId": "<:starM:794834814154833930>",
 					"channelId": "692290853145673750",
 					"threshold": 9
@@ -70,6 +62,10 @@
 					"channelId": "687887082365911085",
 					"threshold": 6
 				}
+			],
+			"starChannels": [
+				"683557850454556675",
+				"683557873686806528"
 			]
 		}
 	}

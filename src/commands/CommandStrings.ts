@@ -3,6 +3,7 @@ export enum CommandStrings {
     SET_AUTO_REACT = "setautoreact",
     SET_BRUH = "setbruh",
     SET_DOTW = "setdotw",
+    SET_STAR = "setstar",
     SET_VC_PAIRS = "setvcpairs",
     SET_REACT_PAIRS = "setreactpairs",
     REGISTER = "register",

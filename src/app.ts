@@ -24,7 +24,7 @@ import {helpCmd, pingCmd, sayCmd} from "./commands/utility";
 import {
     setBruhCmd,
     setDotwCmd, setHoursCmd,
-    setPrefixCmd,
+    setPrefixCmd, setStarCmd,
     setVcChannelPairs
 } from "./commands/setters";
 import {cheemsCmd} from "./commands/cheems";
@@ -41,7 +41,7 @@ client.on("ready", async () => {
     console.log(`Bot has started, with ${client.users.cache.size} users, in ${client.channels.cache.size} channels of ${client.guilds.cache.size} guilds.`);
     // Example of changing the bot's playing game to something useful. `client.user` is what the
     // docs refer to as the "ClientUser".
-    client?.user?.setActivity(`@DJMTbot for help! | ${client.users.cache.size} users`);
+    client?.user?.setActivity(`@DJMTbot for help!`);
     reactBoard = await ReactBoard.getInstance();
     await startCronJobs(client);
 
@@ -119,6 +119,9 @@ client.on("message", async (message: Message) => {
             }
             if (command === CommandStrings.SET_HOURS) {
                 await setHoursCmd(client, args, message);
+            }
+            if (command === CommandStrings.SET_STAR) {
+                await setStarCmd(client, args, message);
             }
             if (command === CommandStrings.SET_AUTO_REACT) {
                 await reactBoard.setAutoReactCmd(client, args, message);
