@@ -1,9 +1,21 @@
 export interface Register {
     bruhCooldown: boolean;
     bruhChannels: string[];
-    starChannels: string[];
+    autoReacts: autoReactEntry[];
     dotwChannels: string[];
     vcChannelPairs: string[][];
+    reactBoards: ReactBoardEntry[];
+}
+
+export interface ReactBoardEntry {
+    rawEmoteId: string,
+    channelId: string,
+    threshold: number,
+}
+
+export interface autoReactEntry {
+    rawEmoteId: string,
+    channelIds: string[],
 }
 
 export interface GuildConfig {
