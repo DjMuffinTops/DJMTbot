@@ -1,4 +1,5 @@
 export enum CommandStrings {
+    SET_DEBUG_CHANNEL = "setdebugchannel",
     SET_HOURS = "sethours",
     SET_AUTO_REACT = "setautoreact",
     SET_BRUH = "setbruh",

@@ -1,6 +1,7 @@
 {
 	"devMode": false,
 	"prefix": "djmt!",
+	"debugChannel": "",
 	"registered": false,
 	"register": {}
 }

@@ -4,10 +4,10 @@ import * as Discord from 'discord.js';
 // some might call it `cootchie`. Either way, when you see `client.something`, or `bot.something`,
 // this is what we're refering to. Your client.
 import {Register, GuildConfig} from "./types/types";
-import {Message} from "discord.js";
+import {Message, TextChannel} from "discord.js";
 
 export const client = new Discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'] });
-let reactBoard: ReactBoard;
+let reactBoard: ReactBoard; // TODO: This is currently global, needs a class that has one react board per guild
 // Here we load the guildConfigs.json file that contains our token and our prefix values.
 require('dotenv').config();
 
@@ -22,7 +22,7 @@ import {
 } from "./commands/config";
 import {helpCmd, pingCmd, sayCmd} from "./commands/utility";
 import {
-    setBruhCmd,
+    setBruhCmd, setDebugChannel,
     setDotwCmd, setHoursCmd,
     setPrefixCmd, setStarCmd,
     setVcChannelPairs
@@ -44,6 +44,7 @@ client.on("ready", async () => {
     client?.user?.setActivity(`@DJMTbot for help!`);
     reactBoard = await ReactBoard.getInstance();
     await startCronJobs(client);
+    // const debugChannel = (await client.channels.fetch(reactMapValue.channelId) as TextChannel);
 
 });
 
@@ -114,6 +115,9 @@ client.on("message", async (message: Message) => {
         if ((Object.values(CommandStrings) as string[]).includes(command)) {
             message.channel.startTyping();
             // Admin Commands
+            if (command === CommandStrings.SET_DEBUG_CHANNEL) {
+                await setDebugChannel(client, args, message);
+            }
             if (command === CommandStrings.SET_REACT_PAIRS) {
                 await reactBoard.setReactPairsCmd(client, args, message);
             }
@@ -182,4 +186,4 @@ client.on("message", async (message: Message) => {
     }
     message.channel.stopTyping(true);
 });
-client.login(process.env.TOKEN);
+client.login(process.env.DEV_TOKEN);

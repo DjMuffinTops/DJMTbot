@@ -2,6 +2,23 @@ import {Client, Message} from "discord.js";
 import {isAdmin} from "./helper";
 import {getConfig, updateConfig} from "./config";
 import {setConsecutiveHours} from "../jobs/vcReminders";
+export async function setDebugChannel(client: Client, args: string[], message: Message) {
+    // Admin only
+    if (!isAdmin(message)) {
+        await message.channel.send(`This command requires administrator permissions.`);
+        return;
+    }
+    const gConfig = await getConfig(message);
+    if (gConfig.debugChannel === message.channel.id) {
+        gConfig.debugChannel = "";
+        await updateConfig(gConfig, message);
+        await message.channel.send(`${message.channel.toString()} is no longer set as the debugChannel`);
+    } else {
+        gConfig.debugChannel = message.channel.id;
+        await updateConfig(gConfig, message);
+        await message.channel.send(`${message.channel.toString()} is now set as the debugChannel channel`);
+    }
+}
 
 export async function setBruhCmd(client: Client, args: string[], message: Message) {
     // Admin only

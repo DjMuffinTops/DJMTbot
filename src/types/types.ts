@@ -23,6 +23,7 @@ export interface GuildConfig {
     "devMode": boolean,
     "prefix": string,
     "registered": boolean,
+    "debugChannel": string,
     "register": Register;
 }
 
