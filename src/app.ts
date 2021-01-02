@@ -186,4 +186,4 @@ client.on("message", async (message: Message) => {
     }
     message.channel.stopTyping(true);
 });
-client.login(process.env.DEV_TOKEN);
+client.login(process.env.TOKEN);
