@@ -5,5 +5,5 @@ Discord.js w/ Typescript
 ```
 yarn
 
-yarn dev
+yarn start
 ```
