@@ -1,0 +1,20 @@
+{
+	"174699864670732288": {
+		"devMode": false,
+		"prefix": "djmt!",
+		"debugChannel": "",
+		"registered": true,
+		"register": {
+			"reactBoards": [
+				{
+					"rawEmoteId": "<:based:785972843711561728>",
+					"channelId": "797720146721636352",
+					"threshold": 3
+				}
+			],
+			"bruhChannels": [
+				"797720146721636352"
+			]
+		}
+	}
+}
