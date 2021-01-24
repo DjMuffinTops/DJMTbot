@@ -2,19 +2,19 @@ import {Component} from "../Component";
 import {Channel, Client, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
 import {Cron} from "../../types/Cron";
 import {CommandStrings} from "../../commands/CommandStrings";
-import {client} from "../../app";
 import {isAdmin} from "../../commands/helper";
 
-class SayCommand extends Component {
+export class SayCommand extends Component {
 
     async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
+        console.log('pref?');
         const command = args?.shift()?.toLowerCase() || '';
         if (command === CommandStrings.SAY) {
-            await this.sayCmd(client, args, message);
+            await this.sayCmd(args, message);
         }
     }
 
-    async sayCmd(client: Client, args: string[], message: Message) {
+    async sayCmd(args: string[], message: Message) {
         const sayMessage:string  = args.join(" ");
         const userId = `<@${message.author.id}>`;
         const deniedMsgs = [
