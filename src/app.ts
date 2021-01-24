@@ -109,6 +109,7 @@ client.on("message", async (message: Message) => {
     // command = say
     // args = ["Is", "this", "the", "real", "life?"]
     args = message.content.slice(guildPrefix.length).trim().split(/ +/g);
+    // Insert onMessageWithGuildPrefix Code here
     const command = args?.shift()?.toLowerCase() || '';
 
     try {
@@ -175,9 +176,9 @@ client.on("message", async (message: Message) => {
             if (command === CommandStrings.PING) {
                 await pingCmd(client, args, message);
             }
-            if (command === CommandStrings.SAY) {
-                await sayCmd(client, args, message);
-            }
+            // if (command === CommandStrings.SAY) {
+            //     await sayCmd(client, args, message);
+            // }
         }
     } catch (e) {
         console.error(`Errored with message content: ${message.content}`);
