@@ -157,7 +157,4 @@ export async function bruhCmd(client: Client, args: string[], message: Message) 
     if (Number.isInteger(count) && count === 2) {
         await sendBruh(message, client);
     }
-
-
-
 }

@@ -3,6 +3,7 @@ import {GuildConfig} from "./types/types";
 import {Component} from "./Components/Component";
 import {SayCommand} from "./Components/Commands/SayCommand";
 import {Cron} from "./types/Cron";
+import {CheemsCommand} from "./Components/Commands/CheemsCommand";
 
 export class Guild {
     client: Client;
@@ -17,6 +18,7 @@ export class Guild {
         this.prefix = guildConfig.prefix ? guildConfig.prefix : process.env.DEFAULT_PREFIX as string;
         this.components = [];
         this.components.push(new SayCommand(this));
+        this.components.push(new CheemsCommand(this));
         console.log(`Guild ${guildId} created`);
     }
     // Cron Scheduling https://github.com/node-cron/node-cron

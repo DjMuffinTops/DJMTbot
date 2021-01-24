@@ -1,5 +1,5 @@
 import {Component} from "../Component";
-import {Channel, Client, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
+import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
 import {Cron} from "../../types/Cron";
 import {CommandStrings} from "../../commands/CommandStrings";
 import {isAdmin} from "../../commands/helper";
