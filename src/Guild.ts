@@ -16,7 +16,7 @@ export class Guild {
         this.config = guildConfig;
         this.prefix = guildConfig.prefix ? guildConfig.prefix : process.env.DEFAULT_PREFIX as string;
         this.components = [];
-        this.components.push(new SayCommand(client));
+        this.components.push(new SayCommand(this));
         console.log(`Guild ${guildId} created`);
     }
     // Cron Scheduling https://github.com/node-cron/node-cron

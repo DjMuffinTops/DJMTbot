@@ -1,10 +1,11 @@
 import {Channel, Client, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
 import {Cron} from "../types/Cron";
+import {Guild} from "../Guild";
 
 export abstract class Component {
-    client: Client;
-    public constructor(client: Client) {
-        this.client = client;
+    guild: Guild;
+    public constructor(guild: Guild) {
+        this.guild = guild;
     }
     // Cron Scheduling https://github.com/node-cron/node-cron
     abstract async cron(cron: Cron): Promise<void>;

@@ -7,7 +7,6 @@ import {isAdmin} from "../../commands/helper";
 export class SayCommand extends Component {
 
     async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
-        console.log('pref?');
         const command = args?.shift()?.toLowerCase() || '';
         if (command === CommandStrings.SAY) {
             await this.sayCmd(args, message);
@@ -38,7 +37,6 @@ export class SayCommand extends Component {
         // And we get the bot to say the thing:
         await message.channel.send(sayMessage.length ? sayMessage : `You didn't say anything! >:(`);
         await message.delete();
-
     }
 
     async cron(cron: Cron): Promise<void> {
