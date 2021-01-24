@@ -2,12 +2,12 @@ import {Client, Message} from "discord.js";
 import {getConfig, updateConfig} from "./config";
 import {isAdmin} from "./helper";
 
-export async function pingCmd(client: Client, args: string[], message: Message) {
-    // Calculates ping between sending a message and editing it, giving a nice round-trip latency.
-    // The second ping is an average latency between the bot and the websocket server (one-way, not round-trip)
-    const m = await message.channel.send("Ping?");
-    await m.edit(`Pong! Latency is ${m.createdTimestamp - message.createdTimestamp}ms. API Latency is ${Math.round(client.ws.ping)}ms`);
-}
+// export async function pingCmd(client: Client, args: string[], message: Message) {
+//     // Calculates ping between sending a message and editing it, giving a nice round-trip latency.
+//     // The second ping is an average latency between the bot and the websocket server (one-way, not round-trip)
+//     const m = await message.channel.send("Ping?");
+//     await m.edit(`Pong! Latency is ${m.createdTimestamp - message.createdTimestamp}ms. API Latency is ${Math.round(client.ws.ping)}ms`);
+// }
 
 // export async function sayCmd(client: Client, args: string[], message: Message) {
 //     const sayMessage:string  = args.join(" ");

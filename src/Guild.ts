@@ -6,6 +6,7 @@ import {Cron} from "./types/Cron";
 import {CheemsCommand} from "./Components/Commands/CheemsCommand";
 import {BSpeakCommand} from "./Components/Commands/BSpeakCommand";
 import {HelpCommand} from "./Components/Commands/HelpCommand";
+import {PingCommand} from "./Components/Commands/PingCommand";
 
 export class Guild {
     client: Client;
@@ -23,6 +24,7 @@ export class Guild {
         this.components.push(new CheemsCommand(this));
         this.components.push(new BSpeakCommand(this));
         this.components.push(new HelpCommand(this));
+        this.components.push(new PingCommand(this));
         console.log(`Guild ${guildId} created`);
     }
     // Cron Scheduling https://github.com/node-cron/node-cron
