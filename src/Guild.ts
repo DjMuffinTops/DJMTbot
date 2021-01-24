@@ -7,24 +7,25 @@ import {CheemsCommand} from "./Components/Commands/CheemsCommand";
 import {BSpeakCommand} from "./Components/Commands/BSpeakCommand";
 import {HelpCommand} from "./Components/Commands/HelpCommand";
 import {PingCommand} from "./Components/Commands/PingCommand";
+import {BruhCommand} from "./Components/Commands/BruhCommand";
 
 export class Guild {
     client: Client;
     guildId: string;
     prefix: string;
     config: GuildConfig;
-    components: Component[];
+    components: Component[] = [];
     constructor(client: Client, guildId: string, guildConfig: GuildConfig) {
         this.client = client;
         this.guildId = guildId;
         this.config = guildConfig;
         this.prefix = guildConfig.prefix ? guildConfig.prefix : process.env.DEFAULT_PREFIX as string;
-        this.components = [];
         this.components.push(new SayCommand(this));
         this.components.push(new CheemsCommand(this));
         this.components.push(new BSpeakCommand(this));
         this.components.push(new HelpCommand(this));
         this.components.push(new PingCommand(this));
+        this.components.push(new BruhCommand(this));
         console.log(`Guild ${guildId} created`);
     }
     // Cron Scheduling https://github.com/node-cron/node-cron
