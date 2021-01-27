@@ -32,8 +32,8 @@ export class DJMTbot {
         const files = await FileSystem.readdir('./json/guilds');
         const guildIds = files.map((filename) => filename.substr(0, filename.indexOf('.')));
         for (const id of guildIds) {
-            const gConfig: GuildConfig = await getConfig(id);
-            this.guilds.set(id, new Guild(this.client, id, gConfig));
+            // const gConfig: GuildConfig = await getConfig(id);
+            this.guilds.set(id, new Guild(this.client, id));
         }
     }
 
@@ -111,9 +111,6 @@ export class DJMTbot {
             //         if (command === CommandStrings.SET_AUTO_REACT) {
             //             await reactBoard.setAutoReactCmd(this.client, args, message);
             //         }
-            //         if (command === CommandStrings.SET_BRUH) {
-            //             await setBruhCmd(this.client, args, message);
-            //         }
             //         if (command === CommandStrings.SET_DOTW) {
             //             await setDotwCmd(this.client, args, message);
             //         }
@@ -132,33 +129,8 @@ export class DJMTbot {
             //         if (command === CommandStrings.SET_PREFIX) {
             //             await setPrefixCmd(this.client, args, message);
             //         }
-            //         if (command === CommandStrings.EXPORT_CONFIG) {
-            //             await exportConfig(this.client, args, message);
-            //         }
-            //         if (command === CommandStrings.RESET_CONFIG) {
-            //             await resetConfig(this.client, message);
-            //         }
-            //         // end admin commands
-            //
-            //         // For all users
-            //         if (command === CommandStrings.B_SPEAK) {
-            //             await bCmd(this.client, args, message);
-            //         }
-            //         if (command === CommandStrings.BRUH) {
-            //             await bruhCmd(this.client, args, message);
-            //         }
-            //         if (command === CommandStrings.CHEEMS) {
-            //             await cheemsCmd(this.client, args, message);
-            //         }
-            //         if (command === CommandStrings.HELP) {
-            //             await helpCmd(this.client, args, message);
-            //         }
-            //         if (command === CommandStrings.PING) {
-            //             await pingCmd(this.client, args, message);
-            //         }
-            //         // if (command === CommandStrings.SAY) {
-            //         //     await sayCmd(client, args, message);
-            //         // }
+
+
             //     }
             // } catch (e) {
             //     console.error(`Errored with message content: ${message.content}`);

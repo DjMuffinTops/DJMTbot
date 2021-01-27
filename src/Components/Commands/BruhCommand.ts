@@ -10,7 +10,6 @@ import {
 import {Component} from "../Component";
 import {Cron} from "../../types/Cron";
 import {CommandStrings} from "../../commands/CommandStrings";
-import {getConfig, updateConfig} from "../../commands/config";
 import {isAdmin} from "../../commands/helper";
 
 export class BruhCommand extends Component{
@@ -66,7 +65,7 @@ export class BruhCommand extends Component{
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
-        const gConfig = await getConfig(message);
+        const gConfig = this.guild.config;
         if (!gConfig.registered) {
             await message.channel.send(`Please register your guild to use this command.`);
             return;
@@ -97,7 +96,8 @@ export class BruhCommand extends Component{
                 // Remove the channel if it's already in the list
                 if (register?.bruhChannels?.includes(channelId)) {
                     register.bruhChannels.splice(register.bruhChannels.indexOf(channelId), 1);
-                    await updateConfig(gConfig, message);
+                    await this.guild.saveConfig();
+                    // await updateConfig(gConfig, message);
                     await message.channel.send(`Removed ${channelMentionStr} from the bruh channels list!`);
                 } else {
                     // If bruhChannels hasn't been initialized, do that
@@ -106,7 +106,7 @@ export class BruhCommand extends Component{
                     }
                     // Push the channelId to the bruhChannels list
                     register.bruhChannels.push(channelId);
-                    await updateConfig(gConfig, message);
+                    await this.guild.saveConfig();
                     await message.channel.send(`Added ${channelMentionStr} to the bruh channels list!`);
                 }
             }
@@ -114,18 +114,11 @@ export class BruhCommand extends Component{
     }
 
     async sendBruh(message: Message) {
-        let guildId = message?.guild?.id;
-        if (!guildId) {
-            console.log('No guild Id found');
-            return;
-        }
-
-        const gConfig = await getConfig(message);
-        if (!gConfig.registered) {
+        if (!this.guild.config.registered) {
             await message.channel.send(`Please register your guild to use this command.`);
             return;
         }
-        let register = gConfig.register;
+        let register = this.guild.config.register;
         try {
             let attachmentList = [];
             let msgContent = '';
@@ -237,20 +230,19 @@ export class BruhCommand extends Component{
     }
 
     async bruhCmd(args: string[], message: Message) {
-        const gConfig = await getConfig(message);
-        if (!gConfig.registered) {
+        if (!this.guild.config.registered) {
             await message.channel.send(`Please register your guild to use this command.`);
             return;
         }
 
         if (this.onCooldown) {
             await message.channel.send(`Please wait, the bruh command is on cooldown.`);
-        } else {
-            this.onCooldown = true;
-            setTimeout(async () => {
-                this.onCooldown = false;
-            }, 2500);
+            return;
         }
+        this.onCooldown = true;
+        setTimeout(async () => {
+            this.onCooldown = false;
+        }, 2500);
         const count: number = Number(args[0]);
         await this.sendBruh(message);
         if (Number.isInteger(count) && count === 2) {
