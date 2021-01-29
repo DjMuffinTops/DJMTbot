@@ -3,10 +3,13 @@ import {Cron} from "../../types/Cron";
 import {Channel, Client, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
 import {CommandStrings} from "../../commands/CommandStrings";
 import {isAdmin} from "../../commands/helper";
-import {updateConfig} from "../../commands/config";
+import {ComponentNames} from "../ComponentNames";
 const defaultConfig = require("../../../json/defaultConfig.json");
 
-export class ConfigCommands extends Component{
+export interface IConfigCommands {}
+export class ConfigCommands extends Component<IConfigCommands>{
+
+    name: ComponentNames = ComponentNames.CONFIG;
 
     async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
@@ -15,6 +18,10 @@ export class ConfigCommands extends Component{
         } else if (command === CommandStrings.RESET_CONFIG) {
             await this.resetConfig(message);
         }
+    }
+
+    async onLoadJSON(register: IConfigCommands): Promise<void> {
+        return Promise.resolve(undefined);
     }
 
     async cron(cron: Cron): Promise<void> {
@@ -55,23 +62,19 @@ export class ConfigCommands extends Component{
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
-        console.log(this.guild.config);
-        const jsonString = `"${this.guild.guildId}": ${JSON.stringify(this.guild.config,null, '\t')}`;
+        console.log(this.guild.getJSON());
+        const jsonString = `"${this.guild.guildId}": ${JSON.stringify(this.guild.getJSON(),null, '\t')}`;
         await message.channel.send(`\`\`\`json\n${jsonString}\n\`\`\``);
     }
 
-    async resetConfig(message: Message, force: boolean = false) {
+    async resetConfig(message: Message) {
         // Admin only
-        if (!force && !isAdmin(message)) {
+        if (!isAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
-        await updateConfig(defaultConfig, message);
-        if (!force){
-            await message.channel.send(`Reset my guild config to default settings.`);
-        } else {
-            console.log(`Reset my guild config to default settings.`);
-        }
+        await this.guild.resetJSON();
+        await message.channel.send(`Reset my guild config to default settings.`);
     }
 
 }

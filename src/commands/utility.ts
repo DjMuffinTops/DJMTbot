@@ -1,6 +1,6 @@
-import {Client, Message} from "discord.js";
-import {getConfig, updateConfig} from "./config";
-import {isAdmin} from "./helper";
+// import {Client, Message} from "discord.js";
+// import {getConfig, updateConfig} from "./config";
+// import {isAdmin} from "./helper";
 
 // export async function pingCmd(client: Client, args: string[], message: Message) {
 //     // Calculates ping between sending a message and editing it, giving a nice round-trip latency.

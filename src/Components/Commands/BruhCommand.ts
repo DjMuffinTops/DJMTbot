@@ -1,7 +1,8 @@
 import {
     Channel,
     GuildMember,
-    Message, MessageAttachment,
+    Message,
+    MessageAttachment,
     MessageReaction,
     TextChannel,
     User,
@@ -11,11 +12,19 @@ import {Component} from "../Component";
 import {Cron} from "../../types/Cron";
 import {CommandStrings} from "../../commands/CommandStrings";
 import {isAdmin} from "../../commands/helper";
+import {Register} from "../../types/types";
+import {ComponentNames} from "../ComponentNames";
 
-export class BruhCommand extends Component{
+export interface IBruhCommand {}
+export class BruhCommand extends Component<IBruhCommand> {
+
+    name = ComponentNames.BRUH;
     // This is local as its not very important to store
     onCooldown: boolean = false;
 
+    async onLoadJSON(json: Register): Promise<void> {
+        return Promise.resolve(undefined);
+    }
 
     async cron(cron: Cron): Promise<void> {
         return Promise.resolve(undefined);
@@ -65,12 +74,11 @@ export class BruhCommand extends Component{
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
-        const gConfig = this.guild.config;
-        if (!gConfig.registered) {
+        if (!this.guild.registered) {
             await message.channel.send(`Please register your guild to use this command.`);
             return;
         }
-        let register = gConfig.register;
+        let register = this.guild.register as Register;
         if (args.length === 0) {
             let channelString = "";
             if (register?.bruhChannels?.length > 0) {
@@ -96,7 +104,7 @@ export class BruhCommand extends Component{
                 // Remove the channel if it's already in the list
                 if (register?.bruhChannels?.includes(channelId)) {
                     register.bruhChannels.splice(register.bruhChannels.indexOf(channelId), 1);
-                    await this.guild.saveConfig();
+                    await this.guild.saveJSON();
                     // await updateConfig(gConfig, message);
                     await message.channel.send(`Removed ${channelMentionStr} from the bruh channels list!`);
                 } else {
@@ -106,7 +114,7 @@ export class BruhCommand extends Component{
                     }
                     // Push the channelId to the bruhChannels list
                     register.bruhChannels.push(channelId);
-                    await this.guild.saveConfig();
+                    await this.guild.saveJSON();
                     await message.channel.send(`Added ${channelMentionStr} to the bruh channels list!`);
                 }
             }
@@ -114,15 +122,15 @@ export class BruhCommand extends Component{
     }
 
     async sendBruh(message: Message) {
-        if (!this.guild.config.registered) {
+        if (!this.guild.registered) {
             await message.channel.send(`Please register your guild to use this command.`);
             return;
         }
-        let register = this.guild.config.register;
+        let register = this.guild.register;
         try {
             let attachmentList = [];
             let msgContent = '';
-            if (register?.bruhChannels?.length > 0) {
+            if (register.bruhChannels && register?.bruhChannels?.length > 0) {
                 let bruhChannelId = register.bruhChannels[Math.floor(register.bruhChannels.length * Math.random())]; // pick a random bruh channel id
                 let channel: TextChannel | undefined = (message?.guild?.channels?.cache?.get(bruhChannelId) as TextChannel); // get the channel object
 
@@ -230,7 +238,7 @@ export class BruhCommand extends Component{
     }
 
     async bruhCmd(args: string[], message: Message) {
-        if (!this.guild.config.registered) {
+        if (!this.guild.registered) {
             await message.channel.send(`Please register your guild to use this command.`);
             return;
         }

@@ -2,14 +2,23 @@ import {Channel, Client, GuildMember, Message, MessageReaction, User, VoiceState
 import {CommandStrings} from "../../commands/CommandStrings";
 import {Cron} from "../../types/Cron";
 import {Component} from "../Component";
+import {Register} from "../../types/types";
+import {ComponentNames} from "../ComponentNames";
 
-export class PingCommand extends Component{
+export interface IPingCommand {}
+export class PingCommand extends Component<IPingCommand>{
+
+    name: ComponentNames = ComponentNames.PING;
 
     async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
         if (command === CommandStrings.PING) {
             await this.pingCmd(args, message);
         }
+    }
+
+    async onLoadJSON(register: IPingCommand): Promise<void> {
+        return Promise.resolve(undefined);
     }
 
     async cron(cron: Cron): Promise<void> {

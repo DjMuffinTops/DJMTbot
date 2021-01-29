@@ -1,5 +1,5 @@
 import {Channel, Client, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
-import {GuildConfig} from "./types/types";
+import {GuildConfig, Register} from "./types/types";
 import {Component} from "./Components/Component";
 import {SayCommand} from "./Components/Commands/SayCommand";
 import {Cron} from "./types/Cron";
@@ -9,49 +9,75 @@ import {HelpCommand} from "./Components/Commands/HelpCommand";
 import {PingCommand} from "./Components/Commands/PingCommand";
 import {BruhCommand} from "./Components/Commands/BruhCommand";
 import {promises as FileSystem} from "fs";
-import {getConfig} from "./commands/config";
-import {isAdmin} from "./commands/helper";
 import {ConfigCommands} from "./Components/Commands/ConfigCommands";
+import {isAdmin} from "./commands/helper";
+const defaultConfig = require("../json/defaultConfig.json");
 
-export class Guild {
+export class Guild implements GuildConfig {
     client: Client;
-    guildId: string;
-    prefix: string = process.env.DEFAULT_PREFIX as string;
-    config!: GuildConfig;
+    readonly guildId: string;
+    // Config
+    private _devMode: boolean = false;
+    private _prefix: string = process.env.DEFAULT_PREFIX as string;
+    private _registered: boolean = false;
+    private _debugChannel: string = '';
+    register: Register = {};
+
     components: Component[] = [];
     constructor(client: Client, guildId: string) {
         this.client = client;
         this.guildId = guildId;
-        this.loadConfig().then(() => { // sets this.config and this.prefix
-            this.components.push(new ConfigCommands(this));
-            this.components.push(new SayCommand(this));
-            this.components.push(new CheemsCommand(this));
-            this.components.push(new BSpeakCommand(this));
-            this.components.push(new HelpCommand(this));
-            this.components.push(new PingCommand(this));
-            this.components.push(new BruhCommand(this));
+        this.components.push(new ConfigCommands(this));
+        this.components.push(new SayCommand(this));
+        this.components.push(new CheemsCommand(this));
+        this.components.push(new BSpeakCommand(this));
+        this.components.push(new HelpCommand(this));
+        this.components.push(new PingCommand(this));
+        this.components.push(new BruhCommand(this));
+        this.loadJSON().then(() => { // sets this.config and this.prefix
             console.log(`Guild ${guildId} created`);
         });
     }
 
-    // Config Read / Write
-    private async loadConfig(): Promise<void> {
-        const buffer = await FileSystem.readFile(`./json/guilds/${this.guildId}.json`);
-        const gConfig = JSON.parse(buffer.toString());
-        const config = gConfig[this.guildId];
-        this.config = config;
-        this.prefix = config.prefix ? config.prefix : process.env.DEFAULT_PREFIX as string;
+    getJSON(): GuildConfig {
+        return {
+            devMode: this._devMode,
+            prefix: this._prefix,
+            registered: this._registered,
+            debugChannel: this._debugChannel,
+            register: this.register
+        }
     }
 
-    async saveConfig(): Promise<void> {
+    // Config Read / Write
+    private async loadJSON(): Promise<void> {
+        const buffer = await FileSystem.readFile(`./json/guilds/${this.guildId}.json`);
+        const gConfig = JSON.parse(buffer.toString()) as GuildConfig;
+        this._devMode = gConfig.devMode;
+        this._prefix = gConfig.prefix;
+        this._registered = gConfig.registered;
+        this._debugChannel = gConfig.debugChannel;
+        this.register = gConfig.register as Register;
+        for (const component of this.components) {
+            await component.onLoadJSON(gConfig.register);
+        }
+    }
+
+    async saveJSON(): Promise<void> {
         const filename = `./json/guilds/${this.guildId}.json`;
-        await FileSystem.writeFile(filename, JSON.stringify({[this.guildId]: this.config},null, '\t'));
+        await FileSystem.writeFile(filename, JSON.stringify({[this.guildId]: this.getJSON()},null, '\t'));
         console.log(`${filename} saved`);
-        // const gConfig = this.getConfig();
-        // // @ts-ignore
-        // if (gConfig?.devMode){
-        //     await message.channel.send(`\`\`\`json\n${JSON.stringify({[this.guildId]: config},null, '\t')}\`\`\``);
-        // }
+    }
+
+    async resetJSON() {
+        this._devMode = false;
+        this._prefix = process.env.DEFAULT_PREFIX as string;
+        this._registered = false;
+        this._debugChannel = '';
+        this.register = {};
+        console.log(`Reset ${this.guildId} config to default settings.`);
+        await this.saveJSON();
+        await this.loadJSON();
     }
 
     // Cron Scheduling https://github.com/node-cron/node-cron
@@ -76,8 +102,8 @@ export class Guild {
             await component.onMessage(args, message);
 
             // Pass through if it starts with our prefix
-            if (message.content.indexOf(this.prefix) === 0) {
-                args = message.content.slice(this.prefix.length).trim().split(/ +/g);
+            if (message.content.indexOf(this._prefix) === 0) {
+                args = message.content.slice(this._prefix.length).trim().split(/ +/g);
                 await component.onMessageWithGuildPrefix(args, message);
             }
         }
@@ -109,4 +135,40 @@ export class Guild {
         }
     }
 
+    // Getters / Setters
+    get devMode(): boolean {
+        return this._devMode;
+    }
+
+    set devMode(value: boolean) {
+        this._devMode = value;
+        this.saveJSON();
+    }
+
+    get prefix(): string {
+        return this._prefix;
+    }
+
+    set prefix(value: string) {
+        this._prefix = value;
+        this.saveJSON();
+    }
+
+    get registered(): boolean {
+        return this._registered;
+    }
+
+    set registered(value: boolean) {
+        this._registered = value;
+        this.saveJSON();
+    }
+
+    get debugChannel(): string {
+        return this._debugChannel;
+    }
+
+    set debugChannel(value: string) {
+        this._debugChannel = value;
+        this.saveJSON();
+    }
 }

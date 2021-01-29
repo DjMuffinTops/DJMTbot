@@ -250,22 +250,22 @@ export async function setHoursCmd(client: Client, args: string[], message: Messa
 }
 
 
-export async function setPrefixCmd(client: Client, args: string[], message: Message) {
-    // Admin only
-    if (!isAdmin(message)) {
-        await message.channel.send(`This command requires administrator permissions.`);
-        return;
-    }
-    const gConfig = await getConfig(message);
-    if (args.length === 0) {
-        gConfig.prefix = process.env.DEFAULT_PREFIX as string;
-        await updateConfig(gConfig, message);
-        await message.channel.send(`Set my prefix to \`\`${process.env.DEFAULT_PREFIX}\`\``);
-    } else if (args.length === 1) {
-        gConfig.prefix = args[0] ? args[0] : process.env.DEFAULT_PREFIX as string;
-        await updateConfig(gConfig, message);
-        await message.channel.send(`Set my prefix to \`\`${gConfig.prefix}\`\``);
-    } else {
-        await message.channel.send(`Please enter a single prefix.`);
-    }
-}
+// export async function setPrefixCmd(client: Client, args: string[], message: Message) {
+//     // Admin only
+//     if (!isAdmin(message)) {
+//         await message.channel.send(`This command requires administrator permissions.`);
+//         return;
+//     }
+//     const gConfig = await getConfig(message);
+//     if (args.length === 0) {
+//         gConfig.prefix = process.env.DEFAULT_PREFIX as string;
+//         await updateConfig(gConfig, message);
+//         await message.channel.send(`Set my prefix to \`\`${process.env.DEFAULT_PREFIX}\`\``);
+//     } else if (args.length === 1) {
+//         gConfig.prefix = args[0] ? args[0] : process.env.DEFAULT_PREFIX as string;
+//         await updateConfig(gConfig, message);
+//         await message.channel.send(`Set my prefix to \`\`${gConfig.prefix}\`\``);
+//     } else {
+//         await message.channel.send(`Please enter a single prefix.`);
+//     }
+// }

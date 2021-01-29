@@ -2,14 +2,23 @@ import {Component} from "../Component";
 import {CommandStrings} from "../../commands/CommandStrings";
 import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
 import {Cron} from "../../types/Cron";
+import {Register} from "../../types/types";
+import {ComponentNames} from "../ComponentNames";
 
-export class CheemsCommand extends Component {
+export interface ICheemsCommand {}
+export class CheemsCommand extends Component<ICheemsCommand> {
+
+    name: ComponentNames = ComponentNames.CHEEMS;
 
     async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
         if (command === CommandStrings.CHEEMS) {
             await this.cheemsCmd(args, message);
         }
+    }
+
+    async onLoadJSON(register: ICheemsCommand): Promise<void> {
+        return Promise.resolve(undefined);
     }
 
     async cron(cron: Cron): Promise<void> {

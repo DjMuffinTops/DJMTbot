@@ -3,15 +3,23 @@ import {Cron} from "../../types/Cron";
 import {Channel, Client, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
 import {CommandStrings} from "../../commands/CommandStrings";
 import {isAdmin} from "../../commands/helper";
-import {getConfig, updateConfig} from "../../commands/config";
+import {Register} from "../../types/types";
+import {ComponentNames} from "../ComponentNames";
 
-export class ComponentTemplate extends Component{
-    
+export interface ISetPrefixCommand {}
+export class SetPrefixCommand extends Component<ISetPrefixCommand>{
+
+    name: ComponentNames = ComponentNames.SET_PREFIX;
+
     async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
         if (command === CommandStrings.SET_PREFIX) {
             await this.setPrefixCmd(args, message);
         }
+        return Promise.resolve(undefined);
+    }
+
+    async onLoadJSON(register: ISetPrefixCommand): Promise<void> {
         return Promise.resolve(undefined);
     }
 
@@ -53,15 +61,12 @@ export class ComponentTemplate extends Component{
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
-        const gConfig = this.guild.config;
         if (args.length === 0) {
-            gConfig.prefix = process.env.DEFAULT_PREFIX as string;
-            await this.guild.saveConfig(); // TODO: we should call save on gConfig itself
+            this.guild.prefix = process.env.DEFAULT_PREFIX as string;
             await message.channel.send(`Set my prefix to \`\`${process.env.DEFAULT_PREFIX}\`\``);
         } else if (args.length === 1) {
-            gConfig.prefix = args[0] ? args[0] : process.env.DEFAULT_PREFIX as string;
-            await this.guild.saveConfig();
-            await message.channel.send(`Set my prefix to \`\`${gConfig.prefix}\`\``);
+            this.guild.prefix = args[0] ? args[0] : process.env.DEFAULT_PREFIX as string;
+            await message.channel.send(`Set my prefix to \`\`${this.guild.prefix}\`\``);
         } else {
             await message.channel.send(`Please enter a single prefix.`);
         }

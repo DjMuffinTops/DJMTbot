@@ -2,14 +2,22 @@ import {Component} from "../Component";
 import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
 import {CommandStrings} from "../../commands/CommandStrings";
 import {Cron} from "../../types/Cron";
+import {ComponentNames} from "../ComponentNames";
 
-export class BSpeakCommand extends Component {
+export interface IBSpeakCommand {}
+export class BSpeakCommand extends Component<IBSpeakCommand> {
+
+    name: ComponentNames = ComponentNames.BSPEAK;
 
     async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
         if (command === CommandStrings.B_SPEAK) {
             await this.bCmd(args, message);
         }
+    }
+
+    async onLoadJSON(register: IBSpeakCommand): Promise<void> {
+        return Promise.resolve(undefined);
     }
 
     async cron(cron: Cron): Promise<void> {

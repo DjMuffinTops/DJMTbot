@@ -3,8 +3,12 @@ import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "
 import {Cron} from "../../types/Cron";
 import {CommandStrings} from "../../commands/CommandStrings";
 import {isAdmin} from "../../commands/helper";
+import {ComponentNames} from "../ComponentNames";
 
-export class SayCommand extends Component {
+export interface ISayCommand {}
+export class SayCommand extends Component<ISayCommand> {
+
+    name: ComponentNames = ComponentNames.SAY;
 
     async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
@@ -37,6 +41,10 @@ export class SayCommand extends Component {
         // And we get the bot to say the thing:
         await message.channel.send(sayMessage.length ? sayMessage : `You didn't say anything! >:(`);
         await message.delete();
+    }
+
+    async onLoadJSON(register: ISayCommand): Promise<void> {
+        return Promise.resolve(undefined);
     }
 
     async cron(cron: Cron): Promise<void> {

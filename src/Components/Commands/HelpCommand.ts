@@ -5,14 +5,22 @@ import {Cron} from "../../types/Cron";
 import {getConfig} from "../../commands/config";
 import {isAdmin} from "../../commands/helper";
 import {CommandStrings} from "../../commands/CommandStrings";
+import {ComponentNames} from "../ComponentNames";
 
-export class HelpCommand extends Component{
+export interface IHelpCommand {}
+export class HelpCommand extends Component<IHelpCommand>{
+
+    name: ComponentNames = ComponentNames.HELP;
 
     async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
         if (command === CommandStrings.HELP) {
             await this.helpCmd(args, message);
         }
+    }
+
+    async onLoadJSON(register: IHelpCommand): Promise<void> {
+        throw new Error("Method not implemented.");
     }
 
     async cron(cron: Cron): Promise<void> {
