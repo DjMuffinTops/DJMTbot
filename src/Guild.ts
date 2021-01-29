@@ -10,33 +10,38 @@ import {PingCommand} from "./Components/Commands/PingCommand";
 import {BruhCommand} from "./Components/Commands/BruhCommand";
 import {promises as FileSystem} from "fs";
 import {ConfigCommands} from "./Components/Commands/ConfigCommands";
-import {isAdmin} from "./commands/helper";
+import {ComponentNames} from "./Components/ComponentNames";
 const defaultConfig = require("../json/defaultConfig.json");
 
 export class Guild implements GuildConfig {
     client: Client;
     readonly guildId: string;
     // Config
-    private _devMode: boolean = false;
+    private _devMode: boolean = defaultConfig.devMode;
     private _prefix: string = process.env.DEFAULT_PREFIX as string;
-    private _registered: boolean = false;
-    private _debugChannel: string = '';
-    register: Register = {};
+    private _registered: boolean = defaultConfig.registered;
+    private _debugChannel: string = defaultConfig.debugChannel;
+    register: Register = defaultConfig.register;
+    components: Map<ComponentNames, Component<any>>;
 
-    components: Component[] = [];
     constructor(client: Client, guildId: string) {
         this.client = client;
         this.guildId = guildId;
-        this.components.push(new ConfigCommands(this));
-        this.components.push(new SayCommand(this));
-        this.components.push(new CheemsCommand(this));
-        this.components.push(new BSpeakCommand(this));
-        this.components.push(new HelpCommand(this));
-        this.components.push(new PingCommand(this));
-        this.components.push(new BruhCommand(this));
+        this.components = new Map<ComponentNames, Component<any>>();
+        this.components.set(ComponentNames.CONFIG, new ConfigCommands(this));
+        this.components.set(ComponentNames.SAY, new SayCommand(this));
+        this.components.set(ComponentNames.CHEEMS, new CheemsCommand(this));
+        this.components.set(ComponentNames.BSPEAK, new BSpeakCommand(this));
+        this.components.set(ComponentNames.HELP, new HelpCommand(this));
+        this.components.set(ComponentNames.PING, new PingCommand(this));
+        this.components.set(ComponentNames.BRUH, new BruhCommand(this));
         this.loadJSON().then(() => { // sets this.config and this.prefix
             console.log(`Guild ${guildId} created`);
         });
+    }
+
+    getComponent(name: ComponentNames): Component<any> | undefined {
+        return this.components.get(name);
     }
 
     getJSON(): GuildConfig {
@@ -58,8 +63,8 @@ export class Guild implements GuildConfig {
         this._registered = gConfig.registered;
         this._debugChannel = gConfig.debugChannel;
         this.register = gConfig.register as Register;
-        for (const component of this.components) {
-            await component.onLoadJSON(gConfig.register);
+        for (const component of Array.from(this.components.values())) {
+            await component.onLoadJSON(gConfig.register[component.name]);
         }
     }
 
@@ -70,11 +75,11 @@ export class Guild implements GuildConfig {
     }
 
     async resetJSON() {
-        this._devMode = false;
+        this._devMode = defaultConfig.devMode;
         this._prefix = process.env.DEFAULT_PREFIX as string;
-        this._registered = false;
-        this._debugChannel = '';
-        this.register = {};
+        this._registered = defaultConfig.registered;
+        this._debugChannel = defaultConfig.debugChannel;
+        this.register = defaultConfig.register;
         console.log(`Reset ${this.guildId} config to default settings.`);
         await this.saveJSON();
         await this.loadJSON();
@@ -82,13 +87,13 @@ export class Guild implements GuildConfig {
 
     // Cron Scheduling https://github.com/node-cron/node-cron
     async cron(cron: Cron): Promise<void> {
-        for (const component of this.components) {
+        for (const component of Array.from(this.components.values())) {
             await component.cron(cron);
         }
     }
     // Events
     async onGuildMemberAdd(member: GuildMember): Promise<void> {
-        for (const component of this.components) {
+        for (const component of Array.from(this.components.values())) {
             await component.onGuildMemberAdd(member);
         }
     }
@@ -98,7 +103,7 @@ export class Guild implements GuildConfig {
             // @ts-ignore
             await message.channel.send(`Type \`\`${guildPrefix}help\`\` to see my commands!`);
         }
-        for (const component of this.components) {
+        for (const component of Array.from(this.components.values())) {
             await component.onMessage(args, message);
 
             // Pass through if it starts with our prefix
@@ -110,27 +115,27 @@ export class Guild implements GuildConfig {
     }
 
     async onMessageUpdate(oldMessage: Message, newMessage: Message): Promise<void> {
-        for (const component of this.components) {
+        for (const component of Array.from(this.components.values())) {
             await component.onMessageUpdate(oldMessage, newMessage);
         }
     }
     async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
-        for (const component of this.components) {
+        for (const component of Array.from(this.components.values())) {
             await component.onVoiceStateUpdate(oldState, newState);
         }
     }
     async onMessageReactionAdd(messageReaction: MessageReaction, user: User): Promise<void> {
-        for (const component of this.components) {
+        for (const component of Array.from(this.components.values())) {
             await component.onMessageReactionAdd(messageReaction, user);
         }
     }
     async onMessageReactionRemove(messageReaction: MessageReaction, user: User): Promise<void> {
-        for (const component of this.components) {
+        for (const component of Array.from(this.components.values())) {
             await component.onMessageReactionRemove(messageReaction, user);
         }
     }
     async onTypingStart(channel: Channel, user: User):Promise<void> {
-        for (const component of this.components) {
+        for (const component of Array.from(this.components.values())) {
             await component.onTypingStart(channel, user);
         }
     }

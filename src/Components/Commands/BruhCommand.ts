@@ -14,6 +14,7 @@ import {CommandStrings} from "../../commands/CommandStrings";
 import {isAdmin} from "../../commands/helper";
 import {Register} from "../../types/types";
 import {ComponentNames} from "../ComponentNames";
+import {PingCommand} from "./PingCommand";
 
 export interface IBruhCommand {}
 export class BruhCommand extends Component<IBruhCommand> {
@@ -81,7 +82,7 @@ export class BruhCommand extends Component<IBruhCommand> {
         let register = this.guild.register as Register;
         if (args.length === 0) {
             let channelString = "";
-            if (register?.bruhChannels?.length > 0) {
+            if (register.bruhChannels && register?.bruhChannels?.length > 0) {
                 register.bruhChannels.forEach((channelId: string) => {
                     channelString += `<#${channelId}> `;
                 });
