@@ -1,5 +1,6 @@
 import {IBruhCommand} from "../Components/Commands/BruhCommand";
 import {ComponentNames} from "../Components/ComponentNames";
+import {TextChannel, VoiceChannel} from "discord.js";
 
 
 export interface ReactBoardEntry {
@@ -19,7 +20,14 @@ export interface GuildConfig {
     prefix: string,
     registered: boolean,
     debugChannel: string,
-    register: Register;
+    register: Register,
+    voiceTextPairs: VoiceTextPairs[]
+
+}
+
+export interface VoiceTextPairs {
+    voiceChannel: VoiceChannel,
+    textChannel: TextChannel
 }
 
 export interface ComponentConfig {

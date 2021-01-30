@@ -1,5 +1,14 @@
-import {Channel, Client, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
-import {GuildConfig, Register} from "./types/types";
+import {
+    Channel,
+    Client,
+    GuildMember,
+    Message,
+    MessageReaction, TextChannel,
+    User,
+    VoiceChannel,
+    VoiceState
+} from "discord.js";
+import {GuildConfig, Register, VoiceTextPairs} from "./types/types";
 import {Component} from "./Components/Component";
 import {SayCommand} from "./Components/Commands/SayCommand";
 import {Cron} from "./types/Cron";
@@ -12,6 +21,7 @@ import {promises as FileSystem} from "fs";
 import {ConfigCommands} from "./Components/Commands/ConfigCommands";
 import {ComponentNames} from "./Components/ComponentNames";
 import {DebugComponent} from "./Components/Commands/DebugComponent";
+import {VoiceTextPairCommand} from "./Components/Commands/VoiceTextPairCommand";
 const defaultConfig = require("../json/defaultConfig.json");
 
 export class Guild implements GuildConfig {
@@ -24,6 +34,7 @@ export class Guild implements GuildConfig {
     private _debugChannel: string = defaultConfig.debugChannel;
     register: Register = defaultConfig.register;
     components: Map<ComponentNames, Component<any>>;
+    voiceTextPairs: VoiceTextPairs[] = [];
 
     constructor(client: Client, guildId: string) {
         this.client = client;
@@ -48,10 +59,25 @@ export class Guild implements GuildConfig {
         this.components.set(ComponentNames.PING, new PingCommand(this));
         this.components.set(ComponentNames.BRUH, new BruhCommand(this));
         this.components.set(ComponentNames.DEBUG, new DebugComponent(this));
+        this.components.set(ComponentNames.VOICE_TEXT_PAIR, new VoiceTextPairCommand(this));
     }
 
     getComponent(name: ComponentNames): Component<any> | undefined {
         return this.components.get(name);
+    }
+
+    async setVoiceTextPair(voiceChannel: VoiceChannel, textChannel: TextChannel): Promise<boolean> {
+        const pair: VoiceTextPairs = {voiceChannel, textChannel};
+        for (const pair of this.voiceTextPairs) {
+            if (pair.voiceChannel === voiceChannel && pair.textChannel === textChannel) {
+                this.voiceTextPairs.splice(this.voiceTextPairs.indexOf(pair),  1);
+                await this.saveJSON();
+                return false;
+            }
+        }
+        this.voiceTextPairs.push(pair);
+        await this.saveJSON();
+        return true;
     }
 
     getJSON(): GuildConfig {
@@ -60,7 +86,8 @@ export class Guild implements GuildConfig {
             prefix: this._prefix,
             registered: this._registered,
             debugChannel: this._debugChannel,
-            register: this.register
+            register: this.register,
+            voiceTextPairs: this.voiceTextPairs,
         }
     }
 
@@ -68,11 +95,12 @@ export class Guild implements GuildConfig {
     async loadJSON(): Promise<void> {
         const buffer = await FileSystem.readFile(`./json/guilds/${this.guildId}.json`);
         const gConfig = JSON.parse(buffer.toString())[this.guildId] as GuildConfig;
-        this._debugMode = gConfig.debugMode;
-        this._prefix = gConfig.prefix;
-        this._registered = gConfig.registered;
-        this._debugChannel = gConfig.debugChannel;
-        this.register = gConfig.register as Register;
+        this._debugMode = gConfig.debugMode || defaultConfig.debugMode;
+        this._prefix = gConfig.prefix || process.env.DEFAULT_PREFIX as string;
+        this._registered = gConfig.registered || defaultConfig.registered;
+        this._debugChannel = gConfig.debugChannel || '';
+        this.register = gConfig.register as Register || {};
+        this.voiceTextPairs = gConfig.voiceTextPairs || [];
         for (const component of Array.from(this.components.values())) {
             // @ts-ignore
             await component.onLoadJSON(gConfig.register[component.name]);

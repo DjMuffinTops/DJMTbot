@@ -8,5 +8,6 @@ export enum ComponentNames {
     BSPEAK= "BSPEAK",
     BRUH= "BRUH",
     SET_PREFIX= "SET_PREFIX",
-    DEBUG= "DEBUG"
+    DEBUG= "DEBUG",
+    VOICE_TEXT_PAIR= "VOICE_TEXT_PAIR"
 }

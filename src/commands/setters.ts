@@ -2,76 +2,7 @@
 // import {isAdmin} from "./helper";
 // import {getConfig, updateConfig} from "./config";
 // import {setConsecutiveHours} from "../jobs/vcReminders";
-// // export async function setDebugChannel(client: Client, args: string[], message: Message) {
-// //     // Admin only
-// //     if (!isAdmin(message)) {
-// //         await message.channel.send(`This command requires administrator permissions.`);
-// //         return;
-// //     }
-// //     const gConfig = await getConfig(message);
-// //     if (gConfig.debugChannel === message.channel.id) {
-// //         gConfig.debugChannel = "";
-// //         await updateConfig(gConfig, message);
-// //         await message.channel.send(`${message.channel.toString()} is no longer set as the debugChannel`);
-// //     } else {
-// //         gConfig.debugChannel = message.channel.id;
-// //         await updateConfig(gConfig, message);
-// //         await message.channel.send(`${message.channel.toString()} is now set as the debugChannel channel`);
-// //     }
-// // }
 //
-// // export async function setBruhCmd(client: Client, args: string[], message: Message) {
-// //     // Admin only
-// //     if (!isAdmin(message)) {
-// //         await message.channel.send(`This command requires administrator permissions.`);
-// //         return;
-// //     }
-// //     const gConfig = await getConfig(message);
-// //     if (!gConfig.registered) {
-// //         await message.channel.send(`Please register your guild to use this command.`);
-// //         return;
-// //     }
-// //     let register = gConfig.register;
-// //     if (args.length === 0) {
-// //         let channelString = "";
-// //         if (register?.bruhChannels?.length > 0) {
-// //             register.bruhChannels.forEach((channelId: string) => {
-// //                 channelString += `<#${channelId}> `;
-// //             });
-// //             await message.channel.send(`Bruh Channel: ${channelString}`);
-// //         } else {
-// //             await message.channel.send(`No Bruh Channels have been set!`);
-// //         }
-// //     } else {
-// //         for (const channelMentionStr of args) {
-// //             // Get the ID from the mention
-// //             let channelId = channelMentionStr.substring(2, channelMentionStr.indexOf('>'));
-// //             try {
-// //                 // Test if the channel exists before moving on
-// //                 const foundChannel = await client.channels.fetch(channelId);
-// //             } catch (e) {
-// //                 console.error(e);
-// //                 await message.channel.send("The given channel is invalid!");
-// //                 continue;
-// //             }
-// //             // Remove the channel if it's already in the list
-// //             if (register?.bruhChannels?.includes(channelId)) {
-// //                 register.bruhChannels.splice(register.bruhChannels.indexOf(channelId), 1);
-// //                 await updateConfig(gConfig, message);
-// //                 await message.channel.send(`Removed ${channelMentionStr} from the bruh channels list!`);
-// //             } else {
-// //                 // If bruhChannels hasn't been initialized, do that
-// //                 if (!register?.bruhChannels) {
-// //                     register.bruhChannels = [];
-// //                 }
-// //                 // Push the channelId to the bruhChannels list
-// //                 register.bruhChannels.push(channelId);
-// //                 await updateConfig(gConfig, message);
-// //                 await message.channel.send(`Added ${channelMentionStr} to the bruh channels list!`);
-// //             }
-// //         }
-// //     }
-// // }
 // export async function setStarCmd(client: Client, args: string[], message: Message) {
 //     // Admin only
 //     if (!isAdmin(message)) {
@@ -248,24 +179,3 @@
 //         await message.channel.send(`Can't set hours, needs two ids, voice and then text channel id`);
 //     }
 // }
-//
-//
-// // export async function setPrefixCmd(client: Client, args: string[], message: Message) {
-// //     // Admin only
-// //     if (!isAdmin(message)) {
-// //         await message.channel.send(`This command requires administrator permissions.`);
-// //         return;
-// //     }
-// //     const gConfig = await getConfig(message);
-// //     if (args.length === 0) {
-// //         gConfig.prefix = process.env.DEFAULT_PREFIX as string;
-// //         await updateConfig(gConfig, message);
-// //         await message.channel.send(`Set my prefix to \`\`${process.env.DEFAULT_PREFIX}\`\``);
-// //     } else if (args.length === 1) {
-// //         gConfig.prefix = args[0] ? args[0] : process.env.DEFAULT_PREFIX as string;
-// //         await updateConfig(gConfig, message);
-// //         await message.channel.send(`Set my prefix to \`\`${gConfig.prefix}\`\``);
-// //     } else {
-// //         await message.channel.send(`Please enter a single prefix.`);
-// //     }
-// // }
