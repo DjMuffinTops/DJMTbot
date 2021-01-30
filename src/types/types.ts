@@ -21,8 +21,6 @@ export interface GuildConfig {
     registered: boolean,
     debugChannel: string,
     register: Register,
-    voiceTextPairs: VoiceTextPairs[]
-
 }
 
 export interface VoiceTextPairs {

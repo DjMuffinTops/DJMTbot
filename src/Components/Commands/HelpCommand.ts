@@ -6,6 +6,7 @@ import {getConfig} from "../../commands/config";
 import {isAdmin} from "../../commands/helper";
 import {CommandStrings} from "../../commands/CommandStrings";
 import {ComponentNames} from "../ComponentNames";
+import {ExampleComponentInterface} from "./ExampleComponentTemplate";
 
 export interface IHelpCommand {}
 export class HelpCommand extends Component<IHelpCommand>{
@@ -19,7 +20,11 @@ export class HelpCommand extends Component<IHelpCommand>{
         }
     }
 
-    async onLoadJSON(parsedJSON: IHelpCommand): Promise<void> {
+    async getSaveData(): Promise<IHelpCommand> {
+        return {};
+    }
+
+    async afterLoadJSON(loadedObject: IHelpCommand): Promise<void> {
         return Promise.resolve(undefined);
     }
 

@@ -4,6 +4,7 @@ import {Cron} from "../../types/Cron";
 import {Component} from "../Component";
 import {Register} from "../../types/types";
 import {ComponentNames} from "../ComponentNames";
+import {IHelpCommand} from "./HelpCommand";
 
 export interface IPingCommand {}
 export class PingCommand extends Component<IPingCommand>{
@@ -17,7 +18,11 @@ export class PingCommand extends Component<IPingCommand>{
         }
     }
 
-    async onLoadJSON(parsedJSON: IPingCommand): Promise<void> {
+    async getSaveData(): Promise<IPingCommand> {
+        return {};
+    }
+
+    async afterLoadJSON(loadedObject: IPingCommand): Promise<void> {
         return Promise.resolve(undefined);
     }
 

@@ -3,8 +3,8 @@ import {Cron} from "../../types/Cron";
 import {Channel, Client, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
 import {ComponentNames} from "../ComponentNames";
 import {isAdmin} from "../../commands/helper";
-import {getConfig, updateConfig} from "../../commands/config";
 import {CommandStrings} from "../../commands/CommandStrings";
+import {IConfigCommands} from "./ConfigCommands";
 
 // Declare data you want to save in JSON here
 export interface IDebugComponent {
@@ -15,7 +15,11 @@ export class DebugComponent extends Component<IDebugComponent> implements IDebug
 
     name: ComponentNames = ComponentNames.DEBUG;
 
-    async onLoadJSON(parsedJSON: IDebugComponent): Promise<void> {
+    async getSaveData(): Promise<IDebugComponent> {
+        return {};
+    }
+
+    async afterLoadJSON(parsedJSON: IDebugComponent): Promise<void> {
         return Promise.resolve(undefined);
     }
 

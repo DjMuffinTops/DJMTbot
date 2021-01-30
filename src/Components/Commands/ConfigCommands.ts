@@ -4,6 +4,7 @@ import {Channel, Client, GuildMember, Message, MessageReaction, User, VoiceState
 import {CommandStrings} from "../../commands/CommandStrings";
 import {isAdmin} from "../../commands/helper";
 import {ComponentNames} from "../ComponentNames";
+import {ICheemsCommand} from "./CheemsCommand";
 const defaultConfig = require("../../../json/defaultConfig.json");
 
 export interface IConfigCommands {}
@@ -20,7 +21,11 @@ export class ConfigCommands extends Component<IConfigCommands>{
         }
     }
 
-    async onLoadJSON(parsedJSON: IConfigCommands): Promise<void> {
+    async getSaveData(): Promise<IConfigCommands> {
+        return {};
+    }
+
+    async afterLoadJSON(parsedJSON: IConfigCommands): Promise<void> {
         return Promise.resolve(undefined);
     }
 
@@ -62,8 +67,8 @@ export class ConfigCommands extends Component<IConfigCommands>{
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
-        console.log(this.guild.getJSON());
-        const jsonString = `"${this.guild.guildId}": ${JSON.stringify(this.guild.getJSON(),null, '\t')}`;
+        console.log(this.guild.getSaveData());
+        const jsonString = `"${this.guild.guildId}": ${JSON.stringify(this.guild.getSaveData(),null, '\t')}`;
         await message.channel.send(`\`\`\`json\n${jsonString}\n\`\`\``);
     }
 

@@ -5,6 +5,7 @@ import {CommandStrings} from "../../commands/CommandStrings";
 import {isAdmin} from "../../commands/helper";
 import {Register} from "../../types/types";
 import {ComponentNames} from "../ComponentNames";
+import {ISayCommand} from "./SayCommand";
 
 export interface ISetPrefixCommand {}
 export class SetPrefixCommand extends Component<ISetPrefixCommand>{
@@ -19,7 +20,11 @@ export class SetPrefixCommand extends Component<ISetPrefixCommand>{
         return Promise.resolve(undefined);
     }
 
-    async onLoadJSON(parsedJSON: ISetPrefixCommand): Promise<void> {
+    async getSaveData(): Promise<ISetPrefixCommand> {
+        return {};
+    }
+
+    async afterLoadJSON(loadedObject: ISetPrefixCommand): Promise<void> {
         return Promise.resolve(undefined);
     }
 

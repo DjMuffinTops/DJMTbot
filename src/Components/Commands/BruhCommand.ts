@@ -23,7 +23,12 @@ export class BruhCommand extends Component<IBruhCommand> {
     // This is local as its not very important to store
     onCooldown: boolean = false;
 
-    async onLoadJSON(parsedJSON: IBruhCommand): Promise<void> {
+
+    async getSaveData(): Promise<IBruhCommand> {
+        return {};
+    }
+
+    async afterLoadJSON(loadedObject: IBruhCommand): Promise<void> {
         return Promise.resolve(undefined);
     }
 

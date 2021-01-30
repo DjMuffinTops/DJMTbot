@@ -12,7 +12,11 @@ export class ExampleComponentTemplate extends Component<ExampleComponentInterfac
 
     name: ComponentNames = ComponentNames.EXAMPLE_COMPONENT;
 
-    async onLoadJSON(parsedJSON: ExampleComponentInterface): Promise<void> {
+    async getSaveData(): Promise<ExampleComponentInterface> {
+        return {};
+    }
+
+    async afterLoadJSON(loadedObject: ExampleComponentInterface): Promise<void> {
         return Promise.resolve(undefined);
     }
 

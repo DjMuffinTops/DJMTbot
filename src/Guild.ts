@@ -34,7 +34,6 @@ export class Guild implements GuildConfig {
     private _debugChannel: string = defaultConfig.debugChannel;
     register: Register = defaultConfig.register;
     components: Map<ComponentNames, Component<any>>;
-    voiceTextPairs: VoiceTextPairs[] = [];
 
     constructor(client: Client, guildId: string) {
         this.client = client;
@@ -66,28 +65,15 @@ export class Guild implements GuildConfig {
         return this.components.get(name);
     }
 
-    async setVoiceTextPair(voiceChannel: VoiceChannel, textChannel: TextChannel): Promise<boolean> {
-        const pair: VoiceTextPairs = {voiceChannel, textChannel};
-        for (const pair of this.voiceTextPairs) {
-            if (pair.voiceChannel === voiceChannel && pair.textChannel === textChannel) {
-                this.voiceTextPairs.splice(this.voiceTextPairs.indexOf(pair),  1);
-                await this.saveJSON();
-                return false;
-            }
-        }
-        this.voiceTextPairs.push(pair);
-        await this.saveJSON();
-        return true;
-    }
 
-    getJSON(): GuildConfig {
+
+    getSaveData(): GuildConfig {
         return {
             debugMode: this._debugMode,
             prefix: this._prefix,
             registered: this._registered,
             debugChannel: this._debugChannel,
             register: this.register,
-            voiceTextPairs: this.voiceTextPairs,
         }
     }
 
@@ -100,16 +86,19 @@ export class Guild implements GuildConfig {
         this._registered = gConfig.registered || defaultConfig.registered;
         this._debugChannel = gConfig.debugChannel || '';
         this.register = gConfig.register as Register || {};
-        this.voiceTextPairs = gConfig.voiceTextPairs || [];
         for (const component of Array.from(this.components.values())) {
             // @ts-ignore
-            await component.onLoadJSON(gConfig.register[component.name]);
+            await component.afterLoadJSON(gConfig.register[component.name]);
         }
     }
 
     async saveJSON(): Promise<void> {
         const filename = `./json/guilds/${this.guildId}.json`;
-        await FileSystem.writeFile(filename, JSON.stringify({[this.guildId]: this.getJSON()},null, '\t'));
+        for (const component of Array.from(this.components.values())) {
+            // @ts-ignore
+            this.register[component.name] = await component.getSaveData();
+        }
+        await FileSystem.writeFile(filename, JSON.stringify({[this.guildId]: this.getSaveData()},null, '\t'));
         console.log(`${filename} saved`);
         // if (this.devMode){
         //     await message.channel.send(`\`\`\`json\n${JSON.stringify({[guildId]: config},null, '\t')}\`\`\``);

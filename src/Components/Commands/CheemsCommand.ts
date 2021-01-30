@@ -4,6 +4,7 @@ import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "
 import {Cron} from "../../types/Cron";
 import {Register} from "../../types/types";
 import {ComponentNames} from "../ComponentNames";
+import {IBruhCommand} from "./BruhCommand";
 
 export interface ICheemsCommand {}
 export class CheemsCommand extends Component<ICheemsCommand> {
@@ -17,7 +18,11 @@ export class CheemsCommand extends Component<ICheemsCommand> {
         }
     }
 
-    async onLoadJSON(parsedJSON: ICheemsCommand): Promise<void> {
+    async getSaveData(): Promise<ICheemsCommand> {
+        return {};
+    }
+
+    async afterLoadJSON(parsedJSON: ICheemsCommand): Promise<void> {
         return Promise.resolve(undefined);
     }
 

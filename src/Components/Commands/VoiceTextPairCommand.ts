@@ -15,18 +15,29 @@ import {isAdmin} from "../../commands/helper";
 import {getConfig, updateConfig} from "../../commands/config";
 import {CommandStrings} from "../../commands/CommandStrings";
 import {VoiceTextPairs} from "../../types/types";
+import {ISetPrefixCommand} from "./SetPrefixCommand";
 
 // Declare data you want to save in JSON here
 export interface IVoiceTextPairCommand {
-
+    voiceTextPairs: VoiceTextPairs[];
 }
 
 export class VoiceTextPairCommand extends Component<IVoiceTextPairCommand> implements IVoiceTextPairCommand {
 
     name: ComponentNames = ComponentNames.VOICE_TEXT_PAIR;
+    voiceTextPairs: VoiceTextPairs[] = [];
 
-    async onLoadJSON(parsedJSON: IVoiceTextPairCommand): Promise<void> {
-        return Promise.resolve(undefined);
+    async getSaveData(): Promise<IVoiceTextPairCommand> {
+        return {
+            voiceTextPairs: this.voiceTextPairs
+        };
+    }
+
+    async afterLoadJSON(loadedObject: IVoiceTextPairCommand): Promise<void> {
+        // console.log(loadedObject);
+        if (loadedObject) {
+            this.voiceTextPairs = loadedObject.voiceTextPairs;
+        }
     }
 
     async cron(cron: Cron): Promise<void> {
@@ -56,7 +67,7 @@ export class VoiceTextPairCommand extends Component<IVoiceTextPairCommand> imple
     async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
         if (command === CommandStrings.SET_VC_PAIRS) {
-            await this.setVcChannelPairs(args, message);
+            await this.stringToVoiceTextPair(args, message);
         }
         return Promise.resolve(undefined);
     }
@@ -69,7 +80,22 @@ export class VoiceTextPairCommand extends Component<IVoiceTextPairCommand> imple
         return Promise.resolve(undefined);
     }
 
-    async setVcChannelPairs(args: string[], message: Message) {
+    async setVoiceTextPair(voiceChannel: VoiceChannel, textChannel: TextChannel): Promise<boolean> {
+        console.log(this.voiceTextPairs);
+        const pair: VoiceTextPairs = {voiceChannel, textChannel};
+        for (const pair of this.voiceTextPairs) {
+            if (pair.voiceChannel.id === voiceChannel.id && pair.textChannel.id === textChannel.id) {
+                this.voiceTextPairs.splice(this.voiceTextPairs.indexOf(pair),  1);
+                await this.guild.saveJSON();
+                return false;
+            }
+        }
+        this.voiceTextPairs.push(pair);
+        await this.guild.saveJSON();
+        return true;
+    }
+
+    async stringToVoiceTextPair(args: string[], message: Message) {
         // Admin only
         if (!isAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
@@ -82,9 +108,9 @@ export class VoiceTextPairCommand extends Component<IVoiceTextPairCommand> imple
         }
         if (args.length === 0) {
             let channelString = "";
-            if (this.guild.voiceTextPairs.length > 0) {
-                this.guild.voiceTextPairs.forEach((pair: VoiceTextPairs) => {
-                    channelString += ` ${pair.voiceChannel.toString()} ${pair.textChannel.toString()}\n`;
+            if (this.voiceTextPairs.length > 0) {
+                this.voiceTextPairs.forEach((pair: VoiceTextPairs) => {
+                    channelString += ` <#${pair.voiceChannel.id}> <#${pair.textChannel.id}>\n`;
                 });
                 await message.channel.send(`VC Channels: ${channelString}`);
             } else {
@@ -108,7 +134,7 @@ export class VoiceTextPairCommand extends Component<IVoiceTextPairCommand> imple
                 await message.channel.send(`The given channels are not the correct types`);
                 return;
             }
-            const success = await this.guild.setVoiceTextPair(foundVoiceChannel as VoiceChannel, foundTextChannel as TextChannel);
+            const success = await this.setVoiceTextPair(foundVoiceChannel as VoiceChannel, foundTextChannel as TextChannel);
             if (success) {
                 await message.channel.send(`Added ${[foundVoiceChannel.toString(),foundTextChannel.toString()]} to the VC Channels list!`);
             } else {
