@@ -1,3 +1,5 @@
+import {IBruhCommand} from "../Components/Commands/BruhCommand";
+import {ComponentNames} from "../Components/ComponentNames";
 
 
 export interface ReactBoardEntry {
@@ -13,11 +15,15 @@ export interface autoReactEntry {
 
 // What should be written to JSON
 export interface GuildConfig {
-    devMode: boolean,
+    debugMode: boolean,
     prefix: string,
     registered: boolean,
     debugChannel: string,
     register: Register;
+}
+
+export interface ComponentConfig {
+    [ComponentNames.BRUH]: IBruhCommand
 }
 
 export interface Register {

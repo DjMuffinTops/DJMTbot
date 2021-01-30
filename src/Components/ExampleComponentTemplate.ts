@@ -1,7 +1,6 @@
 import {Component} from "./Component";
 import {Cron} from "../types/Cron";
 import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
-import {Register} from "../types/types";
 import {ComponentNames} from "./ComponentNames";
 
 // Declare data you want to save in JSON here
@@ -13,7 +12,7 @@ export class ExampleComponentTemplate extends Component<ExampleComponentInterfac
 
     name: ComponentNames = ComponentNames.EXAMPLE_COMPONENT;
 
-    async onLoadJSON(json: ExampleComponentInterface): Promise<void> {
+    async onLoadJSON(parsedJSON: ExampleComponentInterface): Promise<void> {
         return Promise.resolve(undefined);
     }
 

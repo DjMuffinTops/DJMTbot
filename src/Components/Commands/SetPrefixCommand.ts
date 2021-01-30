@@ -19,7 +19,7 @@ export class SetPrefixCommand extends Component<ISetPrefixCommand>{
         return Promise.resolve(undefined);
     }
 
-    async onLoadJSON(register: ISetPrefixCommand): Promise<void> {
+    async onLoadJSON(parsedJSON: ISetPrefixCommand): Promise<void> {
         return Promise.resolve(undefined);
     }
 

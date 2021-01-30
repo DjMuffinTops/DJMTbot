@@ -23,7 +23,7 @@ export class BruhCommand extends Component<IBruhCommand> {
     // This is local as its not very important to store
     onCooldown: boolean = false;
 
-    async onLoadJSON(json: Register): Promise<void> {
+    async onLoadJSON(parsedJSON: IBruhCommand): Promise<void> {
         return Promise.resolve(undefined);
     }
 

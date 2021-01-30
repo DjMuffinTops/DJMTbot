@@ -11,13 +11,14 @@ import {BruhCommand} from "./Components/Commands/BruhCommand";
 import {promises as FileSystem} from "fs";
 import {ConfigCommands} from "./Components/Commands/ConfigCommands";
 import {ComponentNames} from "./Components/ComponentNames";
+import {DebugComponent} from "./Components/Commands/DebugComponent";
 const defaultConfig = require("../json/defaultConfig.json");
 
 export class Guild implements GuildConfig {
     client: Client;
     readonly guildId: string;
     // Config
-    private _devMode: boolean = defaultConfig.devMode;
+    private _debugMode: boolean = defaultConfig.debugMode;
     private _prefix: string = process.env.DEFAULT_PREFIX as string;
     private _registered: boolean = defaultConfig.registered;
     private _debugChannel: string = defaultConfig.debugChannel;
@@ -46,6 +47,7 @@ export class Guild implements GuildConfig {
         this.components.set(ComponentNames.HELP, new HelpCommand(this));
         this.components.set(ComponentNames.PING, new PingCommand(this));
         this.components.set(ComponentNames.BRUH, new BruhCommand(this));
+        this.components.set(ComponentNames.DEBUG, new DebugComponent(this));
     }
 
     getComponent(name: ComponentNames): Component<any> | undefined {
@@ -54,7 +56,7 @@ export class Guild implements GuildConfig {
 
     getJSON(): GuildConfig {
         return {
-            devMode: this._devMode,
+            debugMode: this._debugMode,
             prefix: this._prefix,
             registered: this._registered,
             debugChannel: this._debugChannel,
@@ -66,7 +68,7 @@ export class Guild implements GuildConfig {
     async loadJSON(): Promise<void> {
         const buffer = await FileSystem.readFile(`./json/guilds/${this.guildId}.json`);
         const gConfig = JSON.parse(buffer.toString())[this.guildId] as GuildConfig;
-        this._devMode = gConfig.devMode;
+        this._debugMode = gConfig.debugMode;
         this._prefix = gConfig.prefix;
         this._registered = gConfig.registered;
         this._debugChannel = gConfig.debugChannel;
@@ -81,10 +83,13 @@ export class Guild implements GuildConfig {
         const filename = `./json/guilds/${this.guildId}.json`;
         await FileSystem.writeFile(filename, JSON.stringify({[this.guildId]: this.getJSON()},null, '\t'));
         console.log(`${filename} saved`);
+        // if (this.devMode){
+        //     await message.channel.send(`\`\`\`json\n${JSON.stringify({[guildId]: config},null, '\t')}\`\`\``);
+        // }
     }
 
     async resetJSON() {
-        this._devMode = defaultConfig.devMode;
+        this._debugMode = defaultConfig.devMode;
         this._prefix = process.env.DEFAULT_PREFIX as string;
         this._registered = defaultConfig.registered;
         this._debugChannel = defaultConfig.debugChannel;
@@ -109,7 +114,6 @@ export class Guild implements GuildConfig {
     async onMessage(args: string[], message: Message): Promise<void> {
         // Display the prefix when mentioned
         if (this.client?.user && message.mentions.has(this.client.user)) {
-            // @ts-ignore
             await message.channel.send(`Type \`\`${this.guildId}help\`\` to see my commands!`);
         }
         for (const component of Array.from(this.components.values())) {
@@ -150,12 +154,12 @@ export class Guild implements GuildConfig {
     }
 
     // Getters / Setters
-    get devMode(): boolean {
-        return this._devMode;
+    get debugMode(): boolean {
+        return this._debugMode;
     }
 
-    set devMode(value: boolean) {
-        this._devMode = value;
+    set debugMode(value: boolean) {
+        this._debugMode = value;
         this.saveJSON();
     }
 

@@ -17,7 +17,7 @@ export class PingCommand extends Component<IPingCommand>{
         }
     }
 
-    async onLoadJSON(register: IPingCommand): Promise<void> {
+    async onLoadJSON(parsedJSON: IPingCommand): Promise<void> {
         return Promise.resolve(undefined);
     }
 

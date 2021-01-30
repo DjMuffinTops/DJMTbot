@@ -16,7 +16,7 @@ export class BSpeakCommand extends Component<IBSpeakCommand> {
         }
     }
 
-    async onLoadJSON(register: IBSpeakCommand): Promise<void> {
+    async onLoadJSON(parsedJSON: IBSpeakCommand): Promise<void> {
         return Promise.resolve(undefined);
     }
 

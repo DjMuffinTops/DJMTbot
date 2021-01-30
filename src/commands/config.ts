@@ -34,7 +34,7 @@ export async function updateConfig(config: GuildConfig, message: Message) {
     console.log(`${filename} updated`);
     const gConfig = await getConfig(message);
     // @ts-ignore
-    if (gConfig?.devMode){
+    if (gConfig?.debugMode){
         await message.channel.send(`\`\`\`json\n${JSON.stringify({[guildId]: config},null, '\t')}\`\`\``);
     }
 }
@@ -105,14 +105,14 @@ export async function unregisterCmd (client: Client, args: string[], message: Me
     }
 }
 
-export async function devModeCmd(client: Client, args: string[], message: Message) {
-    // Admin only
-    if (!isAdmin(message)) {
-        await message.channel.send(`This command requires administrator permissions.`);
-        return;
-    }
-    const gConfig = await getConfig(message);
-    gConfig.devMode = !gConfig?.devMode;
-    // await updateConfig(gConfig, message);
-    await message.channel.send(`Dev Mode ${gConfig.devMode ? "enabled" : "disabled" }.`);
-}
+// export async function devModeCmd(client: Client, args: string[], message: Message) {
+//     // Admin only
+//     if (!isAdmin(message)) {
+//         await message.channel.send(`This command requires administrator permissions.`);
+//         return;
+//     }
+//     const gConfig = await getConfig(message);
+//     gConfig.devMode = !gConfig?.devMode;
+//     // await updateConfig(gConfig, message);
+//     await message.channel.send(`Dev Mode ${gConfig.devMode ? "enabled" : "disabled" }.`);
+// }

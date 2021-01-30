@@ -1,26 +1,21 @@
 import {Component} from "../Component";
 import {Cron} from "../../types/Cron";
 import {Channel, Client, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
-import {CommandStrings} from "../../commands/CommandStrings";
-import {isAdmin} from "../../commands/helper";
 import {ComponentNames} from "../ComponentNames";
-const defaultConfig = require("../../../json/defaultConfig.json");
+import {isAdmin} from "../../commands/helper";
+import {getConfig, updateConfig} from "../../commands/config";
+import {CommandStrings} from "../../commands/CommandStrings";
 
-export interface IConfigCommands {}
-export class ConfigCommands extends Component<IConfigCommands>{
+// Declare data you want to save in JSON here
+export interface IDebugComponent {
 
-    name: ComponentNames = ComponentNames.CONFIG;
+}
 
-    async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
-        const command = args?.shift()?.toLowerCase() || '';
-        if (command === CommandStrings.EXPORT_CONFIG) {
-            await this.exportConfig(args, message);
-        } else if (command === CommandStrings.RESET_CONFIG) {
-            await this.resetConfig(message);
-        }
-    }
+export class DebugComponent extends Component<IDebugComponent> implements IDebugComponent {
 
-    async onLoadJSON(parsedJSON: IConfigCommands): Promise<void> {
+    name: ComponentNames = ComponentNames.DEBUG;
+
+    async onLoadJSON(parsedJSON: IDebugComponent): Promise<void> {
         return Promise.resolve(undefined);
     }
 
@@ -48,6 +43,17 @@ export class ConfigCommands extends Component<IConfigCommands>{
         return Promise.resolve(undefined);
     }
 
+    async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
+        const command = args?.shift()?.toLowerCase() || '';
+        if (command === CommandStrings.SET_DEBUG_CHANNEL) {
+            await this.setDebugChannel(args, message);
+        }
+        if (command === CommandStrings.DEBUG_MODE) {
+            await this.debugModeCmd(args, message);
+        }
+        return Promise.resolve(undefined);
+    }
+
     async onTypingStart(channel: Channel, user: User): Promise<void> {
         return Promise.resolve(undefined);
     }
@@ -56,25 +62,30 @@ export class ConfigCommands extends Component<IConfigCommands>{
         return Promise.resolve(undefined);
     }
 
-    async exportConfig(args:string [], message: Message) {
+    async debugModeCmd(args: string[], message: Message) {
         // Admin only
         if (!isAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
-        console.log(this.guild.getJSON());
-        const jsonString = `"${this.guild.guildId}": ${JSON.stringify(this.guild.getJSON(),null, '\t')}`;
-        await message.channel.send(`\`\`\`json\n${jsonString}\n\`\`\``);
+        this.guild.debugMode = !this.guild.debugMode;
+        // await updateConfig(gConfig, message);
+        await message.channel.send(`Dev Mode ${this.guild.debugMode ? "enabled" : "disabled" }.`);
     }
 
-    async resetConfig(message: Message) {
+    async setDebugChannel(args: string[], message: Message) {
         // Admin only
         if (!isAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
-        await this.guild.resetJSON();
-        await message.channel.send(`Reset my guild config to default settings.`);
+        if (this.guild.debugChannel === message.channel.id) {
+            this.guild.debugChannel = "";
+            await message.channel.send(`${message.channel.toString()} is no longer set as the debugChannel`);
+        } else {
+            this.guild.debugChannel = message.channel.id;
+            await message.channel.send(`${message.channel.toString()} is now set as the debugChannel channel`);
+        }
     }
 
 }

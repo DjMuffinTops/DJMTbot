@@ -114,17 +114,8 @@ export class DJMTbot {
             //         if (command === CommandStrings.SET_VC_PAIRS) {
             //             await setVcChannelPairs(this.client, args, message);
             //         }
-            //         if (command === CommandStrings.REGISTER) {
-            //             await registerCmd(this.client, args, message);
-            //         }
-            //         if (command === CommandStrings.UNREGISTER) {
-            //             await unregisterCmd(this.client, args, message);
-            //         }
             //         if (command === CommandStrings.DEV_MODE) {
             //             await devModeCmd(this.client, args, message);
-            //         }
-            //         if (command === CommandStrings.SET_PREFIX) {
-            //             await setPrefixCmd(this.client, args, message);
             //         }
 
 

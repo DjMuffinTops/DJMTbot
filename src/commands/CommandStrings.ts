@@ -9,7 +9,7 @@ export enum CommandStrings {
     SET_REACT_PAIRS = "setreactpairs",
     REGISTER = "register",
     UNREGISTER = "unregister",
-    DEV_MODE = "dev",
+    DEBUG_MODE = "debug",
     SET_PREFIX = "prefix",
     EXPORT_CONFIG = "exportconfig",
     RESET_CONFIG = "resetconfig",

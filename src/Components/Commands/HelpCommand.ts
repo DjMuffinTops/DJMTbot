@@ -19,7 +19,7 @@ export class HelpCommand extends Component<IHelpCommand>{
         }
     }
 
-    async onLoadJSON(register: IHelpCommand): Promise<void> {
+    async onLoadJSON(parsedJSON: IHelpCommand): Promise<void> {
         return Promise.resolve(undefined);
     }
 
@@ -72,7 +72,7 @@ ${prefix}prefix [text] -> Sets a new command prefix for this bot. Use this comma
 ${prefix}register -> Registers this server to have data saved that is required for certain commands.\n
 ${prefix}unregister -> Unregisters this server and deletes all register data saved.\n
 ${prefix}resetconfig -> Restores the guild's config settings to the bot's default config.\n
-${prefix}dev -> When enabled, the bot will print out the states of the guild config, and guild registry.\n
+${prefix}debug -> When enabled, the bot will print out the states of the guild config, and guild registry.\n
 ${prefix}setstar [TextChannel Mention] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channel(s) to be auto starred by the bot. Use command without mentioning channels to see the list of marked channels.\n
 ${prefix}setautoreact [Emoji] [TextChannel Mention] -> {REGISTER REQUIRED} Marks/unmarks the mentioned channel(s) to be auto starred with the given emoji by the bot. Use command without mentioning channels to see the list of marked channels.\n`;
         let helpAdminCommands2 =

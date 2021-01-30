@@ -17,7 +17,7 @@ export class CheemsCommand extends Component<ICheemsCommand> {
         }
     }
 
-    async onLoadJSON(register: ICheemsCommand): Promise<void> {
+    async onLoadJSON(parsedJSON: ICheemsCommand): Promise<void> {
         return Promise.resolve(undefined);
     }
 

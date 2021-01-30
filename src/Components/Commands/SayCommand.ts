@@ -43,7 +43,7 @@ export class SayCommand extends Component<ISayCommand> {
         await message.delete();
     }
 
-    async onLoadJSON(register: ISayCommand): Promise<void> {
+    async onLoadJSON(parsedJSON: ISayCommand): Promise<void> {
         return Promise.resolve(undefined);
     }
 

@@ -7,5 +7,6 @@ export enum ComponentNames {
     CHEEMS= "CHEEMS",
     BSPEAK= "BSPEAK",
     BRUH= "BRUH",
-    SET_PREFIX= "SET_PREFIX"
+    SET_PREFIX= "SET_PREFIX",
+    DEBUG= "DEBUG"
 }
