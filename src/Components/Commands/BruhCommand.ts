@@ -165,7 +165,7 @@ export class BruhCommand extends Component<IBruhCommand> {
                     // If theres an embed, its probably a floof bot star embed
                     if (randomMsg.embeds && randomMsg.embeds.length > 0) {
                         let embed = randomMsg.embeds[0];
-                        console.log(embed);
+                        // console.log(embed);
                         if (embed.fields) {
                             embed.fields.forEach((field: any) => {
                                 if (field.name === 'Message') {

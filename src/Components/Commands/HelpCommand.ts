@@ -20,7 +20,7 @@ export class HelpCommand extends Component<IHelpCommand>{
     }
 
     async onLoadJSON(register: IHelpCommand): Promise<void> {
-        throw new Error("Method not implemented.");
+        return Promise.resolve(undefined);
     }
 
     async cron(cron: Cron): Promise<void> {

@@ -1,13 +1,10 @@
-import {Client, Message} from "discord.js";
-import Discord from "discord.js";
+import Discord, {Client, Message} from "discord.js";
 import {promises as FileSystem} from "fs";
-import {GuildConfig} from "./types/types";
-import {getConfig} from "./commands/config";
-import ReactBoard from "./listeners/reactBoard";
+// import ReactBoard from "./listeners/reactBoard";
 import startCronJobs from "./cron";
 import {Guild} from "./Guild";
-import cron from "node-cron";
-let reactBoard: ReactBoard; // TODO: This is currently global, needs a class that has one react board per guild
+import {ComponentNames} from "./Components/ComponentNames";
+// let reactBoard: ReactBoard; // TODO: This is currently global, needs a class that has one react board per guild
 // Here we load the guildConfigs.json file that contains our token and our prefix values.
 require('dotenv').config();
 
@@ -32,19 +29,19 @@ export class DJMTbot {
         const files = await FileSystem.readdir('./json/guilds');
         const guildIds = files.map((filename) => filename.substr(0, filename.indexOf('.')));
         for (const id of guildIds) {
-            // const gConfig: GuildConfig = await getConfig(id);
-            this.guilds.set(id, new Guild(this.client, id));
+            const guild = new Guild(this.client, id);
+            this.guilds.set(id, guild);
         }
     }
 
-    public run() {
+    async run() {
         this.client.on("ready", async () => {
             // This event will run if the bot starts, and logs in, successfully.
             console.log(`Bot has started, with ${this.client.users.cache.size} users, in ${this.client.channels.cache.size} channels of ${this.client.guilds.cache.size} guilds.`);
             // Example of changing the bot's playing game to something useful. `client.user` is what the
             // docs refer to as the "ClientUser".
             this.client?.user?.setActivity(`@DJMTbot for help!`);
-            reactBoard = await ReactBoard.getInstance();
+            // reactBoard = await ReactBoard.getInstance();
             await startCronJobs(this.client);
             // const debugChannel = (await client.channels.fetch(reactMapValue.channelId) as TextChannel);
         });
@@ -73,7 +70,7 @@ export class DJMTbot {
                     return;
                 }
             }
-            await reactBoard.reactBoardCheck(this.client, reaction);
+            // await reactBoard.reactBoardCheck(this.client, reaction);
         });
 
         this.client.on("message", async (message: Message) => {

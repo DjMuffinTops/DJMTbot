@@ -28,6 +28,17 @@ export class Guild implements GuildConfig {
         this.client = client;
         this.guildId = guildId;
         this.components = new Map<ComponentNames, Component<any>>();
+        try {
+            this.initializeComponents().then(() => {
+                this.loadJSON().then(r => console.log(`[${guildId}] Guild initialized and loaded JSON.`));
+            })
+        } catch (e) {
+            console.log(`[${guildId}]: ${e}`);
+        }
+
+    }
+
+    private async initializeComponents(): Promise<void> {
         this.components.set(ComponentNames.CONFIG, new ConfigCommands(this));
         this.components.set(ComponentNames.SAY, new SayCommand(this));
         this.components.set(ComponentNames.CHEEMS, new CheemsCommand(this));
@@ -35,9 +46,6 @@ export class Guild implements GuildConfig {
         this.components.set(ComponentNames.HELP, new HelpCommand(this));
         this.components.set(ComponentNames.PING, new PingCommand(this));
         this.components.set(ComponentNames.BRUH, new BruhCommand(this));
-        this.loadJSON().then(() => { // sets this.config and this.prefix
-            console.log(`Guild ${guildId} created`);
-        });
     }
 
     getComponent(name: ComponentNames): Component<any> | undefined {
@@ -55,15 +63,16 @@ export class Guild implements GuildConfig {
     }
 
     // Config Read / Write
-    private async loadJSON(): Promise<void> {
+    async loadJSON(): Promise<void> {
         const buffer = await FileSystem.readFile(`./json/guilds/${this.guildId}.json`);
-        const gConfig = JSON.parse(buffer.toString()) as GuildConfig;
+        const gConfig = JSON.parse(buffer.toString())[this.guildId] as GuildConfig;
         this._devMode = gConfig.devMode;
         this._prefix = gConfig.prefix;
         this._registered = gConfig.registered;
         this._debugChannel = gConfig.debugChannel;
         this.register = gConfig.register as Register;
         for (const component of Array.from(this.components.values())) {
+            // @ts-ignore
             await component.onLoadJSON(gConfig.register[component.name]);
         }
     }
@@ -101,7 +110,7 @@ export class Guild implements GuildConfig {
         // Display the prefix when mentioned
         if (this.client?.user && message.mentions.has(this.client.user)) {
             // @ts-ignore
-            await message.channel.send(`Type \`\`${guildPrefix}help\`\` to see my commands!`);
+            await message.channel.send(`Type \`\`${this.guildId}help\`\` to see my commands!`);
         }
         for (const component of Array.from(this.components.values())) {
             await component.onMessage(args, message);
