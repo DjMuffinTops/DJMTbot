@@ -1,5 +1,4 @@
-import {Channel, Client, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
-import {Cron} from "../types/Cron";
+import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
 import {Guild} from "../Guild";
 import {ComponentNames} from "./ComponentNames";
 

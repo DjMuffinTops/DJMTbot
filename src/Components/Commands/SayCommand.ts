@@ -1,8 +1,7 @@
 import {Component} from "../Component";
 import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
-import {Cron} from "../../types/Cron";
-import {CommandStrings} from "../../commands/CommandStrings";
-import {isAdmin} from "../../commands/helper";
+import {CommandStrings} from "../../Constants/CommandStrings";
+import {isAdmin} from "../../helper";
 import {ComponentNames} from "../ComponentNames";
 
 export interface ISayCommand {}

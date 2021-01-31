@@ -1,7 +1,6 @@
 import {Component} from "../Component";
-import {CommandStrings} from "../../commands/CommandStrings";
+import {CommandStrings} from "../../Constants/CommandStrings";
 import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
-import {Cron} from "../../types/Cron";
 import {ComponentNames} from "../ComponentNames";
 
 export interface ICheemsCommand {}

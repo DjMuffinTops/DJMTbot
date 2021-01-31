@@ -11,11 +11,9 @@ import {
 } from "discord.js";
 import {ComponentNames} from "../ComponentNames";
 import {VoiceTextPairCommand, VoiceTextPair} from "./VoiceTextPairCommand";
-import {isAdmin} from "../../commands/helper";
-import cron from "node-cron";
-import {vcRemindersJob} from "../../jobs/vcReminders";
+import {isAdmin} from "../../helper";
 import {Cron} from "../../types/Cron";
-import {CommandStrings} from "../../commands/CommandStrings";
+import {CommandStrings} from "../../Constants/CommandStrings";
 
 // Declare data you want to save in JSON here
 export interface VCHoursComponentSave {

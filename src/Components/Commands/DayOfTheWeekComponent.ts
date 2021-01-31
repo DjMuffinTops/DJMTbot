@@ -2,7 +2,6 @@ import {Component} from "../Component";
 import {Cron} from "../../types/Cron";
 import {
     Channel,
-    Client,
     GuildMember,
     Message,
     MessageReaction,
@@ -11,15 +10,19 @@ import {
     VoiceState
 } from "discord.js";
 import {ComponentNames} from "../ComponentNames";
-import {DayOfTheWeek, GuildConfig} from "../../types/types";
-import {dayOfTheWeek} from "../../jobs/dotwConstants";
-import {isAdmin} from "../../commands/helper";
-import {CommandStrings} from "../../commands/CommandStrings";
+import {dotwConstants} from "../../Constants/dotwConstants";
+import {isAdmin} from "../../helper";
+import {CommandStrings} from "../../Constants/CommandStrings";
 
 
 // Declare data you want to save in JSON here
 export interface DayOfTheWeekComponentSave {
     dotwChannels: string[];
+}
+
+interface DayOfTheWeek {
+    day: string,
+    messages: string[]
 }
 
 export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> {
@@ -91,7 +94,7 @@ export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> 
 
     async dotwJob() {
         const date = new Date();
-        const today: DayOfTheWeek = dayOfTheWeek[date.getDay()];
+        const today: DayOfTheWeek = dotwConstants[date.getDay()];
         console.log(`[${this.guild.guildId}] Running Day of the Week Job: ${today.day} ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`);
         for (const channelId of this.dotwChannels) {
             const channel = (await this.guild.client.channels.fetch(channelId) as TextChannel);

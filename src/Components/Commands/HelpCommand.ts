@@ -1,10 +1,7 @@
-
-import {Channel, Client, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
+import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
 import {Component} from "../Component";
-import {Cron} from "../../types/Cron";
-import {getConfig} from "../../commands/config";
-import {isAdmin} from "../../commands/helper";
-import {CommandStrings} from "../../commands/CommandStrings";
+import {isAdmin} from "../../helper";
+import {CommandStrings} from "../../Constants/CommandStrings";
 import {ComponentNames} from "../ComponentNames";
 
 export interface IHelpCommand {}
@@ -60,8 +57,7 @@ export class HelpCommand extends Component<IHelpCommand> {
     }
 
     async helpCmd(args: string[], message: Message) {
-        const gConfig = await getConfig(message);
-        let prefix = gConfig.prefix;
+        let prefix = this.guild.guildId;
         let helpCommands =
             `#FUN
 ${prefix}cheems [text] -> Cheemsifies the given text.\n

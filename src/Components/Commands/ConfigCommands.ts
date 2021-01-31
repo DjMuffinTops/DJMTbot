@@ -1,10 +1,8 @@
 import {Component} from "../Component";
-import {Cron} from "../../types/Cron";
-import {Channel, Client, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
-import {CommandStrings} from "../../commands/CommandStrings";
-import {isAdmin} from "../../commands/helper";
+import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
+import {CommandStrings} from "../../Constants/CommandStrings";
+import {isAdmin} from "../../helper";
 import {ComponentNames} from "../ComponentNames";
-const defaultConfig = require("../../../json/defaultConfig.json");
 
 export interface IConfigCommands {}
 export class ConfigCommands extends Component<IConfigCommands>{

@@ -9,25 +9,31 @@ import {
     VoiceState
 } from "discord.js";
 import {Component} from "../Component";
-import {Cron} from "../../types/Cron";
-import {CommandStrings} from "../../commands/CommandStrings";
-import {isAdmin} from "../../commands/helper";
-import {Register} from "../../types/types";
+import {CommandStrings} from "../../Constants/CommandStrings";
+import {isAdmin} from "../../helper";
 import {ComponentNames} from "../ComponentNames";
 
-export interface IBruhCommand {}
+export interface IBruhCommand {
+    bruhChannels: string[];
+}
 export class BruhCommand extends Component<IBruhCommand> {
 
     name = ComponentNames.BRUH;
+    bruhChannels: string[] = [];
     // This is local as its not very important to store
     onCooldown: boolean = false;
 
 
     async getSaveData(): Promise<IBruhCommand> {
-        return {};
+        return {
+            bruhChannels: this.bruhChannels
+        };
     }
 
     async afterLoadJSON(loadedObject: IBruhCommand | undefined): Promise<void> {
+        if (loadedObject) {
+            this.bruhChannels = loadedObject.bruhChannels;
+        }
         return Promise.resolve(undefined);
     }
 
@@ -83,11 +89,10 @@ export class BruhCommand extends Component<IBruhCommand> {
             await message.channel.send(`Please register your guild to use this command.`);
             return;
         }
-        let register = this.guild.register as Register;
         if (args.length === 0) {
             let channelString = "";
-            if (register.bruhChannels && register?.bruhChannels?.length > 0) {
-                register.bruhChannels.forEach((channelId: string) => {
+            if (this.bruhChannels && this.bruhChannels?.length > 0) {
+                this.bruhChannels.forEach((channelId: string) => {
                     channelString += `<#${channelId}> `;
                 });
                 await message.channel.send(`Bruh Channel: ${channelString}`);
@@ -107,18 +112,14 @@ export class BruhCommand extends Component<IBruhCommand> {
                     continue;
                 }
                 // Remove the channel if it's already in the list
-                if (register?.bruhChannels?.includes(channelId)) {
-                    register.bruhChannels.splice(register.bruhChannels.indexOf(channelId), 1);
+                if (this.bruhChannels?.includes(channelId)) {
+                    this.bruhChannels.splice(this.bruhChannels.indexOf(channelId), 1);
                     await this.guild.saveJSON();
                     // await updateConfig(gConfig, message);
                     await message.channel.send(`Removed ${channelMentionStr} from the bruh channels list!`);
                 } else {
-                    // If bruhChannels hasn't been initialized, do that
-                    if (!register?.bruhChannels) {
-                        register.bruhChannels = [];
-                    }
                     // Push the channelId to the bruhChannels list
-                    register.bruhChannels.push(channelId);
+                    this.bruhChannels.push(channelId);
                     await this.guild.saveJSON();
                     await message.channel.send(`Added ${channelMentionStr} to the bruh channels list!`);
                 }
@@ -131,12 +132,11 @@ export class BruhCommand extends Component<IBruhCommand> {
             await message.channel.send(`Please register your guild to use this command.`);
             return;
         }
-        let register = this.guild.register;
         try {
             let attachmentList = [];
             let msgContent = '';
-            if (register.bruhChannels && register?.bruhChannels?.length > 0) {
-                let bruhChannelId = register.bruhChannels[Math.floor(register.bruhChannels.length * Math.random())]; // pick a random bruh channel id
+            if (this.bruhChannels && this.bruhChannels?.length > 0) {
+                let bruhChannelId = this.bruhChannels[Math.floor(this.bruhChannels.length * Math.random())]; // pick a random bruh channel id
                 let channel: TextChannel | undefined = (message?.guild?.channels?.cache?.get(bruhChannelId) as TextChannel); // get the channel object
 
 

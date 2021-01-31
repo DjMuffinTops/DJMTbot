@@ -2,16 +2,13 @@ import {
     Channel,
     Client,
     GuildMember,
-    Message,
+    Message, MessageAttachment, MessageEmbed,
     MessageReaction, TextChannel,
     User,
-    VoiceChannel,
     VoiceState
 } from "discord.js";
-import {GuildConfig, Register} from "./types/types";
 import {Component} from "./Components/Component";
 import {SayCommand} from "./Components/Commands/SayCommand";
-import {Cron} from "./types/Cron";
 import {CheemsCommand} from "./Components/Commands/CheemsCommand";
 import {BSpeakCommand} from "./Components/Commands/BSpeakCommand";
 import {HelpCommand} from "./Components/Commands/HelpCommand";
@@ -23,12 +20,21 @@ import {ComponentNames} from "./Components/ComponentNames";
 import {DebugComponent} from "./Components/Commands/DebugComponent";
 import {VoiceTextPairCommand} from "./Components/Commands/VoiceTextPairCommand";
 import {ReactBoardsComponent} from "./Components/Commands/ReactBoardsComponent";
-import {JSONStringifyReplacer, JSONStringifyReviver} from "./commands/helper";
+import {JSONStringifyReplacer, JSONStringifyReviver} from "./helper";
 import {DayOfTheWeekComponent} from "./Components/Commands/DayOfTheWeekComponent";
 import {VCHoursComponent} from "./Components/Commands/VCHoursComponent";
 const defaultConfig = require("../json/defaultConfig.json");
 
-export class Guild implements GuildConfig {
+// What should be written to JSON
+export interface GuildConfig {
+    debugMode: boolean,
+    prefix: string,
+    registered: boolean,
+    debugChannel: string,
+    register: any,
+}
+
+export class Guild {
     client: Client;
     readonly guildId: string;
     // Config
@@ -36,7 +42,7 @@ export class Guild implements GuildConfig {
     private _prefix: string = process.env.DEFAULT_PREFIX as string;
     private _registered: boolean = defaultConfig.registered;
     private _debugChannel: string = defaultConfig.debugChannel;
-    register: Register = defaultConfig.register;
+    register = defaultConfig.register;
     components: Map<ComponentNames, Component<any>>;
 
     constructor(client: Client, guildId: string) {
@@ -72,8 +78,6 @@ export class Guild implements GuildConfig {
         return this.components.get(name);
     }
 
-
-
     getSaveData(): GuildConfig {
         return {
             debugMode: this._debugMode,
@@ -92,7 +96,7 @@ export class Guild implements GuildConfig {
         this._prefix = gConfig.prefix || process.env.DEFAULT_PREFIX as string;
         this._registered = gConfig.registered || defaultConfig.registered;
         this._debugChannel = gConfig.debugChannel || '';
-        this.register = gConfig.register as Register || {};
+        this.register = gConfig.register || {};``
         for (const component of Array.from(this.components.values())) {
             // @ts-ignore
             await component.afterLoadJSON(gConfig.register[component.name]);
@@ -107,9 +111,11 @@ export class Guild implements GuildConfig {
         }
         await FileSystem.writeFile(filename, JSON.stringify({[this.guildId]: this.getSaveData()}, JSONStringifyReplacer, '\t'));
         console.log(`${filename} saved`);
-        // if (this.devMode){
-        //     await message.channel.send(`\`\`\`json\n${JSON.stringify({[guildId]: config},null, '\t')}\`\`\``);
-        // }
+        if (this.debugMode){
+            const foundChannel = (await this.client.channels.fetch(this.debugChannel) as TextChannel);
+            const attachment = new MessageAttachment(Buffer.from(JSON.stringify({[this.guildId]: this.getSaveData()}, JSONStringifyReplacer, '\t')), 'config.txt');
+            await foundChannel.send(attachment);
+        }
     }
 
     async resetJSON() {

@@ -1,8 +1,6 @@
 import {Component} from "../Component";
-import {Cron} from "../../types/Cron";
 import {
     Channel,
-    Client,
     GuildMember,
     Message,
     MessageReaction, TextChannel,
@@ -11,8 +9,8 @@ import {
     VoiceState
 } from "discord.js";
 import {ComponentNames} from "../ComponentNames";
-import {isAdmin} from "../../commands/helper";
-import {CommandStrings} from "../../commands/CommandStrings";
+import {isAdmin} from "../../helper";
+import {CommandStrings} from "../../Constants/CommandStrings";
 
 // Declare data you want to save in JSON here
 export interface IVoiceTextPairCommand {
