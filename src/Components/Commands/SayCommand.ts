@@ -51,7 +51,7 @@ export class SayCommand extends Component<ISayCommand> {
         return Promise.resolve(undefined);
     }
 
-    async cron(cron: Cron): Promise<void> {
+    async onReady(): Promise<void> {
         return Promise.resolve(undefined);
     }
 

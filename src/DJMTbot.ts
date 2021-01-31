@@ -1,12 +1,10 @@
 import Discord, {Client, Message, User} from "discord.js";
 import {promises as FileSystem} from "fs";
-// import ReactBoard from "./listeners/reactBoard";
-import startCronJobs from "./cron";
 import {Guild} from "./Guild";
-import {ComponentNames} from "./Components/ComponentNames";
-// let reactBoard: ReactBoard; // TODO: This is currently global, needs a class that has one react board per guild
+import {Cron} from "./types/Cron";
 // Here we load the guildConfigs.json file that contains our token and our prefix values.
 require('dotenv').config();
+Cron.getInstance();
 
 export class DJMTbot {
     private static instance: DJMTbot;
@@ -42,7 +40,9 @@ export class DJMTbot {
             // docs refer to as the "ClientUser".
             this.client?.user?.setActivity(`@DJMTbot for help!`);
             // reactBoard = await ReactBoard.getInstance();
-            await startCronJobs(this.client);
+            for (const id of Array.from(this.guilds.keys())) {
+                this.guilds.get(id)?.onReady();
+            }
             // const debugChannel = (await client.channels.fetch(reactMapValue.channelId) as TextChannel);
         });
 
@@ -98,18 +98,13 @@ export class DJMTbot {
             //     if ((Object.values(CommandStrings) as string[]).includes(command)) {
             //         message.channel.startTyping();
             //         // Admin Commands
-            //         if (command === CommandStrings.SET_DEBUG_CHANNEL) {
-            //             await setDebugChannel(this.client, args, message);
-            //         }
 
             //         if (command === CommandStrings.SET_HOURS) {
             //             await setHoursCmd(this.client, args, message);
             //         }
 
 
-            //         if (command === CommandStrings.SET_DOTW) {
-            //             await setDotwCmd(this.client, args, message);
-            //         }
+
 
 
 

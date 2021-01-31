@@ -42,7 +42,7 @@ export class VoiceTextPairCommand extends Component<IVoiceTextPairCommand> {
         }
     }
 
-    async cron(cron: Cron): Promise<void> {
+    async onReady(): Promise<void> {
         return Promise.resolve(undefined);
     }
 

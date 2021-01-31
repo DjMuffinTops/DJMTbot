@@ -28,7 +28,7 @@ export class ConfigCommands extends Component<IConfigCommands>{
         return Promise.resolve(undefined);
     }
 
-    async cron(cron: Cron): Promise<void> {
+    async onReady(): Promise<void> {
         return Promise.resolve(undefined);
     }
 

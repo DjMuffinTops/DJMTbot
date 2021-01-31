@@ -31,7 +31,7 @@ export class BruhCommand extends Component<IBruhCommand> {
         return Promise.resolve(undefined);
     }
 
-    async cron(cron: Cron): Promise<void> {
+    async onReady(): Promise<void> {
         return Promise.resolve(undefined);
     }
 

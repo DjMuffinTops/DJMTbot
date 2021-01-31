@@ -22,7 +22,7 @@ export class DebugComponent extends Component<IDebugComponent> {
         return Promise.resolve(undefined);
     }
 
-    async cron(cron: Cron): Promise<void> {
+    async onReady(): Promise<void> {
         return Promise.resolve(undefined);
     }
 

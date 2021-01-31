@@ -9,9 +9,8 @@ export abstract class Component<T> {
     public constructor(guild: Guild) {
         this.guild = guild;
     }
-    // Cron Scheduling https://github.com/node-cron/node-cron
-    abstract async cron(cron: Cron): Promise<void>;
     // Events
+    abstract async onReady(): Promise<void>;
     abstract async getSaveData(): Promise<T>;
     abstract async afterLoadJSON(loadedObject: T | undefined): Promise<void>;
     abstract async onGuildMemberAdd(member: GuildMember): Promise<void>;

@@ -3,7 +3,7 @@ import cron, {ScheduledTask, ScheduleOptions} from "node-cron";
 export class Cron {
     private static instance: Cron;
     private constructor() {}
-    public static async getInstance(): Promise<Cron> {
+    public static getInstance(): Cron {
         if (!Cron.instance) {
             Cron.instance = cron;
         }

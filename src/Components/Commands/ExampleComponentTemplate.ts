@@ -20,7 +20,7 @@ export class ExampleComponentTemplate extends Component<ExampleComponentInterfac
         return Promise.resolve(undefined);
     }
 
-    async cron(cron: Cron): Promise<void> {
+    async onReady(): Promise<void> {
         return Promise.resolve(undefined);
     }
 

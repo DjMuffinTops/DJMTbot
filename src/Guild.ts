@@ -24,6 +24,7 @@ import {DebugComponent} from "./Components/Commands/DebugComponent";
 import {VoiceTextPairCommand} from "./Components/Commands/VoiceTextPairCommand";
 import {ReactBoardsComponent} from "./Components/Commands/ReactBoardsComponent";
 import {JSONStringifyReplacer, JSONStringifyReviver} from "./commands/helper";
+import {DayOfTheWeekComponent} from "./Components/Commands/DayOfTheWeekComponent";
 const defaultConfig = require("../json/defaultConfig.json");
 
 export class Guild implements GuildConfig {
@@ -62,6 +63,7 @@ export class Guild implements GuildConfig {
         this.components.set(ComponentNames.DEBUG, new DebugComponent(this));
         this.components.set(ComponentNames.VOICE_TEXT_PAIR, new VoiceTextPairCommand(this));
         this.components.set(ComponentNames.REACT_BOARDS, new ReactBoardsComponent(this));
+        this.components.set(ComponentNames.DAY_OF_THE_WEEK, new DayOfTheWeekComponent(this));
     }
 
     getComponent(name: ComponentNames): Component<any> | undefined {
@@ -119,13 +121,13 @@ export class Guild implements GuildConfig {
         await this.loadJSON();
     }
 
-    // Cron Scheduling https://github.com/node-cron/node-cron
-    async cron(cron: Cron): Promise<void> {
+    // Events
+    async onReady(): Promise<void> {
         for (const component of Array.from(this.components.values())) {
-            await component.cron(cron);
+            await component.onReady();
         }
     }
-    // Events
+
     async onGuildMemberAdd(member: GuildMember): Promise<void> {
         for (const component of Array.from(this.components.values())) {
             await component.onGuildMemberAdd(member);

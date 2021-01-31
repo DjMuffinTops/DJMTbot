@@ -27,7 +27,7 @@ export class HelpCommand extends Component<IHelpCommand> {
         return Promise.resolve(undefined);
     }
 
-    async cron(cron: Cron): Promise<void> {
+    async onReady(): Promise<void> {
         return Promise.resolve(undefined);
     }
 
