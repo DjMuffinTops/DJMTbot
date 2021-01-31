@@ -1,17 +1,17 @@
 import {Component} from "../Component";
 import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
-import {CommandStrings} from "../../Constants/CommandStrings";
-import {isAdmin} from "../../helper";
-import {ComponentNames} from "../ComponentNames";
+import {ComponentCommands} from "../Constants/ComponentCommands";
+import {isAdmin} from "../HelperFunctions";
+import {ComponentNames} from "../Constants/ComponentNames";
 
-export interface ISayCommand {}
-export class SayCommand extends Component<ISayCommand> {
+export interface SayComponentSave {}
+export class SayComponent extends Component<SayComponentSave> {
 
     name: ComponentNames = ComponentNames.SAY;
 
     async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
-        if (command === CommandStrings.SAY) {
+        if (command === ComponentCommands.SAY) {
             await this.sayCmd(args, message);
         }
     }
@@ -42,11 +42,11 @@ export class SayCommand extends Component<ISayCommand> {
         await message.delete();
     }
 
-    async getSaveData(): Promise<ISayCommand> {
+    async getSaveData(): Promise<SayComponentSave> {
         return {};
     }
 
-    async afterLoadJSON(loadedObject: ISayCommand | undefined): Promise<void> {
+    async afterLoadJSON(loadedObject: SayComponentSave | undefined): Promise<void> {
         return Promise.resolve(undefined);
     }
 

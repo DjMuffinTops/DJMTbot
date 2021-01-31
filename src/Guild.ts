@@ -7,22 +7,22 @@ import {
     User,
     VoiceState
 } from "discord.js";
-import {Component} from "./Components/Component";
-import {SayCommand} from "./Components/Commands/SayCommand";
-import {CheemsCommand} from "./Components/Commands/CheemsCommand";
-import {BSpeakCommand} from "./Components/Commands/BSpeakCommand";
-import {HelpCommand} from "./Components/Commands/HelpCommand";
-import {PingCommand} from "./Components/Commands/PingCommand";
-import {BruhCommand} from "./Components/Commands/BruhCommand";
+import {Component} from "./Component";
+import {SayComponent} from "./Components/SayComponent";
+import {CheemsComponent} from "./Components/CheemsComponent";
+import {BSpeakComponent} from "./Components/BSpeakComponent";
+import {HelpComponent} from "./Components/HelpComponent";
+import {PingComponent} from "./Components/PingComponent";
+import {BruhComponent} from "./Components/BruhComponent";
 import {promises as FileSystem} from "fs";
-import {ConfigCommands} from "./Components/Commands/ConfigCommands";
-import {ComponentNames} from "./Components/ComponentNames";
-import {DebugComponent} from "./Components/Commands/DebugComponent";
-import {VoiceTextPairCommand} from "./Components/Commands/VoiceTextPairCommand";
-import {ReactBoardsComponent} from "./Components/Commands/ReactBoardsComponent";
-import {JSONStringifyReplacer, JSONStringifyReviver} from "./helper";
-import {DayOfTheWeekComponent} from "./Components/Commands/DayOfTheWeekComponent";
-import {VCHoursComponent} from "./Components/Commands/VCHoursComponent";
+import {ConfigComponent} from "./Components/ConfigComponent";
+import {ComponentNames} from "./Constants/ComponentNames";
+import {DebugComponent} from "./Components/DebugComponent";
+import {VoiceTextPairComponent} from "./Components/VoiceTextPairComponent";
+import {ReactBoardsComponent} from "./Components/ReactBoardsComponent";
+import {JSONStringifyReplacer, JSONStringifyReviver} from "./HelperFunctions";
+import {DayOfTheWeekComponent} from "./Components/DayOfTheWeekComponent";
+import {VCHoursComponent} from "./Components/VCHoursComponent";
 const defaultConfig = require("../json/defaultConfig.json");
 
 // What should be written to JSON
@@ -60,15 +60,15 @@ export class Guild {
     }
 
     private async initializeComponents(): Promise<void> {
-        this.components.set(ComponentNames.CONFIG, new ConfigCommands(this));
-        this.components.set(ComponentNames.SAY, new SayCommand(this));
-        this.components.set(ComponentNames.CHEEMS, new CheemsCommand(this));
-        this.components.set(ComponentNames.BSPEAK, new BSpeakCommand(this));
-        this.components.set(ComponentNames.HELP, new HelpCommand(this));
-        this.components.set(ComponentNames.PING, new PingCommand(this));
-        this.components.set(ComponentNames.BRUH, new BruhCommand(this));
+        this.components.set(ComponentNames.CONFIG, new ConfigComponent(this));
+        this.components.set(ComponentNames.SAY, new SayComponent(this));
+        this.components.set(ComponentNames.CHEEMS, new CheemsComponent(this));
+        this.components.set(ComponentNames.BSPEAK, new BSpeakComponent(this));
+        this.components.set(ComponentNames.HELP, new HelpComponent(this));
+        this.components.set(ComponentNames.PING, new PingComponent(this));
+        this.components.set(ComponentNames.BRUH, new BruhComponent(this));
         this.components.set(ComponentNames.DEBUG, new DebugComponent(this));
-        this.components.set(ComponentNames.VOICE_TEXT_PAIR, new VoiceTextPairCommand(this));
+        this.components.set(ComponentNames.VOICE_TEXT_PAIR, new VoiceTextPairComponent(this));
         this.components.set(ComponentNames.REACT_BOARDS, new ReactBoardsComponent(this));
         this.components.set(ComponentNames.DAY_OF_THE_WEEK, new DayOfTheWeekComponent(this));
         this.components.set(ComponentNames.VC_HOURS, new VCHoursComponent(this));

@@ -9,11 +9,11 @@ import {
     VoiceChannel,
     VoiceState
 } from "discord.js";
-import {ComponentNames} from "../ComponentNames";
-import {VoiceTextPairCommand, VoiceTextPair} from "./VoiceTextPairCommand";
-import {isAdmin} from "../../helper";
-import {Cron} from "../../Cron";
-import {CommandStrings} from "../../Constants/CommandStrings";
+import {ComponentNames} from "../Constants/ComponentNames";
+import {VoiceTextPairComponent, VoiceTextPair} from "./VoiceTextPairComponent";
+import {isAdmin} from "../HelperFunctions";
+import {Cron} from "../Cron";
+import {ComponentCommands} from "../Constants/ComponentCommands";
 
 // Declare data you want to save in JSON here
 export interface VCHoursComponentSave {
@@ -34,7 +34,7 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
     }
 
     async onReady(): Promise<void> {
-        const vcChannelPairs: VoiceTextPair[] = (this.guild.getComponent(ComponentNames.VOICE_TEXT_PAIR) as VoiceTextPairCommand).voiceTextPairs;
+        const vcChannelPairs: VoiceTextPair[] = (this.guild.getComponent(ComponentNames.VOICE_TEXT_PAIR) as VoiceTextPairComponent).voiceTextPairs;
         for (const pair of vcChannelPairs) {
             this.consecutiveHours.set(pair, 0);
         }
@@ -67,7 +67,7 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
 
     async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
-        if (command === CommandStrings.SET_HOURS) {
+        if (command === ComponentCommands.SET_HOURS) {
             await this.setHoursCmd(args, message);
         }
         return Promise.resolve(undefined);
@@ -91,7 +91,7 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
             let voiceId = args[0];
             let textId = args[1];
             let hours = Number(args[2]);
-            const vcChannelPairs: VoiceTextPair[] = (this.guild.getComponent(ComponentNames.VOICE_TEXT_PAIR) as VoiceTextPairCommand).voiceTextPairs;
+            const vcChannelPairs: VoiceTextPair[] = (this.guild.getComponent(ComponentNames.VOICE_TEXT_PAIR) as VoiceTextPairComponent).voiceTextPairs;
             for (const pair of vcChannelPairs) {
                 if (pair.voiceChannel.id === voiceId && pair.textChannel.id === textId) {
                     this.consecutiveHours.set(pair, hours);
@@ -107,7 +107,7 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
 
     async vcRemindersJob() {
         console.log(`[${this.guild.guildId}] Running VC Reminder Job`);
-        const vcChannelPairs: VoiceTextPair[] = (this.guild.getComponent(ComponentNames.VOICE_TEXT_PAIR) as VoiceTextPairCommand).voiceTextPairs;
+        const vcChannelPairs: VoiceTextPair[] = (this.guild.getComponent(ComponentNames.VOICE_TEXT_PAIR) as VoiceTextPairComponent).voiceTextPairs;
         // For each channel pair
         for (const pair of vcChannelPairs) {
             const voiceChannel = (await this.guild.client.channels.fetch(pair.voiceChannel.id) as VoiceChannel);

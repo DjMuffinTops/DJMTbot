@@ -1,6 +1,6 @@
 import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
-import {Guild} from "../Guild";
-import {ComponentNames} from "./ComponentNames";
+import {Guild} from "./Guild";
+import {ComponentNames} from "./Constants/ComponentNames";
 
 export abstract class Component<T> {
     abstract name: ComponentNames;

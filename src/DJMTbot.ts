@@ -34,26 +34,19 @@ export class DJMTbot {
 
     async run() {
         this.client.on("ready", async () => {
-            // This event will run if the bot starts, and logs in, successfully.
-            console.log(`Bot has started, with ${this.client.users.cache.size} users, in ${this.client.channels.cache.size} channels of ${this.client.guilds.cache.size} guilds.`);
-            // Example of changing the bot's playing game to something useful. `client.user` is what the
-            // docs refer to as the "ClientUser".
+            console.log(`Bot is ready!`);
             this.client?.user?.setActivity(`@DJMTbot for help!`);
-            // reactBoard = await ReactBoard.getInstance();
             for (const id of Array.from(this.guilds.keys())) {
                 this.guilds.get(id)?.onReady();
             }
-            // const debugChannel = (await client.channels.fetch(reactMapValue.channelId) as TextChannel);
         });
 
         this.client.on("guildCreate", guild => {
-            // This event triggers when the bot joins a guild.
             console.log(`New guild joined: ${guild.name} (id: ${guild.id}). This guild has ${guild.memberCount} members!`);
             this.client?.user?.setActivity(`@DJMTbot for help! | ${this.client.users.cache.size} users`);
         });
 
         this.client.on("guildDelete", guild => {
-            // this event triggers when the bot is removed from a guild.
             console.log(`I have been removed from: ${guild.name} (id: ${guild.id})`);
             this.client?.user?.setActivity(`@DJMTbot for help! | ${this.client.users.cache.size} users`);
         });
@@ -66,7 +59,6 @@ export class DJMTbot {
                     await reaction.fetch();
                 } catch (error) {
                     console.error('Something went wrong when fetching the message: ', error);
-                    // Return as `reaction.message.author` may be undefined/null
                     return;
                 }
             }
@@ -79,8 +71,7 @@ export class DJMTbot {
         });
 
         this.client.on("message", async (message: Message) => {
-            // Ignore bot messages
-            if (message.author.bot) return;
+            if (message.author.bot) return; // Ignore bot messages
             let args: string[] = message.content.trim().split(/ +/g);
             for (const id of Array.from(this.guilds.keys())) {
                 if (id === message.guild?.id) {
@@ -88,35 +79,8 @@ export class DJMTbot {
                     return;
                 }
             }
-
-            // Listeners
-            // await executeListeners(this.client, args, message);
-
-            // const command = args?.shift()?.toLowerCase() || '';
-
-            // try {
-            //     if ((Object.values(CommandStrings) as string[]).includes(command)) {
-            //         message.channel.startTyping();
-            //         // Admin Commands
-
-            //         if (command === CommandStrings.SET_HOURS) {
-            //             await setHoursCmd(this.client, args, message);
-            //         }
-
-
-
-
-
-
-
-            //     }
-            // } catch (e) {
-            //     console.error(`Errored with message content: ${message.content}`);
-            //     console.error(`Errored with message: ${JSON.stringify(message, null, 2)}`);
-            //     console.log(e);
-            // }
             message.channel.stopTyping(true);
         });
-        this.client.login(process.env.DEV_TOKEN);
+        await this.client.login(process.env.DEV_TOKEN);
     }
 }

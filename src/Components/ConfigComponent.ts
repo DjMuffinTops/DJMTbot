@@ -8,30 +8,30 @@ import {
     User,
     VoiceState
 } from "discord.js";
-import {CommandStrings} from "../../Constants/CommandStrings";
-import {isAdmin, JSONStringifyReplacer} from "../../helper";
-import {ComponentNames} from "../ComponentNames";
+import {ComponentCommands} from "../Constants/ComponentCommands";
+import {isAdmin, JSONStringifyReplacer} from "../HelperFunctions";
+import {ComponentNames} from "../Constants/ComponentNames";
 import {DateTime} from "luxon";
 
-export interface IConfigCommands {}
-export class ConfigCommands extends Component<IConfigCommands>{
+export interface ConfigComponentSave {}
+export class ConfigComponent extends Component<ConfigComponentSave>{
 
     name: ComponentNames = ComponentNames.CONFIG;
 
     async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
-        if (command === CommandStrings.EXPORT_CONFIG) {
+        if (command === ComponentCommands.EXPORT_CONFIG) {
             await this.exportConfig(args, message);
-        } else if (command === CommandStrings.RESET_CONFIG) {
+        } else if (command === ComponentCommands.RESET_CONFIG) {
             await this.resetConfig(message);
         }
     }
 
-    async getSaveData(): Promise<IConfigCommands> {
+    async getSaveData(): Promise<ConfigComponentSave> {
         return {};
     }
 
-    async afterLoadJSON(parsedJSON: IConfigCommands | undefined): Promise<void> {
+    async afterLoadJSON(parsedJSON: ConfigComponentSave | undefined): Promise<void> {
         return Promise.resolve(undefined);
     }
 

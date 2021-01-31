@@ -1,27 +1,27 @@
 import {Component} from "../Component";
 import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
-import {CommandStrings} from "../../Constants/CommandStrings";
-import {isAdmin} from "../../helper";
-import {ComponentNames} from "../ComponentNames";
+import {ComponentCommands} from "../Constants/ComponentCommands";
+import {isAdmin} from "../HelperFunctions";
+import {ComponentNames} from "../Constants/ComponentNames";
 
-export interface ISetPrefixCommand {}
-export class SetPrefixCommand extends Component<ISetPrefixCommand> {
+export interface SetPrefixComponentSave {}
+export class SetPrefixComponent extends Component<SetPrefixComponentSave> {
 
     name: ComponentNames = ComponentNames.SET_PREFIX;
 
     async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
-        if (command === CommandStrings.SET_PREFIX) {
+        if (command === ComponentCommands.SET_PREFIX) {
             await this.setPrefixCmd(args, message);
         }
         return Promise.resolve(undefined);
     }
 
-    async getSaveData(): Promise<ISetPrefixCommand> {
+    async getSaveData(): Promise<SetPrefixComponentSave> {
         return {};
     }
 
-    async afterLoadJSON(loadedObject: ISetPrefixCommand | undefined): Promise<void> {
+    async afterLoadJSON(loadedObject: SetPrefixComponentSave | undefined): Promise<void> {
         return Promise.resolve(undefined);
     }
 

@@ -9,14 +9,14 @@ import {
     VoiceState
 } from "discord.js";
 import {Component} from "../Component";
-import {CommandStrings} from "../../Constants/CommandStrings";
-import {isAdmin} from "../../helper";
-import {ComponentNames} from "../ComponentNames";
+import {ComponentCommands} from "../Constants/ComponentCommands";
+import {isAdmin} from "../HelperFunctions";
+import {ComponentNames} from "../Constants/ComponentNames";
 
-export interface IBruhCommand {
+export interface BruhComponentSave {
     bruhChannels: string[];
 }
-export class BruhCommand extends Component<IBruhCommand> {
+export class BruhComponent extends Component<BruhComponentSave> {
 
     name = ComponentNames.BRUH;
     bruhChannels: string[] = [];
@@ -24,13 +24,13 @@ export class BruhCommand extends Component<IBruhCommand> {
     onCooldown: boolean = false;
 
 
-    async getSaveData(): Promise<IBruhCommand> {
+    async getSaveData(): Promise<BruhComponentSave> {
         return {
             bruhChannels: this.bruhChannels
         };
     }
 
-    async afterLoadJSON(loadedObject: IBruhCommand | undefined): Promise<void> {
+    async afterLoadJSON(loadedObject: BruhComponentSave | undefined): Promise<void> {
         if (loadedObject) {
             this.bruhChannels = loadedObject.bruhChannels;
         }
@@ -63,9 +63,9 @@ export class BruhCommand extends Component<IBruhCommand> {
 
     async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
-        if (command === CommandStrings.BRUH) {
+        if (command === ComponentCommands.BRUH) {
             await this.bruhCmd(args, message);
-        } else if (command === CommandStrings.SET_BRUH) {
+        } else if (command === ComponentCommands.SET_BRUH) {
             await this.setBruhCmd(args, message);
         }
         return Promise.resolve(undefined);

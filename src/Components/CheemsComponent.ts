@@ -1,25 +1,25 @@
 import {Component} from "../Component";
-import {CommandStrings} from "../../Constants/CommandStrings";
+import {ComponentCommands} from "../Constants/ComponentCommands";
 import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
-import {ComponentNames} from "../ComponentNames";
+import {ComponentNames} from "../Constants/ComponentNames";
 
-export interface ICheemsCommand {}
-export class CheemsCommand extends Component<ICheemsCommand> {
+export interface CheemsComponentSave {}
+export class CheemsComponent extends Component<CheemsComponentSave> {
 
     name: ComponentNames = ComponentNames.CHEEMS;
 
     async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
-        if (command === CommandStrings.CHEEMS) {
+        if (command === ComponentCommands.CHEEMS) {
             await this.cheemsCmd(args, message);
         }
     }
 
-    async getSaveData(): Promise<ICheemsCommand> {
+    async getSaveData(): Promise<CheemsComponentSave> {
         return {};
     }
 
-    async afterLoadJSON(parsedJSON: ICheemsCommand | undefined): Promise<void> {
+    async afterLoadJSON(parsedJSON: CheemsComponentSave | undefined): Promise<void> {
         return Promise.resolve(undefined);
     }
 

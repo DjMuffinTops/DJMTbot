@@ -1,4 +1,4 @@
-export enum CommandStrings {
+export enum ComponentCommands {
     SET_DEBUG_CHANNEL = "setdebugchannel",
     SET_HOURS = "sethours",
     SET_AUTO_REACT = "setautoreact",

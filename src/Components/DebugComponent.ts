@@ -1,23 +1,23 @@
 import {Component} from "../Component";
 import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
-import {ComponentNames} from "../ComponentNames";
-import {isAdmin} from "../../helper";
-import {CommandStrings} from "../../Constants/CommandStrings";
+import {ComponentNames} from "../Constants/ComponentNames";
+import {isAdmin} from "../HelperFunctions";
+import {ComponentCommands} from "../Constants/ComponentCommands";
 
 // Declare data you want to save in JSON here
-export interface IDebugComponent {
+export interface DebugComponentSave {
 
 }
 
-export class DebugComponent extends Component<IDebugComponent> {
+export class DebugComponent extends Component<DebugComponentSave> {
 
     name: ComponentNames = ComponentNames.DEBUG;
 
-    async getSaveData(): Promise<IDebugComponent> {
+    async getSaveData(): Promise<DebugComponentSave> {
         return {};
     }
 
-    async afterLoadJSON(parsedJSON: IDebugComponent | undefined): Promise<void> {
+    async afterLoadJSON(parsedJSON: DebugComponentSave | undefined): Promise<void> {
         return Promise.resolve(undefined);
     }
 
@@ -47,10 +47,10 @@ export class DebugComponent extends Component<IDebugComponent> {
 
     async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
-        if (command === CommandStrings.SET_DEBUG_CHANNEL) {
+        if (command === ComponentCommands.SET_DEBUG_CHANNEL) {
             await this.setDebugChannel(args, message);
         }
-        if (command === CommandStrings.DEBUG_MODE) {
+        if (command === ComponentCommands.DEBUG_MODE) {
             await this.debugModeCmd(args, message);
         }
         return Promise.resolve(undefined);

@@ -1,21 +1,21 @@
 import {Component} from "../Component";
 import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
-import {ComponentNames} from "../ComponentNames";
+import {ComponentNames} from "../Constants/ComponentNames";
 
 // Declare data you want to save in JSON here
-export interface ExampleComponentInterface {
+export interface ExampleComponentSave {
 
 }
 
-export class ExampleComponentTemplate extends Component<ExampleComponentInterface> {
+export class ExampleComponentTemplate extends Component<ExampleComponentSave> {
 
     name: ComponentNames = ComponentNames.EXAMPLE_COMPONENT;
 
-    async getSaveData(): Promise<ExampleComponentInterface> {
+    async getSaveData(): Promise<ExampleComponentSave> {
         return {};
     }
 
-    async afterLoadJSON(loadedObject: ExampleComponentInterface | undefined): Promise<void> {
+    async afterLoadJSON(loadedObject: ExampleComponentSave | undefined): Promise<void> {
         return Promise.resolve(undefined);
     }
 
@@ -45,7 +45,7 @@ export class ExampleComponentTemplate extends Component<ExampleComponentInterfac
 
     async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
         // const command = args?.shift()?.toLowerCase() || '';
-        // if (command === CommandStrings.ADD_YOUR_COMMAND_TAG_HERE) {
+        // if (command === ComponentCommands.ADD_YOUR_COMMAND_TAG_HERE) {
         //     await this.yourCommandHere(args, message);
         // }
         return Promise.resolve(undefined);

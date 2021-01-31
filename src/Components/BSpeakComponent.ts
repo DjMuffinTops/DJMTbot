@@ -1,25 +1,25 @@
 import {Component} from "../Component";
 import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
-import {CommandStrings} from "../../Constants/CommandStrings";
-import {ComponentNames} from "../ComponentNames";
+import {ComponentCommands} from "../Constants/ComponentCommands";
+import {ComponentNames} from "../Constants/ComponentNames";
 
-export interface IBSpeakCommand {}
-export class BSpeakCommand extends Component<IBSpeakCommand> {
+export interface BSpeakComponentSave {}
+export class BSpeakComponent extends Component<BSpeakComponentSave> {
 
     name: ComponentNames = ComponentNames.BSPEAK;
 
     async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
-        if (command === CommandStrings.B_SPEAK) {
+        if (command === ComponentCommands.B_SPEAK) {
             await this.bCmd(args, message);
         }
     }
 
-    async getSaveData(): Promise<IBSpeakCommand> {
+    async getSaveData(): Promise<BSpeakComponentSave> {
         return {};
     }
 
-    async afterLoadJSON(loadedObject: IBSpeakCommand | undefined): Promise<void> {
+    async afterLoadJSON(loadedObject: BSpeakComponentSave | undefined): Promise<void> {
         return Promise.resolve(undefined);
     }
 

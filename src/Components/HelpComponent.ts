@@ -1,26 +1,26 @@
 import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
 import {Component} from "../Component";
-import {isAdmin} from "../../helper";
-import {CommandStrings} from "../../Constants/CommandStrings";
-import {ComponentNames} from "../ComponentNames";
+import {isAdmin} from "../HelperFunctions";
+import {ComponentCommands} from "../Constants/ComponentCommands";
+import {ComponentNames} from "../Constants/ComponentNames";
 
-export interface IHelpCommand {}
-export class HelpCommand extends Component<IHelpCommand> {
+export interface HelpComponentSave {}
+export class HelpComponent extends Component<HelpComponentSave> {
 
     name: ComponentNames = ComponentNames.HELP;
 
     async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
-        if (command === CommandStrings.HELP) {
+        if (command === ComponentCommands.HELP) {
             await this.helpCmd(args, message);
         }
     }
 
-    async getSaveData(): Promise<IHelpCommand> {
+    async getSaveData(): Promise<HelpComponentSave> {
         return {};
     }
 
-    async afterLoadJSON(loadedObject: IHelpCommand | undefined): Promise<void> {
+    async afterLoadJSON(loadedObject: HelpComponentSave | undefined): Promise<void> {
         return Promise.resolve(undefined);
     }
 

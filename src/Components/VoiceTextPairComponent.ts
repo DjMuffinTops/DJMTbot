@@ -8,12 +8,12 @@ import {
     VoiceChannel,
     VoiceState
 } from "discord.js";
-import {ComponentNames} from "../ComponentNames";
-import {isAdmin} from "../../helper";
-import {CommandStrings} from "../../Constants/CommandStrings";
+import {ComponentNames} from "../Constants/ComponentNames";
+import {isAdmin} from "../HelperFunctions";
+import {ComponentCommands} from "../Constants/ComponentCommands";
 
 // Declare data you want to save in JSON here
-export interface IVoiceTextPairCommand {
+export interface VoiceTextPairComponentSave {
     voiceTextPairs: VoiceTextPair[];
 }
 
@@ -22,18 +22,18 @@ export interface VoiceTextPair {
     textChannel: TextChannel
 }
 
-export class VoiceTextPairCommand extends Component<IVoiceTextPairCommand> {
+export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave> {
 
     name: ComponentNames = ComponentNames.VOICE_TEXT_PAIR;
     voiceTextPairs: VoiceTextPair[] = [];
 
-    async getSaveData(): Promise<IVoiceTextPairCommand> {
+    async getSaveData(): Promise<VoiceTextPairComponentSave> {
         return {
             voiceTextPairs: this.voiceTextPairs
         };
     }
 
-    async afterLoadJSON(loadedObject: IVoiceTextPairCommand | undefined): Promise<void> {
+    async afterLoadJSON(loadedObject: VoiceTextPairComponentSave | undefined): Promise<void> {
         // console.log(loadedObject);
         if (loadedObject) {
             this.voiceTextPairs = loadedObject.voiceTextPairs;
@@ -66,7 +66,7 @@ export class VoiceTextPairCommand extends Component<IVoiceTextPairCommand> {
 
     async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
-        if (command === CommandStrings.SET_VC_PAIRS) {
+        if (command === ComponentCommands.SET_VC_PAIRS) {
             await this.stringToVoiceTextPair(args, message);
         }
         return Promise.resolve(undefined);

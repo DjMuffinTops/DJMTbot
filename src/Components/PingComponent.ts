@@ -1,25 +1,25 @@
 import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
-import {CommandStrings} from "../../Constants/CommandStrings";
+import {ComponentCommands} from "../Constants/ComponentCommands";
 import {Component} from "../Component";
-import {ComponentNames} from "../ComponentNames";
+import {ComponentNames} from "../Constants/ComponentNames";
 
-export interface IPingCommand {}
-export class PingCommand extends Component<IPingCommand>{
+export interface PingComponentSave {}
+export class PingComponent extends Component<PingComponentSave>{
 
     name: ComponentNames = ComponentNames.PING;
 
     async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
-        if (command === CommandStrings.PING) {
+        if (command === ComponentCommands.PING) {
             await this.pingCmd(args, message);
         }
     }
 
-    async getSaveData(): Promise<IPingCommand> {
+    async getSaveData(): Promise<PingComponentSave> {
         return {};
     }
 
-    async afterLoadJSON(loadedObject: IPingCommand | undefined): Promise<void> {
+    async afterLoadJSON(loadedObject: PingComponentSave | undefined): Promise<void> {
         return Promise.resolve(undefined);
     }
 

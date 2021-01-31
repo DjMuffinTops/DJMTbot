@@ -8,9 +8,9 @@ import {
     User,
     VoiceState
 } from "discord.js";
-import {ComponentNames} from "../ComponentNames";
-import {isAdmin} from "../../helper";
-import {CommandStrings} from "../../Constants/CommandStrings";
+import {ComponentNames} from "../Constants/ComponentNames";
+import {isAdmin} from "../HelperFunctions";
+import {ComponentCommands} from "../Constants/ComponentCommands";
 
 // Declare data you want to save in JSON here
 export interface ReactBoardSave {
@@ -83,11 +83,11 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
 
     async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
-        if (command === CommandStrings.SET_AUTO_REACT) {
+        if (command === ComponentCommands.SET_AUTO_REACT) {
             await this.setAutoReactCmd(args, message);
-        } else if (command === CommandStrings.SET_REACT_PAIRS) {
+        } else if (command === ComponentCommands.SET_REACT_PAIRS) {
             await this.setReactPairsCmd(args, message);
-        } else if (command === CommandStrings.SET_STAR) {
+        } else if (command === ComponentCommands.SET_STAR) {
             await this.setStarCmd(args, message);
         }
         return Promise.resolve(undefined);
