@@ -8,7 +8,7 @@ import {
     VoiceChannel,
     VoiceState
 } from "discord.js";
-import {GuildConfig, Register, VoiceTextPairs} from "./types/types";
+import {GuildConfig, Register} from "./types/types";
 import {Component} from "./Components/Component";
 import {SayCommand} from "./Components/Commands/SayCommand";
 import {Cron} from "./types/Cron";
@@ -22,6 +22,8 @@ import {ConfigCommands} from "./Components/Commands/ConfigCommands";
 import {ComponentNames} from "./Components/ComponentNames";
 import {DebugComponent} from "./Components/Commands/DebugComponent";
 import {VoiceTextPairCommand} from "./Components/Commands/VoiceTextPairCommand";
+import {ReactBoardsComponent} from "./Components/Commands/ReactBoardsComponent";
+import {JSONStringifyReplacer, JSONStringifyReviver} from "./commands/helper";
 const defaultConfig = require("../json/defaultConfig.json");
 
 export class Guild implements GuildConfig {
@@ -59,6 +61,7 @@ export class Guild implements GuildConfig {
         this.components.set(ComponentNames.BRUH, new BruhCommand(this));
         this.components.set(ComponentNames.DEBUG, new DebugComponent(this));
         this.components.set(ComponentNames.VOICE_TEXT_PAIR, new VoiceTextPairCommand(this));
+        this.components.set(ComponentNames.REACT_BOARDS, new ReactBoardsComponent(this));
     }
 
     getComponent(name: ComponentNames): Component<any> | undefined {
@@ -80,7 +83,7 @@ export class Guild implements GuildConfig {
     // Config Read / Write
     async loadJSON(): Promise<void> {
         const buffer = await FileSystem.readFile(`./json/guilds/${this.guildId}.json`);
-        const gConfig = JSON.parse(buffer.toString())[this.guildId] as GuildConfig;
+        const gConfig = JSON.parse(buffer.toString(), JSONStringifyReviver)[this.guildId] as GuildConfig;
         this._debugMode = gConfig.debugMode || defaultConfig.debugMode;
         this._prefix = gConfig.prefix || process.env.DEFAULT_PREFIX as string;
         this._registered = gConfig.registered || defaultConfig.registered;
@@ -98,7 +101,7 @@ export class Guild implements GuildConfig {
             // @ts-ignore
             this.register[component.name] = await component.getSaveData();
         }
-        await FileSystem.writeFile(filename, JSON.stringify({[this.guildId]: this.getSaveData()},null, '\t'));
+        await FileSystem.writeFile(filename, JSON.stringify({[this.guildId]: this.getSaveData()}, JSONStringifyReplacer, '\t'));
         console.log(`${filename} saved`);
         // if (this.devMode){
         //     await message.channel.send(`\`\`\`json\n${JSON.stringify({[guildId]: config},null, '\t')}\`\`\``);

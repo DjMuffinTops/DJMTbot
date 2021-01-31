@@ -2,9 +2,7 @@ import {Component} from "../Component";
 import {CommandStrings} from "../../commands/CommandStrings";
 import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
 import {Cron} from "../../types/Cron";
-import {Register} from "../../types/types";
 import {ComponentNames} from "../ComponentNames";
-import {IBruhCommand} from "./BruhCommand";
 
 export interface ICheemsCommand {}
 export class CheemsCommand extends Component<ICheemsCommand> {
@@ -22,7 +20,7 @@ export class CheemsCommand extends Component<ICheemsCommand> {
         return {};
     }
 
-    async afterLoadJSON(parsedJSON: ICheemsCommand): Promise<void> {
+    async afterLoadJSON(parsedJSON: ICheemsCommand | undefined): Promise<void> {
         return Promise.resolve(undefined);
     }
 

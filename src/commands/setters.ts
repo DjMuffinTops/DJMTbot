@@ -3,12 +3,7 @@
 // import {getConfig, updateConfig} from "./config";
 // import {setConsecutiveHours} from "../jobs/vcReminders";
 //
-// export async function setStarCmd(client: Client, args: string[], message: Message) {
-//     // Admin only
-//     if (!isAdmin(message)) {
-//         await message.channel.send(`This command requires administrator permissions.`);
-//         return;
-//     }
+
 //
 //     const gConfig = await getConfig(message);
 //     if (!gConfig.registered) {

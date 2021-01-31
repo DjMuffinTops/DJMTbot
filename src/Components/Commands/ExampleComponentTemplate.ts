@@ -8,7 +8,7 @@ export interface ExampleComponentInterface {
 
 }
 
-export class ExampleComponentTemplate extends Component<ExampleComponentInterface> implements ExampleComponentInterface {
+export class ExampleComponentTemplate extends Component<ExampleComponentInterface> {
 
     name: ComponentNames = ComponentNames.EXAMPLE_COMPONENT;
 
@@ -16,7 +16,7 @@ export class ExampleComponentTemplate extends Component<ExampleComponentInterfac
         return {};
     }
 
-    async afterLoadJSON(loadedObject: ExampleComponentInterface): Promise<void> {
+    async afterLoadJSON(loadedObject: ExampleComponentInterface | undefined): Promise<void> {
         return Promise.resolve(undefined);
     }
 

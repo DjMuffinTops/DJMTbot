@@ -4,7 +4,6 @@ import {Channel, Client, GuildMember, Message, MessageReaction, User, VoiceState
 import {CommandStrings} from "../../commands/CommandStrings";
 import {isAdmin} from "../../commands/helper";
 import {ComponentNames} from "../ComponentNames";
-import {ICheemsCommand} from "./CheemsCommand";
 const defaultConfig = require("../../../json/defaultConfig.json");
 
 export interface IConfigCommands {}
@@ -25,7 +24,7 @@ export class ConfigCommands extends Component<IConfigCommands>{
         return {};
     }
 
-    async afterLoadJSON(parsedJSON: IConfigCommands): Promise<void> {
+    async afterLoadJSON(parsedJSON: IConfigCommands | undefined): Promise<void> {
         return Promise.resolve(undefined);
     }
 

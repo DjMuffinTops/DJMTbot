@@ -23,11 +23,6 @@ export interface GuildConfig {
     register: Register,
 }
 
-export interface VoiceTextPairs {
-    voiceChannel: VoiceChannel,
-    textChannel: TextChannel
-}
-
 export interface ComponentConfig {
     [ComponentNames.BRUH]: IBruhCommand
 }

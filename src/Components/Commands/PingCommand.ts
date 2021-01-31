@@ -2,9 +2,7 @@ import {Channel, Client, GuildMember, Message, MessageReaction, User, VoiceState
 import {CommandStrings} from "../../commands/CommandStrings";
 import {Cron} from "../../types/Cron";
 import {Component} from "../Component";
-import {Register} from "../../types/types";
 import {ComponentNames} from "../ComponentNames";
-import {IHelpCommand} from "./HelpCommand";
 
 export interface IPingCommand {}
 export class PingCommand extends Component<IPingCommand>{
@@ -22,7 +20,7 @@ export class PingCommand extends Component<IPingCommand>{
         return {};
     }
 
-    async afterLoadJSON(loadedObject: IPingCommand): Promise<void> {
+    async afterLoadJSON(loadedObject: IPingCommand | undefined): Promise<void> {
         return Promise.resolve(undefined);
     }
 

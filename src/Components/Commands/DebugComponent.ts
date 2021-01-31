@@ -4,14 +4,13 @@ import {Channel, Client, GuildMember, Message, MessageReaction, User, VoiceState
 import {ComponentNames} from "../ComponentNames";
 import {isAdmin} from "../../commands/helper";
 import {CommandStrings} from "../../commands/CommandStrings";
-import {IConfigCommands} from "./ConfigCommands";
 
 // Declare data you want to save in JSON here
 export interface IDebugComponent {
 
 }
 
-export class DebugComponent extends Component<IDebugComponent> implements IDebugComponent {
+export class DebugComponent extends Component<IDebugComponent> {
 
     name: ComponentNames = ComponentNames.DEBUG;
 
@@ -19,7 +18,7 @@ export class DebugComponent extends Component<IDebugComponent> implements IDebug
         return {};
     }
 
-    async afterLoadJSON(parsedJSON: IDebugComponent): Promise<void> {
+    async afterLoadJSON(parsedJSON: IDebugComponent | undefined): Promise<void> {
         return Promise.resolve(undefined);
     }
 

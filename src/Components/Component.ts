@@ -13,7 +13,7 @@ export abstract class Component<T> {
     abstract async cron(cron: Cron): Promise<void>;
     // Events
     abstract async getSaveData(): Promise<T>;
-    abstract async afterLoadJSON(loadedObject: T): Promise<void>;
+    abstract async afterLoadJSON(loadedObject: T | undefined): Promise<void>;
     abstract async onGuildMemberAdd(member: GuildMember): Promise<void>;
     abstract async onMessage(args: string[], message: Message): Promise<void>;
     abstract async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void>;

@@ -4,7 +4,6 @@ import {Cron} from "../../types/Cron";
 import {CommandStrings} from "../../commands/CommandStrings";
 import {isAdmin} from "../../commands/helper";
 import {ComponentNames} from "../ComponentNames";
-import {IPingCommand} from "./PingCommand";
 
 export interface ISayCommand {}
 export class SayCommand extends Component<ISayCommand> {
@@ -48,7 +47,7 @@ export class SayCommand extends Component<ISayCommand> {
         return {};
     }
 
-    async afterLoadJSON(loadedObject: ISayCommand): Promise<void> {
+    async afterLoadJSON(loadedObject: ISayCommand | undefined): Promise<void> {
         return Promise.resolve(undefined);
     }
 

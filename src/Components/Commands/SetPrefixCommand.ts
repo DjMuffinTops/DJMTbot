@@ -3,12 +3,10 @@ import {Cron} from "../../types/Cron";
 import {Channel, Client, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
 import {CommandStrings} from "../../commands/CommandStrings";
 import {isAdmin} from "../../commands/helper";
-import {Register} from "../../types/types";
 import {ComponentNames} from "../ComponentNames";
-import {ISayCommand} from "./SayCommand";
 
 export interface ISetPrefixCommand {}
-export class SetPrefixCommand extends Component<ISetPrefixCommand>{
+export class SetPrefixCommand extends Component<ISetPrefixCommand> {
 
     name: ComponentNames = ComponentNames.SET_PREFIX;
 
@@ -24,7 +22,7 @@ export class SetPrefixCommand extends Component<ISetPrefixCommand>{
         return {};
     }
 
-    async afterLoadJSON(loadedObject: ISetPrefixCommand): Promise<void> {
+    async afterLoadJSON(loadedObject: ISetPrefixCommand | undefined): Promise<void> {
         return Promise.resolve(undefined);
     }
 

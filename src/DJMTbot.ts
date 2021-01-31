@@ -1,4 +1,4 @@
-import Discord, {Client, Message} from "discord.js";
+import Discord, {Client, Message, User} from "discord.js";
 import {promises as FileSystem} from "fs";
 // import ReactBoard from "./listeners/reactBoard";
 import startCronJobs from "./cron";
@@ -70,7 +70,12 @@ export class DJMTbot {
                     return;
                 }
             }
-            // await reactBoard.reactBoardCheck(this.client, reaction);
+            for (const id of Array.from(this.guilds.keys())) {
+                if (id === reaction.message.guild?.id) {
+                    this.guilds.get(id)?.onMessageReactionAdd(reaction, user as User);
+                    return;
+                }
+            }
         });
 
         this.client.on("message", async (message: Message) => {
@@ -96,18 +101,12 @@ export class DJMTbot {
             //         if (command === CommandStrings.SET_DEBUG_CHANNEL) {
             //             await setDebugChannel(this.client, args, message);
             //         }
-            //         if (command === CommandStrings.SET_REACT_PAIRS) {
-            //             await reactBoard.setReactPairsCmd(this.client, args, message);
-            //         }
+
             //         if (command === CommandStrings.SET_HOURS) {
             //             await setHoursCmd(this.client, args, message);
             //         }
-            //         if (command === CommandStrings.SET_STAR) {
-            //             await setStarCmd(this.client, args, message);
-            //         }
-            //         if (command === CommandStrings.SET_AUTO_REACT) {
-            //             await reactBoard.setAutoReactCmd(this.client, args, message);
-            //         }
+
+
             //         if (command === CommandStrings.SET_DOTW) {
             //             await setDotwCmd(this.client, args, message);
             //         }

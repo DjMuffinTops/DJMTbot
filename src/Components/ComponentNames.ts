@@ -9,5 +9,6 @@ export enum ComponentNames {
     BRUH= "BRUH",
     SET_PREFIX= "SET_PREFIX",
     DEBUG= "DEBUG",
-    VOICE_TEXT_PAIR= "VOICE_TEXT_PAIR"
+    VOICE_TEXT_PAIR= "VOICE_TEXT_PAIR",
+    REACT_BOARDS= "REACT_BOARDS"
 }

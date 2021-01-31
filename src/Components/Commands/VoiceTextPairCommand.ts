@@ -12,17 +12,19 @@ import {
 } from "discord.js";
 import {ComponentNames} from "../ComponentNames";
 import {isAdmin} from "../../commands/helper";
-import {getConfig, updateConfig} from "../../commands/config";
 import {CommandStrings} from "../../commands/CommandStrings";
-import {VoiceTextPairs} from "../../types/types";
-import {ISetPrefixCommand} from "./SetPrefixCommand";
 
 // Declare data you want to save in JSON here
 export interface IVoiceTextPairCommand {
     voiceTextPairs: VoiceTextPairs[];
 }
 
-export class VoiceTextPairCommand extends Component<IVoiceTextPairCommand> implements IVoiceTextPairCommand {
+export interface VoiceTextPairs {
+    voiceChannel: VoiceChannel,
+    textChannel: TextChannel
+}
+
+export class VoiceTextPairCommand extends Component<IVoiceTextPairCommand> {
 
     name: ComponentNames = ComponentNames.VOICE_TEXT_PAIR;
     voiceTextPairs: VoiceTextPairs[] = [];
@@ -33,7 +35,7 @@ export class VoiceTextPairCommand extends Component<IVoiceTextPairCommand> imple
         };
     }
 
-    async afterLoadJSON(loadedObject: IVoiceTextPairCommand): Promise<void> {
+    async afterLoadJSON(loadedObject: IVoiceTextPairCommand | undefined): Promise<void> {
         // console.log(loadedObject);
         if (loadedObject) {
             this.voiceTextPairs = loadedObject.voiceTextPairs;

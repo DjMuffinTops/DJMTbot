@@ -20,7 +20,7 @@ export class BSpeakCommand extends Component<IBSpeakCommand> {
         return {};
     }
 
-    async afterLoadJSON(loadedObject: IBSpeakCommand): Promise<void> {
+    async afterLoadJSON(loadedObject: IBSpeakCommand | undefined): Promise<void> {
         return Promise.resolve(undefined);
     }
 

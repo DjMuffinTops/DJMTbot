@@ -14,7 +14,6 @@ import {CommandStrings} from "../../commands/CommandStrings";
 import {isAdmin} from "../../commands/helper";
 import {Register} from "../../types/types";
 import {ComponentNames} from "../ComponentNames";
-import {PingCommand} from "./PingCommand";
 
 export interface IBruhCommand {}
 export class BruhCommand extends Component<IBruhCommand> {
@@ -28,7 +27,7 @@ export class BruhCommand extends Component<IBruhCommand> {
         return {};
     }
 
-    async afterLoadJSON(loadedObject: IBruhCommand): Promise<void> {
+    async afterLoadJSON(loadedObject: IBruhCommand | undefined): Promise<void> {
         return Promise.resolve(undefined);
     }
 
