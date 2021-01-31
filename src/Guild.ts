@@ -25,6 +25,7 @@ import {VoiceTextPairCommand} from "./Components/Commands/VoiceTextPairCommand";
 import {ReactBoardsComponent} from "./Components/Commands/ReactBoardsComponent";
 import {JSONStringifyReplacer, JSONStringifyReviver} from "./commands/helper";
 import {DayOfTheWeekComponent} from "./Components/Commands/DayOfTheWeekComponent";
+import {VCHoursComponent} from "./Components/Commands/VCHoursComponent";
 const defaultConfig = require("../json/defaultConfig.json");
 
 export class Guild implements GuildConfig {
@@ -64,6 +65,7 @@ export class Guild implements GuildConfig {
         this.components.set(ComponentNames.VOICE_TEXT_PAIR, new VoiceTextPairCommand(this));
         this.components.set(ComponentNames.REACT_BOARDS, new ReactBoardsComponent(this));
         this.components.set(ComponentNames.DAY_OF_THE_WEEK, new DayOfTheWeekComponent(this));
+        this.components.set(ComponentNames.VC_HOURS, new VCHoursComponent(this));
     }
 
     getComponent(name: ComponentNames): Component<any> | undefined {

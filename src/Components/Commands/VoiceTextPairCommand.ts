@@ -16,10 +16,10 @@ import {CommandStrings} from "../../commands/CommandStrings";
 
 // Declare data you want to save in JSON here
 export interface IVoiceTextPairCommand {
-    voiceTextPairs: VoiceTextPairs[];
+    voiceTextPairs: VoiceTextPair[];
 }
 
-export interface VoiceTextPairs {
+export interface VoiceTextPair {
     voiceChannel: VoiceChannel,
     textChannel: TextChannel
 }
@@ -27,7 +27,7 @@ export interface VoiceTextPairs {
 export class VoiceTextPairCommand extends Component<IVoiceTextPairCommand> {
 
     name: ComponentNames = ComponentNames.VOICE_TEXT_PAIR;
-    voiceTextPairs: VoiceTextPairs[] = [];
+    voiceTextPairs: VoiceTextPair[] = [];
 
     async getSaveData(): Promise<IVoiceTextPairCommand> {
         return {
@@ -84,7 +84,7 @@ export class VoiceTextPairCommand extends Component<IVoiceTextPairCommand> {
 
     async setVoiceTextPair(voiceChannel: VoiceChannel, textChannel: TextChannel): Promise<boolean> {
         console.log(this.voiceTextPairs);
-        const pair: VoiceTextPairs = {voiceChannel, textChannel};
+        const pair: VoiceTextPair = {voiceChannel, textChannel};
         for (const pair of this.voiceTextPairs) {
             if (pair.voiceChannel.id === voiceChannel.id && pair.textChannel.id === textChannel.id) {
                 this.voiceTextPairs.splice(this.voiceTextPairs.indexOf(pair),  1);
@@ -111,7 +111,7 @@ export class VoiceTextPairCommand extends Component<IVoiceTextPairCommand> {
         if (args.length === 0) {
             let channelString = "";
             if (this.voiceTextPairs.length > 0) {
-                this.voiceTextPairs.forEach((pair: VoiceTextPairs) => {
+                this.voiceTextPairs.forEach((pair: VoiceTextPair) => {
                     channelString += ` <#${pair.voiceChannel.id}> <#${pair.textChannel.id}>\n`;
                 });
                 await message.channel.send(`VC Channels: ${channelString}`);

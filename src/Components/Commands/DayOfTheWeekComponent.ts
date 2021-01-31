@@ -14,11 +14,8 @@ import {ComponentNames} from "../ComponentNames";
 import {DayOfTheWeek, GuildConfig} from "../../types/types";
 import {dayOfTheWeek} from "../../jobs/dotwConstants";
 import {isAdmin} from "../../commands/helper";
-import {getConfig, updateConfig} from "../../commands/config";
 import {CommandStrings} from "../../commands/CommandStrings";
-import {promises as FileSystem} from "fs";
-import cron from "node-cron";
-import {pleasantEvening} from "../../jobs/pleasantEvening";
+
 
 // Declare data you want to save in JSON here
 export interface DayOfTheWeekComponentSave {
