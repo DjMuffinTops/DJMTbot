@@ -12,7 +12,7 @@ import {
 import {ComponentNames} from "../ComponentNames";
 import {VoiceTextPairCommand, VoiceTextPair} from "./VoiceTextPairCommand";
 import {isAdmin} from "../../helper";
-import {Cron} from "../../types/Cron";
+import {Cron} from "../../Cron";
 import {CommandStrings} from "../../Constants/CommandStrings";
 
 // Declare data you want to save in JSON here

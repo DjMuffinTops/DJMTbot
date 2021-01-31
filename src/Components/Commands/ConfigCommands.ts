@@ -1,8 +1,17 @@
 import {Component} from "../Component";
-import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
+import {
+    Channel,
+    GuildMember,
+    Message,
+    MessageAttachment,
+    MessageReaction,
+    User,
+    VoiceState
+} from "discord.js";
 import {CommandStrings} from "../../Constants/CommandStrings";
-import {isAdmin} from "../../helper";
+import {isAdmin, JSONStringifyReplacer} from "../../helper";
 import {ComponentNames} from "../ComponentNames";
+import {DateTime} from "luxon";
 
 export interface IConfigCommands {}
 export class ConfigCommands extends Component<IConfigCommands>{
@@ -64,9 +73,9 @@ export class ConfigCommands extends Component<IConfigCommands>{
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
-        console.log(this.guild.getSaveData());
-        const jsonString = `"${this.guild.guildId}": ${JSON.stringify(this.guild.getSaveData(),null, '\t')}`;
-        await message.channel.send(`\`\`\`json\n${jsonString}\n\`\`\``);
+        const jsonString = `"${this.guild.guildId}": ${JSON.stringify({[this.guild.guildId]: this.getSaveData()}, JSONStringifyReplacer, '\\t')}`;
+        const attachment = new MessageAttachment(Buffer.from(jsonString), `config_${this.guild.guildId}_${DateTime.local().toLocaleString(DateTime.DATETIME_FULL_WITH_SECONDS)}.txt`);
+        await message.channel.send(attachment);
     }
 
     async resetConfig(message: Message) {

@@ -1,7 +1,7 @@
 import Discord, {Client, Message, User} from "discord.js";
 import {promises as FileSystem} from "fs";
 import {Guild} from "./Guild";
-import {Cron} from "./types/Cron";
+import {Cron} from "./Cron";
 // Here we load the guildConfigs.json file that contains our token and our prefix values.
 require('dotenv').config();
 Cron.getInstance();

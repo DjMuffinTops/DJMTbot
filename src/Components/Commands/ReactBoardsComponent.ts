@@ -48,7 +48,6 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
 
     async afterLoadJSON(loadedObject: ReactBoardSave | undefined): Promise<void> {
         if (loadedObject) {
-            console.log(loadedObject);
             this.emoteReactBoardMap = loadedObject.emoteReactBoardMap;
             this.autoReactMap = loadedObject.autoReactMap;
             this.starChannels = loadedObject.starChannels;

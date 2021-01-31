@@ -1,5 +1,5 @@
 import {Component} from "../Component";
-import {Cron} from "../../types/Cron";
+import {Cron} from "../../Cron";
 import {
     Channel,
     GuildMember,
