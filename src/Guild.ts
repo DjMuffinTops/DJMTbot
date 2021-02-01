@@ -17,7 +17,7 @@ import {BruhComponent} from "./Components/BruhComponent";
 import {promises as FileSystem} from "fs";
 import {ConfigComponent} from "./Components/ConfigComponent";
 import {ComponentNames} from "./Constants/ComponentNames";
-import {DebugComponent} from "./Components/DebugComponent";
+import {GuildSettersComponent} from "./Components/GuildSettersComponent";
 import {VoiceTextPairComponent} from "./Components/VoiceTextPairComponent";
 import {ReactBoardsComponent} from "./Components/ReactBoardsComponent";
 import {JSONStringifyReplacer, JSONStringifyReviver} from "./HelperFunctions";
@@ -67,7 +67,7 @@ export class Guild {
         this.components.set(ComponentNames.HELP, new HelpComponent(this));
         this.components.set(ComponentNames.PING, new PingComponent(this));
         this.components.set(ComponentNames.BRUH, new BruhComponent(this));
-        this.components.set(ComponentNames.DEBUG, new DebugComponent(this));
+        this.components.set(ComponentNames.DEBUG, new GuildSettersComponent(this));
         this.components.set(ComponentNames.VOICE_TEXT_PAIR, new VoiceTextPairComponent(this));
         this.components.set(ComponentNames.REACT_BOARDS, new ReactBoardsComponent(this));
         this.components.set(ComponentNames.DAY_OF_THE_WEEK, new DayOfTheWeekComponent(this));

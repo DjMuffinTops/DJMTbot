@@ -57,7 +57,7 @@ export class HelpComponent extends Component<HelpComponentSave> {
     }
 
     async helpCmd(args: string[], message: Message) {
-        let prefix = this.guild.guildId;
+        let prefix = this.guild.prefix;
         let helpCommands =
             `#FUN
 ${prefix}cheems [text] -> Cheemsifies the given text.\n

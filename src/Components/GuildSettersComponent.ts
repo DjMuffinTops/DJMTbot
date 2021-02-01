@@ -9,7 +9,7 @@ export interface DebugComponentSave {
 
 }
 
-export class DebugComponent extends Component<DebugComponentSave> {
+export class GuildSettersComponent extends Component<DebugComponentSave> {
 
     name: ComponentNames = ComponentNames.DEBUG;
 
@@ -49,9 +49,10 @@ export class DebugComponent extends Component<DebugComponentSave> {
         const command = args?.shift()?.toLowerCase() || '';
         if (command === ComponentCommands.SET_DEBUG_CHANNEL) {
             await this.setDebugChannel(args, message);
-        }
-        if (command === ComponentCommands.DEBUG_MODE) {
+        } else if (command === ComponentCommands.DEBUG_MODE) {
             await this.debugModeCmd(args, message);
+        } else if (command === ComponentCommands.SET_PREFIX) {
+            await this.setPrefixCmd(args, message);
         }
         return Promise.resolve(undefined);
     }
@@ -87,6 +88,23 @@ export class DebugComponent extends Component<DebugComponentSave> {
         } else {
             this.guild.debugChannel = message.channel.id;
             await message.channel.send(`${message.channel.toString()} is now set as the debugChannel channel`);
+        }
+    }
+
+    async setPrefixCmd(args: string[], message: Message) {
+        // Admin only
+        if (!isAdmin(message)) {
+            await message.channel.send(`This command requires administrator permissions.`);
+            return;
+        }
+        if (args.length === 0) {
+            this.guild.prefix = process.env.DEFAULT_PREFIX as string;
+            await message.channel.send(`Set my prefix to \`\`${process.env.DEFAULT_PREFIX}\`\``);
+        } else if (args.length === 1) {
+            this.guild.prefix = args[0] ? args[0] : process.env.DEFAULT_PREFIX as string;
+            await message.channel.send(`Set my prefix to \`\`${this.guild.prefix}\`\``);
+        } else {
+            await message.channel.send(`Please enter a single prefix.`);
         }
     }
 
