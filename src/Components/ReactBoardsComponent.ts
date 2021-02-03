@@ -274,7 +274,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
                 .setImage(message.attachments.array().length > 0 ? message.attachments.array()[0].url : '')
                 .setAuthor(`${message.author.username}#${message.author.discriminator} (${message.author.id})`, message.author.displayAvatarURL({size: 128, dynamic: true}))
                 .setFooter(`${reaction.count} ⭐ | ${message.id}`);
-                await channel.send('This is embed', {embed: embed});
+                await channel.send({embed: embed});
                 this.emoteReactBoardMap?.get(rawEmoteId)?.recentMsgIds?.push(message.id);
                 // We dont care about recent msg ids being saved to file, so dont save here.
             }
