@@ -79,11 +79,11 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
-        if (this.guild.debugChannel === message.channel.id) {
-            this.guild.debugChannel = "";
+        if (this.guild.debugChannelId === message.channel.id) {
+            this.guild.debugChannelId = "";
             await message.channel.send(`${message.channel.toString()} is no longer set as the debugChannel`);
         } else {
-            this.guild.debugChannel = message.channel.id;
+            this.guild.debugChannelId = message.channel.id;
             await message.channel.send(`${message.channel.toString()} is now set as the debugChannel channel`);
         }
     }

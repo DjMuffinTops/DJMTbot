@@ -29,7 +29,7 @@ const defaultConfig = require("../json/defaultConfig.json");
 export interface GuildConfig {
     debugMode: boolean,
     prefix: string,
-    debugChannel: string,
+    debugChannelId: string,
     componentData: any,
 }
 
@@ -44,7 +44,7 @@ export class Guild {
     // Config
     private _debugMode: boolean = defaultConfig.debugMode;
     private _prefix: string = process.env.DEFAULT_PREFIX as string;
-    private _debugChannel: string = defaultConfig.debugChannel;
+    private _debugChannelId: string = defaultConfig.debugChannelId;
     private componentData = defaultConfig.componentData;
     private components: Map<ComponentNames, Component<any>>;
 
@@ -54,7 +54,9 @@ export class Guild {
         this.components = new Map<ComponentNames, Component<any>>();
         try {
             this.initializeComponents().then(() => {
-                this.loadJSON().then(r => console.log(`[${guildId}] Guild initialized and loaded JSON.`));
+                this.loadJSON().then(r => {
+                    console.log(`[${guildId}] Guild initialized and loaded JSON.`);
+                });
             })
         } catch (e) {
             console.log(`[${guildId}]: ${e}`);
@@ -98,7 +100,7 @@ export class Guild {
         return {
             debugMode: this._debugMode,
             prefix: this._prefix,
-            debugChannel: this._debugChannel,
+            debugChannelId: this._debugChannelId,
             componentData: this.componentData,
         }
     }
@@ -116,18 +118,18 @@ export class Guild {
         } catch (e) {
             console.log(`[${this.guildId}] Could not load JSON, resetting JSON file: ${e}`)
             await this.resetJSON();
+            return;
         }
-        if (gConfig) {
-            this._debugMode = gConfig.debugMode || defaultConfig.debugMode;
-            this._prefix = gConfig.prefix || process.env.DEFAULT_PREFIX as string;
-            this._debugChannel = gConfig.debugChannel || '';
-            this.componentData = gConfig.componentData || {};
-            if (gConfig.componentData) {
-                for (const component of Array.from(this.components.values())) {
-                    // Send component data to their respective components.
-                    // @ts-ignore
-                    await component.afterLoadJSON(gConfig.componentData[component.name]);
-                }
+
+        if (gConfig && gConfig.componentData) {
+            this._debugMode = gConfig.debugMode;
+            this._prefix = gConfig.prefix;
+            this._debugChannelId = gConfig.debugChannelId;
+            this.componentData = gConfig.componentData;
+            for (const component of Array.from(this.components.values())) {
+                // Send component data to their respective components.
+                // @ts-ignore
+                await component.afterLoadJSON(gConfig.componentData[component.name]);
             }
         } else {
             console.log(`[${this.guildId}] Guild file read but gConfig contents not found. Resetting file`)
@@ -149,10 +151,14 @@ export class Guild {
         await FileSystem.writeFile(filename, JSON.stringify({[this.guildId]: this.getSaveData()}, JSONStringifyReplacer, '\t'));
         console.log(`${filename} saved`);
         if (this.debugMode){
-            const foundChannel = (await this.client.channels.fetch(this.debugChannel) as TextChannel);
+            const foundChannel = await this.getDebugChannel();
             const attachment = new MessageAttachment(Buffer.from(JSON.stringify({[this.guildId]: this.getSaveData()}, JSONStringifyReplacer, '\t')), 'config.txt');
             await foundChannel.send(attachment);
         }
+    }
+
+    private async getDebugChannel(): Promise<TextChannel> {
+        return await this.client.channels.fetch(this.debugChannelId) as TextChannel;
     }
 
     /**
@@ -161,9 +167,13 @@ export class Guild {
     async resetJSON() {
         this._debugMode = defaultConfig.devMode;
         this._prefix = process.env.DEFAULT_PREFIX as string;
-        this._debugChannel = defaultConfig.debugChannel;
+        this._debugChannelId = defaultConfig.debugChannel;
         this.componentData = defaultConfig.componentData;
         console.log(`Reset ${this.guildId} config to default settings.`);
+        if (this.debugChannelId) {
+            const debugChannel = await this.getDebugChannel();
+            await debugChannel.send(`Reset this guild's config`);
+        }
         await this.saveJSON();
         await this.loadJSON();
     }
@@ -174,6 +184,8 @@ export class Guild {
      * Relay's the discord client's 'ready' event to all components
      */
     async onReady(): Promise<void> {
+        const cachedGuild = this.client.guilds.cache.find(guild => guild.id === this.guildId);
+        console.log(`[${this.guildId}] Guild Ready! [${cachedGuild?.name}]`);
         for (const component of Array.from(this.components.values())) {
             await component.onReady();
         }
@@ -274,12 +286,12 @@ export class Guild {
         this.saveJSON();
     }
 
-    get debugChannel(): string {
-        return this._debugChannel;
+    get debugChannelId(): string {
+        return this._debugChannelId;
     }
 
-    set debugChannel(value: string) {
-        this._debugChannel = value;
+    set debugChannelId(value: string) {
+        this._debugChannelId = value;
         this.saveJSON();
     }
 }

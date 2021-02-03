@@ -1,7 +1,6 @@
 {
 	"debugMode": false,
 	"prefix": "djmt!",
-	"debugChannel": "",
-	"registered": false,
+	"debugChannelId": "",
 	"componentData": {}
 }
