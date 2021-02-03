@@ -2,9 +2,24 @@ import {GuildMember, Message, MessageReaction, User, VoiceState} from "discord.j
 import {Guild} from "./Guild";
 import {ComponentNames} from "./Constants/ComponentNames";
 
+/**
+ * Represents a Guild component. New functionality should be attached to guilds using an
+ * instance of a component.
+ *
+ * Expects a generic T, which should be the save interface for your component.
+ * The save interface should define the data you wish to store to the Guild's componentData object.
+ * The componentData object is what gets written and loaded from file, and is expected in the
+ * getSaveData and afterLoadJSON methods below.
+ *
+ * When your make your component, make sure to add it to the initializeComponents function in Guild.ts,
+ * or else your component will never run.
+ *
+ * See ExampleComponentTemplate.ts for how this class should be implemented (copy and paste it!)
+ */
 export abstract class Component<T> {
     abstract name: ComponentNames;
     guild: Guild;
+
     public constructor(guild: Guild) {
         this.guild = guild;
     }

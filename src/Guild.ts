@@ -46,7 +46,7 @@ export class Guild {
     private _prefix: string = process.env.DEFAULT_PREFIX as string;
     private _debugChannel: string = defaultConfig.debugChannel;
     private componentData = defaultConfig.componentData;
-    components: Map<ComponentNames, Component<any>>;
+    private components: Map<ComponentNames, Component<any>>;
 
     constructor(client: Client, guildId: string) {
         this.client = client;
@@ -63,8 +63,8 @@ export class Guild {
     }
 
     /**
-     * Initializes each component for this guild. Any new components need to be added to the
-     * components map to receive events.
+     * Initializes each component for this guild. Any new components NEED to be added to the
+     * components map to be run and receive events.
      * @private
      */
     private async initializeComponents(): Promise<void> {
