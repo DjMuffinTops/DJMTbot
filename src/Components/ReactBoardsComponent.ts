@@ -3,7 +3,7 @@ import {
     Channel,
     GuildMember,
     Message,
-    MessageAttachment,
+    MessageAttachment, MessageEmbed,
     MessageReaction, TextChannel,
     User,
     VoiceState
@@ -260,52 +260,21 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
             !this.emoteReactBoardMap?.get(rawEmoteId)?.recentMsgIds?.includes(reaction.message.id)) {
             const reactMapValue = this.emoteReactBoardMap.get(rawEmoteId);
             if (reaction.count === reactMapValue?.threshold && reactMapValue?.channelId) {
-                const attachmentList: MessageAttachment[] = [];
                 const message = reaction.message;
                 const channel = (await this.guild.client.channels.fetch(reactMapValue.channelId) as TextChannel);
-                message.attachments.forEach((attachment: MessageAttachment) => {
-                    // do something with the attachment
-                    const msgattachment = new MessageAttachment(attachment.url);
-                    attachmentList.push(msgattachment);
-                });
-                // post into the channel
-                const embed =  {
-                    type: 'rich',
-                    // title: undefined,
-                    description: `[Original Message](${message.url})`,
-                    // url: undefined,
-                    color: 16755763,
-                    timestamp: message.createdAt,
-                    fields: [
-                        { name: 'Channel', value: message.channel.toString(), inline: true },
-                        { name: 'Message', value: message.content || '\u200b', inline: true },
-                        { name: 'Media URL', value: message.attachments.first()?.url || '\u200b'}
-                    ],
-                    thumbnail: {
-                        url: message.author.displayAvatarURL({size: 128, dynamic: true}),
-                        // proxyURL: 'https://images-ext-2.discordapp.net/external/n9tMDc7bvqomY_KUtbzl7EHyu1ot_TsuC5OCTKqYyYY/https/cdn.discordapp.com/avatars/120736323706421249/c92e1eb3814ff24c8d7cd7de52557fdb.png',
-                        height: 128,
-                        width: 128
-                    },
-                    image: {
-                        url: attachmentList[0]?.attachment|| null
-                    },
-                    // video: null,
-                    author: {
-                        name: `${message.author.username}#${message.author.discriminator} (${message.author.id})`,
-                        // url: undefined,
-                        iconURL: message.author.displayAvatarURL({size: 128, dynamic: true}),
-                        // proxyIconURL: 'https://images-ext-2.discordapp.net/external/n9tMDc7bvqomY_KUtbzl7EHyu1ot_TsuC5OCTKqYyYY/https/cdn.discordapp.com/avatars/120736323706421249/c92e1eb3814ff24c8d7cd7de52557fdb.png'
-                    },
-                    // provider: null,
-                    footer: {
-                        text: `${reaction.count} ⭐ | ${message.id}`,
-                        iconURL: undefined,
-                        proxyIconURL: undefined
-                    },
-
-                };
-                await channel.send({embed: embed});
+                const embed = new MessageEmbed();
+                embed.type = 'rich';
+                embed.setDescription(`[Original Message](${message.url})`)
+                .setColor(16755763)
+                .setTimestamp(message.createdAt)
+                .addField('Channel', message.channel.toString(), true)
+                .addField('Message', message.content || '\u200b', true)
+                .addField('Media URL', message.attachments.first()?.url || '\u200b', false)
+                .setThumbnail(message.author.displayAvatarURL({size: 128, dynamic: true}))
+                .setImage(message.attachments.array().length > 0 ? message.attachments.array()[0].url : '')
+                .setAuthor(`${message.author.username}#${message.author.discriminator} (${message.author.id})`, message.author.displayAvatarURL({size: 128, dynamic: true}))
+                .setFooter(`${reaction.count} ⭐ | ${message.id}`);
+                await channel.send('This is embed', {embed: embed});
                 this.emoteReactBoardMap?.get(rawEmoteId)?.recentMsgIds?.push(message.id);
                 // We dont care about recent msg ids being saved to file, so dont save here.
             }

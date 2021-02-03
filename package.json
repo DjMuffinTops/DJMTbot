@@ -1,6 +1,6 @@
 {
   "name": "DJMTbot",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "",
   "main": "src/app.ts",
   "scripts": {
@@ -11,7 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "discord.js": "^12.0.2",
+    "discord.js": "12.5.1",
     "dotenv": "^8.2.0",
     "luxon": "^1.25.0",
     "node-cron": "^2.0.3",
