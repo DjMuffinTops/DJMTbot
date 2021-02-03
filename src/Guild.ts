@@ -209,7 +209,7 @@ export class Guild {
     async onMessage(args: string[], message: Message): Promise<void> {
         // Display the prefix when mentioned
         if (this.client?.user && message.mentions.has(this.client.user)) {
-            await message.channel.send(`Type \`\`${this.guildId}help\`\` to see my commands!`);
+            await message.channel.send(`Type \`\`${this._prefix}help\`\` to see my commands!`);
         }
         for (const component of Array.from(this.components.values())) {
             await component.onMessage(args, message); // All messages go through here
