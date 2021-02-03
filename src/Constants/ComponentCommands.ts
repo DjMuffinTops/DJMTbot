@@ -1,4 +1,4 @@
-export enum CommandStrings {
+export enum ComponentCommands {
     SET_DEBUG_CHANNEL = "setdebugchannel",
     SET_HOURS = "sethours",
     SET_AUTO_REACT = "setautoreact",
@@ -7,9 +7,7 @@ export enum CommandStrings {
     SET_STAR = "setstar",
     SET_VC_PAIRS = "setvcpairs",
     SET_REACT_PAIRS = "setreactpairs",
-    REGISTER = "register",
-    UNREGISTER = "unregister",
-    DEV_MODE = "dev",
+    DEBUG_MODE = "debug",
     SET_PREFIX = "prefix",
     EXPORT_CONFIG = "exportconfig",
     RESET_CONFIG = "resetconfig",

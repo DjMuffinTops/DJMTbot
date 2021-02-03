@@ -1,4 +1,4 @@
-export const dayOfTheWeek: any = {
+export const dayOfTheWeekConstants: any = {
     "0": {
         day: "Sunday",
         messages: ["https://cdn.discordapp.com/attachments/718331550953111602/737012518333186109/390aaab73e969fc9a912c447e51011b2850f84cdv2_hq.png"]
