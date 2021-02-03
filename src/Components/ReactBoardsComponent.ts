@@ -105,10 +105,6 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
             return;
         }
 
-        if (!this.guild.registered) {
-            await message.channel.send(`Please register your guild to use this command.`);
-            return;
-        }
         if (args.length === 0) {
             let msg = "";
             if (this.autoReactMap.size > 0) {
@@ -141,7 +137,6 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
                 await message.channel.send("The given channel is invalid!");
                 return;
             }
-            // If our map has it, we gotta look for it in our register and remove it
             if (this.autoReactMap.has(rawEmote)) {
                 if (this.autoReactMap.get(rawEmote)?.includes(channelId)) {
                     // If we have a match delete it from the map
@@ -175,10 +170,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
-        if (!this.guild.registered) {
-            await message.channel.send(`Please register your guild to use this command.`);
-            return;
-        }
+
         if (args.length === 0) {
             if (this.emoteReactBoardMap.size > 0) {
                 let msg = '';
@@ -218,7 +210,6 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
                 await message.channel.send(`The given args are invalid`);
                 return;
             }
-            // If our map has it, we gotta look for it in our register and remove it
             if (this.emoteReactBoardMap.has(rawEmote) &&
                 this.emoteReactBoardMap.get(rawEmote)?.channelId === channelId) {
                 // @ts-ignore
@@ -327,10 +318,6 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
             return;
         }
 
-        if (!this.guild.registered) {
-            await message.channel.send(`Please register your guild to use this command.`);
-            return;
-        }
         if (args.length === 0) {
             let channelString = "";
             if (this.starChannels?.length > 0) {

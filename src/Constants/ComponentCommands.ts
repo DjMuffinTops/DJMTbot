@@ -7,8 +7,6 @@ export enum ComponentCommands {
     SET_STAR = "setstar",
     SET_VC_PAIRS = "setvcpairs",
     SET_REACT_PAIRS = "setreactpairs",
-    REGISTER = "register",
-    UNREGISTER = "unregister",
     DEBUG_MODE = "debug",
     SET_PREFIX = "prefix",
     EXPORT_CONFIG = "exportconfig",

@@ -81,10 +81,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
-        if (!this.guild.registered) {
-            await message.channel.send(`Please register your guild to use this command.`);
-            return;
-        }
+
         if (args.length === 0) {
             let channelString = "";
             if (this.bruhChannels && this.bruhChannels?.length > 0) {
@@ -124,10 +121,6 @@ export class BruhComponent extends Component<BruhComponentSave> {
     }
 
     async sendBruh(message: Message) {
-        if (!this.guild.registered) {
-            await message.channel.send(`Please register your guild to use this command.`);
-            return;
-        }
         try {
             let attachmentList = [];
             let msgContent = '';
@@ -239,11 +232,6 @@ export class BruhComponent extends Component<BruhComponentSave> {
     }
 
     async bruhCmd(args: string[], message: Message) {
-        if (!this.guild.registered) {
-            await message.channel.send(`Please register your guild to use this command.`);
-            return;
-        }
-
         if (this.onCooldown) {
             await message.channel.send(`Please wait, the bruh command is on cooldown.`);
             return;

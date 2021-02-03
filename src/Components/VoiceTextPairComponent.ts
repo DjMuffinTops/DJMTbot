@@ -1,6 +1,5 @@
 import {Component} from "../Component";
 import {
-    Channel,
     GuildMember,
     Message,
     MessageReaction, TextChannel,
@@ -98,10 +97,6 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
             return;
         }
 
-        if (!this.guild.registered) {
-            await message.channel.send(`Please register your guild to use this command.`);
-            return;
-        }
         if (args.length === 0) {
             let channelString = "";
             if (this.voiceTextPairs.length > 0) {

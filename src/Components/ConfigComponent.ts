@@ -1,6 +1,5 @@
 import {Component} from "../Component";
 import {
-    Channel,
     GuildMember,
     Message,
     MessageAttachment,

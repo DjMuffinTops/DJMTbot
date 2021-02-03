@@ -1,8 +1,6 @@
 import Discord, {
-    Channel,
     Client,
-    DMChannel,
-    GuildChannel, GuildMember,
+    GuildMember,
     Message,
     User,
     VoiceState
@@ -50,11 +48,11 @@ export class DJMTbot {
                     this.guilds.set(guildId, guild);
                 }
             }
-            console.log(`Bot is ready!`);
             this.client?.user?.setActivity(`@DJMTbot for help!`);
             for (const id of Array.from(this.guilds.keys())) {
-                this.guilds.get(id)?.onReady();
+                await this.guilds.get(id)?.onReady();
             }
+            console.log(`Bot is ready!`);
         });
 
         this.client.on('guildMemberAdd', async (member) => {
@@ -135,12 +133,10 @@ export class DJMTbot {
 
         this.client.on("guildCreate", guild => {
             console.log(`New guild joined: ${guild.name} (id: ${guild.id}). This guild has ${guild.memberCount} members!`);
-            this.client?.user?.setActivity(`@DJMTbot for help! | ${this.client.users.cache.size} users`);
         });
 
         this.client.on("guildDelete", guild => {
             console.log(`I have been removed from: ${guild.name} (id: ${guild.id})`);
-            this.client?.user?.setActivity(`@DJMTbot for help! | ${this.client.users.cache.size} users`);
         });
 
         await this.client.login(process.env.DEV_TOKEN);

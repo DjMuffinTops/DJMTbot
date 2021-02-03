@@ -29,7 +29,6 @@ const defaultConfig = require("../json/defaultConfig.json");
 export interface GuildConfig {
     debugMode: boolean,
     prefix: string,
-    registered: boolean,
     debugChannel: string,
     componentData: any,
 }
@@ -45,7 +44,6 @@ export class Guild {
     // Config
     private _debugMode: boolean = defaultConfig.debugMode;
     private _prefix: string = process.env.DEFAULT_PREFIX as string;
-    private _registered: boolean = defaultConfig.registered;
     private _debugChannel: string = defaultConfig.debugChannel;
     private componentData = defaultConfig.componentData;
     components: Map<ComponentNames, Component<any>>;
@@ -100,7 +98,6 @@ export class Guild {
         return {
             debugMode: this._debugMode,
             prefix: this._prefix,
-            registered: this._registered,
             debugChannel: this._debugChannel,
             componentData: this.componentData,
         }
@@ -123,7 +120,6 @@ export class Guild {
         if (gConfig) {
             this._debugMode = gConfig.debugMode || defaultConfig.debugMode;
             this._prefix = gConfig.prefix || process.env.DEFAULT_PREFIX as string;
-            this._registered = gConfig.registered || defaultConfig.registered;
             this._debugChannel = gConfig.debugChannel || '';
             this.componentData = gConfig.componentData || {};
             if (gConfig.componentData) {
@@ -165,7 +161,6 @@ export class Guild {
     async resetJSON() {
         this._debugMode = defaultConfig.devMode;
         this._prefix = process.env.DEFAULT_PREFIX as string;
-        this._registered = defaultConfig.registered;
         this._debugChannel = defaultConfig.debugChannel;
         this.componentData = defaultConfig.componentData;
         console.log(`Reset ${this.guildId} config to default settings.`);
@@ -276,15 +271,6 @@ export class Guild {
 
     set prefix(value: string) {
         this._prefix = value;
-        this.saveJSON();
-    }
-
-    get registered(): boolean {
-        return this._registered;
-    }
-
-    set registered(value: boolean) {
-        this._registered = value;
         this.saveJSON();
     }
 

@@ -1,7 +1,6 @@
 import {Component} from "../Component";
 import {Cron} from "../Cron";
 import {
-    Channel,
     GuildMember,
     Message,
     MessageReaction,
@@ -123,10 +122,7 @@ export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> 
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
-        if (!this.guild.registered) {
-            await message.channel.send(`Please register your guild to use this command.`);
-            return;
-        }
+
         if (args.length === 0) {
             let channelString = "";
             if (this.dotwChannels?.length > 0) {

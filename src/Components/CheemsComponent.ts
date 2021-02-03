@@ -1,6 +1,6 @@
 import {Component} from "../Component";
 import {ComponentCommands} from "../Constants/ComponentCommands";
-import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
+import {GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
 import {ComponentNames} from "../Constants/ComponentNames";
 
 export interface CheemsComponentSave {}
