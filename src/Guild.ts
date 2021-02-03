@@ -1,6 +1,6 @@
 import {
     Channel,
-    Client,
+    Client, GuildChannel,
     GuildMember,
     Message, MessageAttachment, MessageEmbed,
     MessageReaction, TextChannel,
@@ -25,15 +25,20 @@ import {DayOfTheWeekComponent} from "./Components/DayOfTheWeekComponent";
 import {VCHoursComponent} from "./Components/VCHoursComponent";
 const defaultConfig = require("../json/defaultConfig.json");
 
-// What should be written to JSON
+// The structure of a Guild's save data JSON.
 export interface GuildConfig {
     debugMode: boolean,
     prefix: string,
     registered: boolean,
     debugChannel: string,
-    register: any,
+    componentData: any,
 }
 
+/**
+ * Represents a single discord server (referred to as a Guild by discord js api). Each guild instance
+ * maintains its own component instances as well. When creating a new component for guilds, make sure
+ * to add it to initializeComponents().
+ */
 export class Guild {
     client: Client;
     readonly guildId: string;
@@ -42,7 +47,7 @@ export class Guild {
     private _prefix: string = process.env.DEFAULT_PREFIX as string;
     private _registered: boolean = defaultConfig.registered;
     private _debugChannel: string = defaultConfig.debugChannel;
-    register = defaultConfig.register;
+    private componentData = defaultConfig.componentData;
     components: Map<ComponentNames, Component<any>>;
 
     constructor(client: Client, guildId: string) {
@@ -59,6 +64,11 @@ export class Guild {
 
     }
 
+    /**
+     * Initializes each component for this guild. Any new components need to be added to the
+     * components map to receive events.
+     * @private
+     */
     private async initializeComponents(): Promise<void> {
         this.components.set(ComponentNames.CONFIG, new ConfigComponent(this));
         this.components.set(ComponentNames.SAY, new SayComponent(this));
@@ -74,41 +84,72 @@ export class Guild {
         this.components.set(ComponentNames.VC_HOURS, new VCHoursComponent(this));
     }
 
+    /**
+     * Gets a component from this guild's components map. You will need to cast the return Component
+     * to access it's properties. Expects the component's assigned ComponnetNames enum value.
+     * @param name The ComponentNames (enum) name of the component to return.
+     */
     getComponent(name: ComponentNames): Component<any> | undefined {
         return this.components.get(name);
     }
 
+    /**
+     * Returns the guild data that will be saved to JSON.
+     */
     getSaveData(): GuildConfig {
         return {
             debugMode: this._debugMode,
             prefix: this._prefix,
             registered: this._registered,
             debugChannel: this._debugChannel,
-            register: this.register,
+            componentData: this.componentData,
         }
     }
 
-    // Config Read / Write
+    /**
+     * Loads data from this guild's respective JSON file. Set's the guilds fields and then passes
+     * component data to each respective component through the component afterLoadJJSON function.
+     */
     async loadJSON(): Promise<void> {
-        const buffer = await FileSystem.readFile(`./json/guilds/${this.guildId}.json`);
-        const gConfig = JSON.parse(buffer.toString(), JSONStringifyReviver)[this.guildId] as GuildConfig;
-        this._debugMode = gConfig.debugMode || defaultConfig.debugMode;
-        this._prefix = gConfig.prefix || process.env.DEFAULT_PREFIX as string;
-        this._registered = gConfig.registered || defaultConfig.registered;
-        this._debugChannel = gConfig.debugChannel || '';
-        this.register = gConfig.register || {};``
-        for (const component of Array.from(this.components.values())) {
-            // @ts-ignore
-            await component.afterLoadJSON(gConfig.register[component.name]);
+        const fileName = `./json/guilds/${this.guildId}.json`;
+        let gConfig;
+        try {
+            const buffer = await FileSystem.readFile(fileName);
+            gConfig = JSON.parse(buffer.toString(), JSONStringifyReviver)[this.guildId] as GuildConfig;
+        } catch (e) {
+            console.log(`[${this.guildId}] Could not load JSON, resetting JSON file: ${e}`)
+            await this.resetJSON();
+        }
+        if (gConfig) {
+            this._debugMode = gConfig.debugMode || defaultConfig.debugMode;
+            this._prefix = gConfig.prefix || process.env.DEFAULT_PREFIX as string;
+            this._registered = gConfig.registered || defaultConfig.registered;
+            this._debugChannel = gConfig.debugChannel || '';
+            this.componentData = gConfig.componentData || {};
+            if (gConfig.componentData) {
+                for (const component of Array.from(this.components.values())) {
+                    // Send component data to their respective components.
+                    // @ts-ignore
+                    await component.afterLoadJSON(gConfig.componentData[component.name]);
+                }
+            }
+        } else {
+            console.log(`[${this.guildId}] Guild file read but gConfig contents not found. Resetting file`)
+            await this.resetJSON();
         }
     }
 
+    /**
+     * Saves data for this guild to a JSON file.
+     */
     async saveJSON(): Promise<void> {
         const filename = `./json/guilds/${this.guildId}.json`;
+        // Build the componentData object by getting each component's save data
         for (const component of Array.from(this.components.values())) {
             // @ts-ignore
-            this.register[component.name] = await component.getSaveData();
+            this.componentData[component.name] = await component.getSaveData();
         }
+        // Write getSaveData() content to file
         await FileSystem.writeFile(filename, JSON.stringify({[this.guildId]: this.getSaveData()}, JSONStringifyReplacer, '\t'));
         console.log(`${filename} saved`);
         if (this.debugMode){
@@ -118,68 +159,104 @@ export class Guild {
         }
     }
 
+    /**
+     * Resets the guild's data to default and reset's the saved JSON
+     */
     async resetJSON() {
         this._debugMode = defaultConfig.devMode;
         this._prefix = process.env.DEFAULT_PREFIX as string;
         this._registered = defaultConfig.registered;
         this._debugChannel = defaultConfig.debugChannel;
-        this.register = defaultConfig.register;
+        this.componentData = defaultConfig.componentData;
         console.log(`Reset ${this.guildId} config to default settings.`);
         await this.saveJSON();
         await this.loadJSON();
     }
 
     // Events
+
+    /**
+     * Relay's the discord client's 'ready' event to all components
+     */
     async onReady(): Promise<void> {
         for (const component of Array.from(this.components.values())) {
             await component.onReady();
         }
     }
 
+    /**
+     * Relay's the discord client's 'guildMemberAdd' event to all components
+     * @param member The added guild member
+     */
     async onGuildMemberAdd(member: GuildMember): Promise<void> {
         for (const component of Array.from(this.components.values())) {
             await component.onGuildMemberAdd(member);
         }
     }
+
+    /**
+     * Relay's the discord client's 'message' event to all components
+     * @param args array of strings containing the message content, separated by spaces
+     * @param message the Message object
+     */
     async onMessage(args: string[], message: Message): Promise<void> {
         // Display the prefix when mentioned
         if (this.client?.user && message.mentions.has(this.client.user)) {
             await message.channel.send(`Type \`\`${this.guildId}help\`\` to see my commands!`);
         }
         for (const component of Array.from(this.components.values())) {
-            await component.onMessage(args, message);
+            await component.onMessage(args, message); // All messages go through here
 
-            // Pass through if it starts with our prefix
+            // Additionally, messages will go through here if the msg starts with our guild prefix
             if (message.content.indexOf(this._prefix) === 0) {
+                // set args to be everything after the prefix, separated by spaces
                 args = message.content.slice(this._prefix.length).trim().split(/ +/g);
                 await component.onMessageWithGuildPrefix(args, message);
             }
         }
     }
 
+    /**
+     * Relay's the discord client's 'messageUpdate' event to all components
+     * @param oldMessage the message prior to updating
+     * @param newMessage the message after updating
+     */
     async onMessageUpdate(oldMessage: Message, newMessage: Message): Promise<void> {
         for (const component of Array.from(this.components.values())) {
             await component.onMessageUpdate(oldMessage, newMessage);
         }
     }
+
+    /**
+     * Relay's the discord client's 'voiceStateUpdate' event to all components
+     * @param oldState the old voice state
+     * @param newState the new voice state
+     */
     async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
         for (const component of Array.from(this.components.values())) {
             await component.onVoiceStateUpdate(oldState, newState);
         }
     }
+
+    /**
+     * Relay's the discord client's 'messageReactionAdd' event to all components
+     * @param messageReaction the reaction added to the message
+     * @param user the user who added the reaction
+     */
     async onMessageReactionAdd(messageReaction: MessageReaction, user: User): Promise<void> {
         for (const component of Array.from(this.components.values())) {
             await component.onMessageReactionAdd(messageReaction, user);
         }
     }
+
+    /**
+     * Relay's the discord client's 'messageReactionRemove' event to all components
+     * @param messageReaction the reaction removed from the message
+     * @param user the user who removed the reaction
+     */
     async onMessageReactionRemove(messageReaction: MessageReaction, user: User): Promise<void> {
         for (const component of Array.from(this.components.values())) {
             await component.onMessageReactionRemove(messageReaction, user);
-        }
-    }
-    async onTypingStart(channel: Channel, user: User):Promise<void> {
-        for (const component of Array.from(this.components.values())) {
-            await component.onTypingStart(channel, user);
         }
     }
 

@@ -71,10 +71,6 @@ export class BruhComponent extends Component<BruhComponentSave> {
         return Promise.resolve(undefined);
     }
 
-    async onTypingStart(channel: Channel, user: User): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
     async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
         return Promise.resolve(undefined);
     }

@@ -72,10 +72,6 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
         return Promise.resolve(undefined);
     }
 
-    async onTypingStart(channel: Channel, user: User): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
     async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
         return Promise.resolve(undefined);
     }
