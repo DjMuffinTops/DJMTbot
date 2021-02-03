@@ -68,7 +68,7 @@ export class ConfigComponent extends Component<ConfigComponentSave>{
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
-        const jsonString = `"${this.guild.guildId}": ${JSON.stringify({[this.guild.guildId]: this.guild.getSaveData()}, JSONStringifyReplacer, '  ')}`;
+        const jsonString = `${JSON.stringify({[this.guild.guildId]: this.guild.getSaveData()}, JSONStringifyReplacer, '  ')}`;
         const attachment = new MessageAttachment(Buffer.from(jsonString), `config_${this.guild.guildId}_${DateTime.local().toLocaleString(DateTime.DATETIME_FULL_WITH_SECONDS)}.txt`);
         await message.channel.send(attachment);
     }
