@@ -1,0 +1,349 @@
+{
+	"683557579590467606": {
+		"prefix": "djmt!",
+		"debugChannelId": "685355983727362061",
+		"componentData": {
+			"CONFIG": {},
+			"SAY": {},
+			"CHEEMS": {},
+			"BSPEAK": {},
+			"HELP": {},
+			"PING": {},
+			"BRUH": {
+				"bruhChannels": [
+					"687887082365911085"
+				]
+			},
+			"DEBUG": {},
+			"VOICE_TEXT_PAIR": {
+				"voiceTextPairs": [
+					{
+						"voiceChannel": {
+							"type": "voice",
+							"deleted": false,
+							"id": "685387416416419860",
+							"name": "🔊 General VC",
+							"rawPosition": 1,
+							"parentID": "687891218272747520",
+							"permissionOverwrites": [
+								"758110296832737321"
+							],
+							"bitrate": 64000,
+							"userLimit": 0,
+							"guild": "683557579590467606",
+							"createdTimestamp": 1583479493956
+						},
+						"textChannel": {
+							"type": "text",
+							"deleted": false,
+							"id": "685377830011666435",
+							"name": "vc-chat",
+							"rawPosition": 45,
+							"parentID": "687891218272747520",
+							"permissionOverwrites": [
+								"758110296832737321"
+							],
+							"topic": null,
+							"nsfw": false,
+							"lastMessageID": "806411146592256071",
+							"rateLimitPerUser": 0,
+							"lastPinTimestamp": 1602381649307,
+							"guild": "683557579590467606",
+							"messages": [
+								"806408064823328768",
+								"806408073269739521",
+								"806408150077014036",
+								"806408253830332428",
+								"806408295496810536",
+								"806408314044678144",
+								"806408317601710100",
+								"806408321137246208",
+								"806408328602845185",
+								"806408414142005278",
+								"806408457141485605",
+								"806408487160250379",
+								"806408761073074216",
+								"806408774986104842",
+								"806408795151925268",
+								"806408830585929789",
+								"806408878274379797",
+								"806409046806626315",
+								"806409127881342977",
+								"806409213109862470",
+								"806409316067442758",
+								"806409374783242250",
+								"806409384073756674",
+								"806409427220430898",
+								"806409432996118558",
+								"806409500893773824",
+								"806409517206208513",
+								"806409520783032321",
+								"806409560977440798",
+								"806409605554765825",
+								"806409638600900630",
+								"806409648714154064",
+								"806409659589591040",
+								"806409694679531543",
+								"806409699720560660",
+								"806409745665622026",
+								"806409780372832256",
+								"806409987928096798",
+								"806410104726355968",
+								"806410165679161354",
+								"806410205277585459",
+								"806410240580255774",
+								"806410279238762527",
+								"806410496734396426",
+								"806410546417106974",
+								"806410652762636318",
+								"806410717786931200",
+								"806410743783489547",
+								"806410903066116108",
+								"806411023473049610",
+								"806411064387960853",
+								"806411146592256071"
+							],
+							"createdTimestamp": 1583477208379
+						}
+					},
+					{
+						"voiceChannel": {
+							"type": "voice",
+							"deleted": false,
+							"id": "686308858246856840",
+							"name": "🔊 General VC 2",
+							"rawPosition": 2,
+							"parentID": "687891218272747520",
+							"permissionOverwrites": [
+								"758110296832737321"
+							],
+							"bitrate": 64000,
+							"userLimit": 0,
+							"guild": "683557579590467606",
+							"createdTimestamp": 1583699182808
+						},
+						"textChannel": {
+							"type": "text",
+							"deleted": false,
+							"id": "696275411478249483",
+							"name": "vc-chat-2",
+							"rawPosition": 46,
+							"parentID": "687891218272747520",
+							"permissionOverwrites": [
+								"758110296832737321"
+							],
+							"topic": null,
+							"nsfw": false,
+							"lastMessageID": "806411125541175306",
+							"rateLimitPerUser": 0,
+							"lastPinTimestamp": 1608955890482,
+							"guild": "683557579590467606",
+							"messages": [
+								"806409701654921226",
+								"806409934034960384",
+								"806409990108610561",
+								"806410032500834314",
+								"806410258787467314",
+								"806410304451641355",
+								"806410463754715157",
+								"806410644303773717",
+								"806410740789149726",
+								"806410828537659422",
+								"806410841078628352",
+								"806411125541175306"
+							],
+							"createdTimestamp": 1586075394268
+						}
+					},
+					{
+						"voiceChannel": {
+							"type": "voice",
+							"deleted": false,
+							"id": "712862825655042050",
+							"name": "🎮 Gaming",
+							"rawPosition": 3,
+							"parentID": "687891218272747520",
+							"permissionOverwrites": [
+								"683557579590467606",
+								"685259372645187599",
+								"758110296832737321"
+							],
+							"bitrate": 64000,
+							"userLimit": 22,
+							"guild": "683557579590467606",
+							"createdTimestamp": 1590030141987
+						},
+						"textChannel": {
+							"type": "text",
+							"deleted": false,
+							"id": "718331550953111602",
+							"name": "gaming-vc-chat",
+							"rawPosition": 47,
+							"parentID": "687891218272747520",
+							"permissionOverwrites": [
+								"758110296832737321"
+							],
+							"topic": null,
+							"nsfw": false,
+							"lastMessageID": "806397210824015872",
+							"rateLimitPerUser": 0,
+							"lastPinTimestamp": 1607741161327,
+							"guild": "683557579590467606",
+							"messages": [],
+							"createdTimestamp": 1591333987702
+						}
+					},
+					{
+						"voiceChannel": {
+							"type": "voice",
+							"deleted": false,
+							"id": "693269995689345074",
+							"name": "🎵 Music",
+							"rawPosition": 4,
+							"parentID": "687891218272747520",
+							"permissionOverwrites": [
+								"683557579590467606",
+								"686642586777026640"
+							],
+							"bitrate": 128000,
+							"userLimit": 0,
+							"guild": "683557579590467606",
+							"createdTimestamp": 1585358847306
+						},
+						"textChannel": {
+							"type": "text",
+							"deleted": false,
+							"id": "733501245528080432",
+							"name": "music-vc-chat",
+							"rawPosition": 48,
+							"parentID": "687891218272747520",
+							"permissionOverwrites": [
+								"758110296832737321"
+							],
+							"topic": null,
+							"nsfw": false,
+							"lastMessageID": "806379634085724161",
+							"rateLimitPerUser": 0,
+							"lastPinTimestamp": 1595760245635,
+							"guild": "683557579590467606",
+							"messages": [],
+							"createdTimestamp": 1594950724728
+						}
+					},
+					{
+						"voiceChannel": {
+							"type": "voice",
+							"deleted": false,
+							"id": "755195307981144154",
+							"name": "🎞 Movie Night",
+							"rawPosition": 5,
+							"parentID": "687891218272747520",
+							"permissionOverwrites": [
+								"683557579590467606",
+								"718495889861116004",
+								"758110296832737321",
+								"780247459334455327"
+							],
+							"bitrate": 64000,
+							"userLimit": 23,
+							"guild": "683557579590467606",
+							"createdTimestamp": 1600122992273
+						},
+						"textChannel": {
+							"type": "text",
+							"deleted": false,
+							"id": "755195417120997447",
+							"name": "movie-night-vc-chat",
+							"rawPosition": 49,
+							"parentID": "687891218272747520",
+							"permissionOverwrites": [
+								"758110296832737321"
+							],
+							"topic": "Text channel for the movie-night voice channel.",
+							"nsfw": false,
+							"lastMessageID": "805321333189378049",
+							"rateLimitPerUser": 0,
+							"lastPinTimestamp": null,
+							"guild": "683557579590467606",
+							"messages": [],
+							"createdTimestamp": 1600123018294
+						}
+					}
+				]
+			},
+			"REACT_BOARDS": {
+				"emoteReactBoardMap": {
+					"dataType": "Map",
+					"value": [
+						[
+							"<:starM:794834814154833930>",
+							{
+								"threshold": 9,
+								"channelId": "692290853145673750",
+								"recentMsgIds": []
+							}
+						],
+						[
+							"<:starW:794834813914710016>",
+							{
+								"threshold": 4,
+								"channelId": "692290853145673750",
+								"recentMsgIds": []
+							}
+						],
+						[
+							"<:starP:794834813877878804>",
+							{
+								"threshold": 10,
+								"channelId": "692290853145673750",
+								"recentMsgIds": []
+							}
+						],
+						[
+							"<:bruh:686630198812082200>",
+							{
+								"threshold": 6,
+								"channelId": "687887082365911085",
+								"recentMsgIds": []
+							}
+						]
+					]
+				},
+				"autoReactMap": {
+					"dataType": "Map",
+					"value": [
+						[
+							"<:starM:794834814154833930>",
+							[
+								"695482939038892083"
+							]
+						],
+						[
+							"<:starW:794834813914710016>",
+							[
+								"685420826509574154"
+							]
+						],
+						[
+							"<:starP:794834813877878804>",
+							[
+								"758687791244378152"
+							]
+						]
+					]
+				},
+				"starChannels": [
+					"683557850454556675",
+					"683557873686806528",
+					"767457371257307186"
+				]
+			},
+			"DAY_OF_THE_WEEK": {
+				"dotwChannels": [
+					"688848577212317744"
+				]
+			},
+			"VC_HOURS": {}
+		}
+	}
+}

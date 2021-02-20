@@ -1,7 +1,6 @@
 {
-	"devMode": false,
+	"debugMode": false,
 	"prefix": "djmt!",
-	"bruhCmd": {
-		"onCooldown": false
-	}
+	"debugChannelId": "",
+	"componentData": {}
 }
