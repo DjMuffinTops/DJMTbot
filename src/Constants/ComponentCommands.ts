@@ -16,5 +16,6 @@ export enum ComponentCommands {
     CHEEMS = "cheems",
     HELP = "help",
     PING  = "ping",
-    SAY = "say"
+    SAY = "say",
+    SET_PNGRC = "setpngrc",
 }
