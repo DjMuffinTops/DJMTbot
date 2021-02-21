@@ -25,3 +25,10 @@ yarn
 ```
 yarn start
 ```
+
+## Creating New Features (Components)
+Visit https://github.com/DjMuffinTops/DJMTbot/blob/develop/src/Components/ExampleComponentTemplate.ts for an example component template. 
+
+Copy and paste this file in the Components folder and implement your feature there. Make sure to read the comments throughly!
+
+If you require more events, functions, or changes in anywhere, please make an issue for it! Also feel free to to contact me on discord for any help!
