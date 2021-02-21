@@ -40,6 +40,7 @@ export interface GuildConfig {
  */
 export class Guild {
     client: Client;
+    isReady: boolean = false;
     readonly guildId: string;
     // Config
     private _debugMode: boolean = defaultConfig.debugMode;
@@ -54,9 +55,7 @@ export class Guild {
         this.components = new Map<ComponentNames, Component<any>>();
         try {
             this.initializeComponents().then(() => {
-                this.loadJSON().then(r => {
-                    console.log(`[${guildId}] Guild initialized and loaded JSON.`);
-                });
+                console.log(`[${guildId}] Guild initialized`);
             })
         } catch (e) {
             console.log(`[${guildId}]: ${e}`);
@@ -184,11 +183,14 @@ export class Guild {
      * Relay's the discord client's 'ready' event to all components
      */
     async onReady(): Promise<void> {
-        const cachedGuild = this.client.guilds.cache.find(guild => guild.id === this.guildId);
-        console.log(`[${this.guildId}] Guild Ready! [${cachedGuild?.name}]`);
+        await this.loadJSON();
+        console.log('Loaded JSON!');
         for (const component of Array.from(this.components.values())) {
             await component.onReady();
         }
+        const cachedGuild = this.client.guilds.cache.find(guild => guild.id === this.guildId);
+        console.log(`[${this.guildId}] Guild Ready! [${cachedGuild?.name}]`);
+        this.isReady = true;
     }
 
     /**
@@ -196,8 +198,10 @@ export class Guild {
      * @param member The added guild member
      */
     async onGuildMemberAdd(member: GuildMember): Promise<void> {
-        for (const component of Array.from(this.components.values())) {
-            await component.onGuildMemberAdd(member);
+        if (this.isReady) {
+            for (const component of Array.from(this.components.values())) {
+                await component.onGuildMemberAdd(member);
+            }
         }
     }
 
@@ -207,18 +211,20 @@ export class Guild {
      * @param message the Message object
      */
     async onMessage(args: string[], message: Message): Promise<void> {
-        // Display the prefix when mentioned
-        if (this.client?.user && message.mentions.has(this.client.user)) {
-            await message.channel.send(`Type \`\`${this._prefix}help\`\` to see my commands!`);
-        }
-        for (const component of Array.from(this.components.values())) {
-            await component.onMessage(args, message); // All messages go through here
+        if (this.isReady) {
+            // Display the prefix when mentioned
+            if (this.client?.user && message.mentions.has(this.client.user)) {
+                await message.channel.send(`Type \`\`${this._prefix}help\`\` to see my commands!`);
+            }
+            for (const component of Array.from(this.components.values())) {
+                await component.onMessage(args, message); // All messages go through here
 
-            // Additionally, messages will go through here if the msg starts with our guild prefix
-            if (message.content.indexOf(this._prefix) === 0) {
-                // set args to be everything after the prefix, separated by spaces
-                args = message.content.slice(this._prefix.length).trim().split(/ +/g);
-                await component.onMessageWithGuildPrefix(args, message);
+                // Additionally, messages will go through here if the msg starts with our guild prefix
+                if (message.content.indexOf(this._prefix) === 0) {
+                    // set args to be everything after the prefix, separated by spaces
+                    args = message.content.slice(this._prefix.length).trim().split(/ +/g);
+                    await component.onMessageWithGuildPrefix(args, message);
+                }
             }
         }
     }
@@ -229,8 +235,10 @@ export class Guild {
      * @param newMessage the message after updating
      */
     async onMessageUpdate(oldMessage: Message, newMessage: Message): Promise<void> {
-        for (const component of Array.from(this.components.values())) {
-            await component.onMessageUpdate(oldMessage, newMessage);
+        if (this.isReady) {
+            for (const component of Array.from(this.components.values())) {
+                await component.onMessageUpdate(oldMessage, newMessage);
+            }
         }
     }
 
@@ -240,8 +248,10 @@ export class Guild {
      * @param newState the new voice state
      */
     async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
-        for (const component of Array.from(this.components.values())) {
-            await component.onVoiceStateUpdate(oldState, newState);
+        if (this.isReady) {
+            for (const component of Array.from(this.components.values())) {
+                await component.onVoiceStateUpdate(oldState, newState);
+            }
         }
     }
 
@@ -251,8 +261,10 @@ export class Guild {
      * @param user the user who added the reaction
      */
     async onMessageReactionAdd(messageReaction: MessageReaction, user: User): Promise<void> {
-        for (const component of Array.from(this.components.values())) {
-            await component.onMessageReactionAdd(messageReaction, user);
+        if (this.isReady) {
+            for (const component of Array.from(this.components.values())) {
+                await component.onMessageReactionAdd(messageReaction, user);
+            }
         }
     }
 
@@ -262,8 +274,10 @@ export class Guild {
      * @param user the user who removed the reaction
      */
     async onMessageReactionRemove(messageReaction: MessageReaction, user: User): Promise<void> {
-        for (const component of Array.from(this.components.values())) {
-            await component.onMessageReactionRemove(messageReaction, user);
+        if (this.isReady) {
+            for (const component of Array.from(this.components.values())) {
+                await component.onMessageReactionRemove(messageReaction, user);
+            }
         }
     }
 
