@@ -54,9 +54,7 @@ export class Guild {
         this.components = new Map<ComponentNames, Component<any>>();
         try {
             this.initializeComponents().then(() => {
-                this.loadJSON().then(r => {
-                    console.log(`[${guildId}] Guild initialized and loaded JSON.`);
-                });
+                console.log(`[${guildId}] Guild initialized`);
             })
         } catch (e) {
             console.log(`[${guildId}]: ${e}`);
@@ -184,6 +182,8 @@ export class Guild {
      * Relay's the discord client's 'ready' event to all components
      */
     async onReady(): Promise<void> {
+        await this.loadJSON();
+        console.log('Loaded JSON!');
         const cachedGuild = this.client.guilds.cache.find(guild => guild.id === this.guildId);
         console.log(`[${this.guildId}] Guild Ready! [${cachedGuild?.name}]`);
         for (const component of Array.from(this.components.values())) {
