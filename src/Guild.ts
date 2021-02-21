@@ -23,6 +23,7 @@ import {ReactBoardsComponent} from "./Components/ReactBoardsComponent";
 import {JSONStringifyReplacer, JSONStringifyReviver} from "./HelperFunctions";
 import {DayOfTheWeekComponent} from "./Components/DayOfTheWeekComponent";
 import {VCHoursComponent} from "./Components/VCHoursComponent";
+import {PNGResolutionCheck} from "./Components/PNGResolutionCheck";
 const defaultConfig = require("../json/defaultConfig.json");
 
 // The structure of a Guild's save data JSON.
@@ -81,6 +82,7 @@ export class Guild {
         this.components.set(ComponentNames.REACT_BOARDS, new ReactBoardsComponent(this));
         this.components.set(ComponentNames.DAY_OF_THE_WEEK, new DayOfTheWeekComponent(this));
         this.components.set(ComponentNames.VC_HOURS, new VCHoursComponent(this));
+        this.components.set(ComponentNames.PNG_RESOLUTION_CHECK, new PNGResolutionCheck(this));
     }
 
     /**
