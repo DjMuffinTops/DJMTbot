@@ -10,7 +10,7 @@ yarn
 ```
 
 ## Get a Discord Bot Token 
-To get your own bot token, (create a bot!)[https://discordjs.guide/preparations/setting-up-a-bot-application.html#setting-up-a-bot-application]
+To get your own bot token, [create a bot!](https://discordjs.guide/preparations/setting-up-a-bot-application.html#setting-up-a-bot-application)
 
 You may also ask me for access to the PW Test server and dev bot token on Discord!
 
