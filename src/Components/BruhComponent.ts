@@ -96,24 +96,22 @@ export class BruhComponent extends Component<BruhComponentSave> {
             for (const channelMentionStr of args) {
                 // Get the ID from the mention
                 let channelId = channelMentionStr.substring(2, channelMentionStr.indexOf('>'));
-                try {
-                    // Test if the channel exists before moving on
-                    const foundChannel = await this.guild.client.channels.fetch(channelId);
-                } catch (e) {
-                    console.error(e);
+                // Test if the channel exists before moving on
+                const foundChannel = this.djmtGuild.getGuildChannel(channelId);
+                if (!foundChannel) {
                     await message.channel.send("The given channel is invalid!");
                     continue;
                 }
                 // Remove the channel if it's already in the list
                 if (this.bruhChannels?.includes(channelId)) {
                     this.bruhChannels.splice(this.bruhChannels.indexOf(channelId), 1);
-                    await this.guild.saveJSON();
+                    await this.djmtGuild.saveJSON();
                     // await updateConfig(gConfig, message);
                     await message.channel.send(`Removed ${channelMentionStr} from the bruh channels list!`);
                 } else {
                     // Push the channelId to the bruhChannels list
                     this.bruhChannels.push(channelId);
-                    await this.guild.saveJSON();
+                    await this.djmtGuild.saveJSON();
                     await message.channel.send(`Added ${channelMentionStr} to the bruh channels list!`);
                 }
             }
@@ -190,7 +188,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
                                 });
                             }
                             if (channelId) {
-                                const foundChannel = (await this.guild.client.channels.fetch(channelId) as TextChannel);
+                                const foundChannel = (this.djmtGuild.getGuildChannel(channelId) as TextChannel);
                                 searchMessage = await foundChannel.messages.fetch(messageId);
                                 msgContent = searchMessage.content;
                                 // TODO: if search message isnt found try again with another random message?

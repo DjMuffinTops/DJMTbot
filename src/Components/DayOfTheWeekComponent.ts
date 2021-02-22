@@ -91,26 +91,30 @@ export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> 
     async dotwJob() {
         const date = new Date();
         const today: DayOfTheWeek = dayOfTheWeekConstants[date.getDay()];
-        console.log(`[${this.guild.guildId}] Running Day of the Week Job: ${today.day} ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`);
+        console.log(`[${this.djmtGuild.guildId}] Running Day of the Week Job: ${today.day} ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`);
         for (const channelId of this.dotwChannels) {
-            const channel = (await this.guild.client.channels.fetch(channelId) as TextChannel);
-            // Determine which dotw post to send
-            let randomMessage = today.messages[Math.floor(today.messages.length * Math.random())];
-            await channel.send(randomMessage);
-            console.log(`[${this.guild.guildId}] Sent: ${date.toLocaleTimeString()} ${randomMessage ? randomMessage : ''}`);
+            const channel = (this.djmtGuild.getGuildChannel(channelId) as TextChannel);
+            if (!channel) {
+                console.error(`[DOTW Job]: ${channelId} could not be found.`)
+            } else {
+                // Determine which dotw post to send
+                let randomMessage = today.messages[Math.floor(today.messages.length * Math.random())];
+                await channel.send(randomMessage);
+                console.log(`[${this.djmtGuild.guildId}] Sent: ${date.toLocaleTimeString()} ${randomMessage ? randomMessage : ''}`);
+            }
         }
     }
 
     async pleasantEveningJob() {
         if (Math.random() < .4) {
             for (const channelId of this.dotwChannels) {
-                try {
-                    const channel = (await this.guild.client.channels.fetch(channelId) as TextChannel);
+                const channel = this.djmtGuild.getGuildChannel(channelId) as TextChannel;
+                if (!channel) {
+                    console.error(`[PleasantEveningJob]: Could not find channel ${channelId}`);
+                } else {
                     // Determine which dotw post to send
                     const msg = 'https://cdn.discordapp.com/attachments/683557958327730219/793229701920718858/unknown.png';
                     await channel.send(msg);
-                } catch (e) {
-                    console.log(e);
                 }
             }
         }
@@ -136,20 +140,18 @@ export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> 
         } else {
             for (const rawChannelId of args) {
                 let channelId = rawChannelId.substring(2, rawChannelId.indexOf('>'));
-                try {
-                    const foundChannel = await this.guild.client.channels.fetch(channelId);
-                } catch (e) {
-                    console.error(e);
+                const foundChannel = await this.djmtGuild.getGuildChannel(channelId);
+                if (!foundChannel) {
                     await message.channel.send("The given channel is invalid!");
                     continue;
                 }
                 if (this.dotwChannels.includes(channelId)) {
                     this.dotwChannels = [];
-                    await this.guild.saveJSON();
+                    await this.djmtGuild.saveJSON();
                     await message.channel.send(`Removed ${rawChannelId} as the Day of the Week Channel!`);
                 } else {
                     this.dotwChannels = [channelId];
-                    await this.guild.saveJSON();
+                    await this.djmtGuild.saveJSON();
                     await message.channel.send(`Set ${rawChannelId} as the Day of the Week Channel!`);
                 }
             }

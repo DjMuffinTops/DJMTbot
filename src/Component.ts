@@ -1,5 +1,5 @@
 import {GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
-import {Guild} from "./Guild";
+import {DJMTGuild} from "./DJMTGuild";
 import {ComponentNames} from "./Constants/ComponentNames";
 
 /**
@@ -18,10 +18,10 @@ import {ComponentNames} from "./Constants/ComponentNames";
  */
 export abstract class Component<T> {
     abstract name: ComponentNames;
-    guild: Guild;
+    djmtGuild: DJMTGuild;
 
-    public constructor(guild: Guild) {
-        this.guild = guild;
+    public constructor(guild: DJMTGuild) {
+        this.djmtGuild = guild;
     }
     // Events
     // (Not all events have been implemented, if you need one that isn't here, open a github issue for it.

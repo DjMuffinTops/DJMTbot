@@ -63,8 +63,13 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
             for (const key of Array.from(loadedObject.channels.keys())) {
                 const value = loadedObject.channels.get(key);
                 if (value) {
+                    const channel = this.djmtGuild.getGuildChannel(value.channel) as TextChannel;
+                    if (!channel) {
+                        console.error(`[PNGResolutionCheck]: could not load ${value}`);
+                        continue;
+                    }
                     const newValue: PNGResolutionEntry = {
-                        channel: await this.guild.client.channels.fetch(value.channel) as TextChannel,
+                        channel: channel,
                         height: value.height,
                         width: value.width
                     }
@@ -241,7 +246,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
             width: entry.width,
             height: entry.height
         });
-        await this.guild.saveJSON();
+        await this.djmtGuild.saveJSON();
         return `Added ${entry.channel.toString()} to PNG Resolution Checking Channels!`;
     }
 
@@ -252,7 +257,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
     async removePNGRCChannel(channel: TextChannel) {
         if (this.channelsMap.get(channel.id)) {
             this.channelsMap.delete(channel.id);
-            await this.guild.saveJSON();
+            await this.djmtGuild.saveJSON();
             return `Removed ${channel.toString()} from PNG Resolution Checking Channels`;
         } else {
             return `${channel.toString()} is not a PNG Resolution Checking Channel`;
