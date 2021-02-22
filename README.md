@@ -27,8 +27,12 @@ yarn start
 ```
 
 ## Creating New Features (Components)
-Visit https://github.com/DjMuffinTops/DJMTbot/blob/develop/src/Components/ExampleComponentTemplate.ts for an example component template. 
+Visit https://github.com/DjMuffinTops/DJMTbot/blob/develop/src/ExampleComponentTemplate.ts for an example component template. 
 
-Copy and paste this file in the Components folder and implement your feature there. Make sure to read the comments throughly!
+Copy and paste this file into the Components folder and implement your feature there. Make sure to read the comments throughly!
+
+## Getting your component to run
+
+You MUST add a line to export your Component class in https://github.com/DjMuffinTops/DJMTbot/blob/develop/src/Components/index.ts for the bot to run your component!
 
 If you require more events, functions, or changes in anywhere, please make an issue for it! Also feel free to to contact me on discord for any help!
