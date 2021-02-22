@@ -19,5 +19,5 @@ export enum ComponentCommands {
     SAY = "say",
     SET_PNGRC = "setpngrc",
     SET_BANNER= "setbanner",
-    NEXT_BANNER= "nextbanner"
+    ROTATE_BANNER= "rotatebanner"
 }

@@ -37,7 +37,7 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
         // Every X hours, change the banner
         Cron.getInstance().schedule(`0 0 */${this.hourInterval} * * *`, async () => {
             console.log(`[${this.djmtGuild.guildId}] Running Dynamic Banner Job`);
-            await this.setNextServerBanner();
+            await this.rotateServerBanner();
         });
     }
 
@@ -65,8 +65,8 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
         const command = args?.shift()?.toLowerCase() || '';
         if (command === ComponentCommands.SET_BANNER) {
             await this.addOrRemoveImageUrl(args, message);
-        } else if (command === ComponentCommands.NEXT_BANNER) {
-            await this.setNextServerBanner(message);
+        } else if (command === ComponentCommands.ROTATE_BANNER) {
+            await this.rotateServerBanner(message);
         }
         return Promise.resolve(undefined);
     }
@@ -80,7 +80,7 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
      * Changes the server banner to the next image in the image url list
      * @param message The message object this command was called by
      */
-    async setNextServerBanner(message?: Message) {
+    async rotateServerBanner(message?: Message) {
         // Admin only
         if (message && !isAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
@@ -88,9 +88,9 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
         }
 
         if (this.imageUrls.length <= 0) {
-            console.log(`[${this.djmtGuild.guildId}] No Dynamic Banner Image Url in queue to change to.`)
+            console.log(`[${this.djmtGuild.guildId}] No Dynamic Banner images in queue to change to.`)
             if (message) {
-                await message.channel.send(`No Dynamic Banner Image Url in queue to change to.`);
+                await message.channel.send(`No Dynamic Banner images in queue to rotate to.`);
             }
         } else {
             const nextUrl = this.imageUrls.shift();
@@ -128,17 +128,17 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
                 })
                 await message.channel.send(msg);
             } else {
-                await message.channel.send(`No Dynamic Banner Image Urls have been set`);
+                await message.channel.send(`No Dynamic Banner Images in the queue`);
             }
         } else if (args.length === 1) {
             const imageUrl = args[0];
             if (this.imageUrls.includes(imageUrl)) {
                 await this.removeImageUrl(imageUrl);
-                await message.channel.send(`Removed ${imageUrl} to Dynamic Banner Image Queue`);
+                await message.channel.send(`Removed ${imageUrl} from Dynamic Banner queue`);
             } else {
                 try {
                     await this.addImageUrl(imageUrl);
-                    await message.channel.send(`Added ${imageUrl} to Dynamic Banner Image Queue`);
+                    await message.channel.send(`Added ${imageUrl} to Dynamic Banner queue`);
                 } catch(e) {
                     await message.channel.send(e.message);
                 }
