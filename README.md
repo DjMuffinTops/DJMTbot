@@ -6,7 +6,7 @@ Install Yarn!
 https://classic.yarnpkg.com/en/docs/install
 
 ## Create a .env file in the root directory
-TOKEN and DEFAULT_PREFIX must be defined here.
+```TOKEN``` and ```DEFAULT_PREFIX``` must be defined here.
 To get a token, create a bot: https://discordjs.guide/preparations/setting-up-a-bot-application.html#setting-up-a-bot-application
 
 Also ask me for access to the PW Test server and dev bot token on Discord!
@@ -35,4 +35,11 @@ Copy and paste this file into the Components folder and implement your feature t
 
 You MUST add a line to export your Component class in https://github.com/DjMuffinTops/DJMTbot/blob/develop/src/Components/index.ts for the bot to run your component!
 
-If you require more events, functions, or changes in anywhere, please make an issue for it! Also feel free to to contact me on discord for any help!
+## How To Contribute
+Please branch from, and make Pull Requests to the ```develop``` branch for anything you'd like to contribute!
+
+If you require more events, functions, or changes in anywhere, please make an issue for it!
+
+## Feel free to to contact me on discord for any help! DjMuffinTops#6590
+
+
