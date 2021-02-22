@@ -15,7 +15,7 @@ import {ComponentCommands} from "../Constants/ComponentCommands";
 
 
 // Declare data you want to save in JSON here
-export interface DayOfTheWeekComponentSave {
+interface DayOfTheWeekComponentSave {
     dotwChannels: string[];
 }
 

@@ -13,7 +13,7 @@ import {isAdmin} from "../HelperFunctions";
 import {ComponentCommands} from "../Constants/ComponentCommands";
 
 // Declare data you want to save in JSON here
-export interface ReactBoardSave {
+interface ReactBoardSave {
     emoteReactBoardMap: Map<string, ReactBoardMapValue>,
     autoReactMap: Map<string, string[]>
     starChannels: string[];

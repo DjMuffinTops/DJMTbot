@@ -3,7 +3,7 @@ import {ComponentCommands} from "../Constants/ComponentCommands";
 import {Component} from "../Component";
 import {ComponentNames} from "../Constants/ComponentNames";
 
-export interface PingComponentSave {}
+interface PingComponentSave {}
 export class PingComponent extends Component<PingComponentSave>{
 
     name: ComponentNames = ComponentNames.PING;

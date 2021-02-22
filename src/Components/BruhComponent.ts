@@ -13,7 +13,7 @@ import {ComponentCommands} from "../Constants/ComponentCommands";
 import {isAdmin} from "../HelperFunctions";
 import {ComponentNames} from "../Constants/ComponentNames";
 
-export interface BruhComponentSave {
+interface BruhComponentSave {
     bruhChannels: string[];
 }
 export class BruhComponent extends Component<BruhComponentSave> {

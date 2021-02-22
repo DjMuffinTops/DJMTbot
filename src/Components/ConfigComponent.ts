@@ -12,7 +12,7 @@ import {isAdmin, JSONStringifyReplacer} from "../HelperFunctions";
 import {ComponentNames} from "../Constants/ComponentNames";
 import {DateTime} from "luxon";
 
-export interface ConfigComponentSave {}
+interface ConfigComponentSave {}
 export class ConfigComponent extends Component<ConfigComponentSave>{
 
     name: ComponentNames = ComponentNames.CONFIG;

@@ -30,8 +30,8 @@ export class DJMTbot {
     }
 
     private async initGuildInstancesFromFiles(): Promise<void> {
-        const files = await FileSystem.readdir('./json/guilds');
-        const guildIds = files.map((filename) => filename.substr(0, filename.indexOf('.')));
+        const filenames = await FileSystem.readdir('./json/guilds');
+        const guildIds = filenames.map((filename) => filename.substr(0, filename.indexOf('.')));
         for (const id of guildIds) {
             const guild = new DJMTGuild(id);
             this.guilds.set(id, guild);
@@ -139,6 +139,6 @@ export class DJMTbot {
             console.log(`I have been removed from: ${guild.name} (id: ${guild.id})`);
         });
 
-        await this.client.login(process.env.DEV_TOKEN);
+        await this.client.login(process.env.TOKEN);
     }
 }

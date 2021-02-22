@@ -1,23 +1,21 @@
-import {Component} from "../Component";
+import {Component} from "./Component";
 import {GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
-import {ComponentNames} from "../Constants/ComponentNames";
+import {ComponentNames} from "./Constants/ComponentNames";
 
 /**
  * Declare data you want to save in JSON here. This interface is used for getSaveData and
  * afterLoadJSON, as it tells Typescript what data you're expecting to write and load.
  */
-export interface ExampleComponentSave {
-
-}
+interface ExampleComponentSave {}
 
 /**
  * Describe your component here! Be sure to mention what its for and if it has any command strings
  * that users can use to interact.
+ * NOTE: This component class file must be exported in the index.ts within the Components folder to be run by the bot!
  */
 export class ExampleComponentTemplate extends Component<ExampleComponentSave> {
 
-    // MANDATORY: Define a name in ComponentNames.ts and place it here. Use this same name in
-    // Guild.ts initializeComponents() to store to the components map.
+    // MANDATORY: Define a name in ComponentNames.ts and place it here.
     name: ComponentNames = ComponentNames.EXAMPLE_COMPONENT;
 
     async getSaveData(): Promise<ExampleComponentSave> {

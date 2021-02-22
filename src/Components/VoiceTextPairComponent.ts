@@ -12,7 +12,7 @@ import {isAdmin} from "../HelperFunctions";
 import {ComponentCommands} from "../Constants/ComponentCommands";
 
 // Declare data you want to save in JSON here
-export interface VoiceTextPairComponentSave {
+interface VoiceTextPairComponentSave {
     voiceTextPairs: VoiceTextPair[];
 }
 
