@@ -20,7 +20,7 @@ import probe, {ProbeResult} from 'probe-image-size';
  * Declare data you want to save in JSON here. This interface is used for getSaveData and
  * afterLoadJSON, as it tells Typescript what data you're expecting to write and load.
  */
-export interface PNGResolutionCheckSave {
+interface PNGResolutionCheckSave {
     channels: Map<string, PNGResolutionEntrySave>;
 }
 

@@ -4,7 +4,7 @@ import {ComponentCommands} from "../Constants/ComponentCommands";
 import {isAdmin} from "../HelperFunctions";
 import {ComponentNames} from "../Constants/ComponentNames";
 
-export interface SayComponentSave {}
+interface SayComponentSave {}
 export class SayComponent extends Component<SayComponentSave> {
 
     name: ComponentNames = ComponentNames.SAY;

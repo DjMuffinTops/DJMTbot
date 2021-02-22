@@ -4,7 +4,7 @@ import {isAdmin} from "../HelperFunctions";
 import {ComponentCommands} from "../Constants/ComponentCommands";
 import {ComponentNames} from "../Constants/ComponentNames";
 
-export interface HelpComponentSave {}
+interface HelpComponentSave {}
 export class HelpComponent extends Component<HelpComponentSave> {
 
     name: ComponentNames = ComponentNames.HELP;

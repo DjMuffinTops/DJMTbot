@@ -6,9 +6,7 @@ import {ComponentNames} from "./Constants/ComponentNames";
  * Declare data you want to save in JSON here. This interface is used for getSaveData and
  * afterLoadJSON, as it tells Typescript what data you're expecting to write and load.
  */
-export interface ExampleComponentSave {
-
-}
+interface ExampleComponentSave {}
 
 /**
  * Describe your component here! Be sure to mention what its for and if it has any command strings

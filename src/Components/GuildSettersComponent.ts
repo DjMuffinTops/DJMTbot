@@ -5,9 +5,7 @@ import {isAdmin} from "../HelperFunctions";
 import {ComponentCommands} from "../Constants/ComponentCommands";
 
 // Declare data you want to save in JSON here
-export interface DebugComponentSave {
-
-}
+interface DebugComponentSave {}
 
 export class GuildSettersComponent extends Component<DebugComponentSave> {
 

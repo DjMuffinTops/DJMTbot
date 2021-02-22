@@ -3,7 +3,7 @@ import {ComponentCommands} from "../Constants/ComponentCommands";
 import {GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
 import {ComponentNames} from "../Constants/ComponentNames";
 
-export interface CheemsComponentSave {}
+interface CheemsComponentSave {}
 export class CheemsComponent extends Component<CheemsComponentSave> {
 
     name: ComponentNames = ComponentNames.CHEEMS;

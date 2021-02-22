@@ -15,9 +15,7 @@ import {Cron} from "../Cron";
 import {ComponentCommands} from "../Constants/ComponentCommands";
 
 // Declare data you want to save in JSON here
-export interface VCHoursComponentSave {
-
-}
+interface VCHoursComponentSave {}
 
 export class VCHoursComponent extends Component<VCHoursComponentSave> {
 
