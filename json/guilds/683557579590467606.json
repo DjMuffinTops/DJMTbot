@@ -343,7 +343,33 @@
 					"688848577212317744"
 				]
 			},
-			"VC_HOURS": {}
+			"VC_HOURS": {},
+			"PNG_RESOLUTION_CHECK": {
+				"channels": {
+					"dataType": "Map",
+					"value": [
+						[
+							"805958285168869436",
+							{
+								"channel": "805958285168869436",
+								"width": 5120,
+								"height": 2880
+							}
+						],
+						[
+							"809149011235176488",
+							{
+								"channel": "809149011235176488",
+								"width": 5120,
+								"height": 2880
+							}
+						]
+					]
+				}
+			},
+			"DYNAMIC_BANNER": {
+				"imageUrls": []
+			}
 		}
 	}
 }

@@ -3,7 +3,7 @@ import {GuildMember, Message, MessageReaction, User, VoiceState} from "discord.j
 import {ComponentCommands} from "../Constants/ComponentCommands";
 import {ComponentNames} from "../Constants/ComponentNames";
 
-export interface BSpeakComponentSave {}
+interface BSpeakComponentSave {}
 export class BSpeakComponent extends Component<BSpeakComponentSave> {
 
     name: ComponentNames = ComponentNames.BSPEAK;

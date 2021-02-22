@@ -12,7 +12,7 @@ import {isAdmin} from "../HelperFunctions";
 import {ComponentCommands} from "../Constants/ComponentCommands";
 
 // Declare data you want to save in JSON here
-export interface VoiceTextPairComponentSave {
+interface VoiceTextPairComponentSave {
     voiceTextPairs: VoiceTextPair[];
 }
 
@@ -81,12 +81,12 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
         for (const pair of this.voiceTextPairs) {
             if (pair.voiceChannel.id === voiceChannel.id && pair.textChannel.id === textChannel.id) {
                 this.voiceTextPairs.splice(this.voiceTextPairs.indexOf(pair),  1);
-                await this.guild.saveJSON();
+                await this.djmtGuild.saveJSON();
                 return false;
             }
         }
         this.voiceTextPairs.push(pair);
-        await this.guild.saveJSON();
+        await this.djmtGuild.saveJSON();
         return true;
     }
 
@@ -111,13 +111,9 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
             const voiceChannelId = args[0]; // Voice channel must be raw due to lack of mention
             const rawTextChannelId = args[1];
             let textChannelId = rawTextChannelId.substring(2, rawTextChannelId.indexOf('>'));
-            let foundVoiceChannel = undefined;
-            let foundTextChannel = undefined;
-            try {
-                foundVoiceChannel = await this.guild.client.channels.fetch(voiceChannelId);
-                foundTextChannel = await this.guild.client.channels.fetch(textChannelId);
-            } catch (e) {
-                console.error(e);
+            let foundVoiceChannel = this.djmtGuild.getGuildChannel(voiceChannelId);
+            let foundTextChannel = this.djmtGuild.getGuildChannel(textChannelId);
+            if (!foundTextChannel || !foundVoiceChannel) {
                 await message.channel.send("The given channel is invalid! Make sure the given channels are the correct types (use help command for more info)");
                 return;
             }

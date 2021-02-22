@@ -1,28 +1,22 @@
 import {
-    Channel,
-    Client, GuildChannel,
+    Guild, GuildChannel,
     GuildMember,
-    Message, MessageAttachment, MessageEmbed,
+    Message, MessageAttachment,
     MessageReaction, TextChannel,
     User,
     VoiceState
 } from "discord.js";
-import {Component} from "./Component";
-import {SayComponent} from "./Components/SayComponent";
-import {CheemsComponent} from "./Components/CheemsComponent";
-import {BSpeakComponent} from "./Components/BSpeakComponent";
-import {HelpComponent} from "./Components/HelpComponent";
-import {PingComponent} from "./Components/PingComponent";
-import {BruhComponent} from "./Components/BruhComponent";
-import {promises as FileSystem} from "fs";
-import {ConfigComponent} from "./Components/ConfigComponent";
+
+import {
+    JSONStringifyReplacer,
+    JSONStringifyReviver
+} from "./HelperFunctions";
+
+import {DJMTbot} from "./DJMTbot";
 import {ComponentNames} from "./Constants/ComponentNames";
-import {GuildSettersComponent} from "./Components/GuildSettersComponent";
-import {VoiceTextPairComponent} from "./Components/VoiceTextPairComponent";
-import {ReactBoardsComponent} from "./Components/ReactBoardsComponent";
-import {JSONStringifyReplacer, JSONStringifyReviver} from "./HelperFunctions";
-import {DayOfTheWeekComponent} from "./Components/DayOfTheWeekComponent";
-import {VCHoursComponent} from "./Components/VCHoursComponent";
+import {Component} from "./Component";
+import * as components from "./Components"; // All components are imported from here!
+import {promises as FileSystem} from "fs";
 const defaultConfig = require("../json/defaultConfig.json");
 
 // The structure of a Guild's save data JSON.
@@ -35,11 +29,12 @@ export interface GuildConfig {
 
 /**
  * Represents a single discord server (referred to as a Guild by discord js api). Each guild instance
- * maintains its own component instances as well. When creating a new component for guilds, make sure
- * to add it to initializeComponents().
+ * maintains its own component instances as well. Every Component class exported within the Components index.ts file
+ * will be instantiated.
  */
-export class Guild {
-    client: Client;
+export class DJMTGuild {
+    guild: Guild | undefined;
+    isReady: boolean = false;
     readonly guildId: string;
     // Config
     private _debugMode: boolean = defaultConfig.debugMode;
@@ -48,15 +43,12 @@ export class Guild {
     private componentData = defaultConfig.componentData;
     private components: Map<ComponentNames, Component<any>>;
 
-    constructor(client: Client, guildId: string) {
-        this.client = client;
+    constructor(guildId: string) {
         this.guildId = guildId;
         this.components = new Map<ComponentNames, Component<any>>();
         try {
             this.initializeComponents().then(() => {
-                this.loadJSON().then(r => {
-                    console.log(`[${guildId}] Guild initialized and loaded JSON.`);
-                });
+                console.log(`[${guildId}] DJMTGuild initialized`);
             })
         } catch (e) {
             console.log(`[${guildId}]: ${e}`);
@@ -65,23 +57,22 @@ export class Guild {
     }
 
     /**
-     * Initializes each component for this guild. Any new components NEED to be added to the
-     * components map to be run and receive events.
+     * Initializes each component class exported in the /Components index.ts file for this guild.
      * @private
      */
     private async initializeComponents(): Promise<void> {
-        this.components.set(ComponentNames.CONFIG, new ConfigComponent(this));
-        this.components.set(ComponentNames.SAY, new SayComponent(this));
-        this.components.set(ComponentNames.CHEEMS, new CheemsComponent(this));
-        this.components.set(ComponentNames.BSPEAK, new BSpeakComponent(this));
-        this.components.set(ComponentNames.HELP, new HelpComponent(this));
-        this.components.set(ComponentNames.PING, new PingComponent(this));
-        this.components.set(ComponentNames.BRUH, new BruhComponent(this));
-        this.components.set(ComponentNames.DEBUG, new GuildSettersComponent(this));
-        this.components.set(ComponentNames.VOICE_TEXT_PAIR, new VoiceTextPairComponent(this));
-        this.components.set(ComponentNames.REACT_BOARDS, new ReactBoardsComponent(this));
-        this.components.set(ComponentNames.DAY_OF_THE_WEEK, new DayOfTheWeekComponent(this));
-        this.components.set(ComponentNames.VC_HOURS, new VCHoursComponent(this));
+        /**
+         * Creates an instance of a component class, from the import 'components'
+         * @param className The name of the class as a string
+         * @param args Arguments to pass to that classes constructor
+         */
+        function createInstance(className: string, ...args: any[]) {
+            return new (<any>components)[className](...args);
+        }
+        for (const className of Object.keys(components)) {
+            const instance: Component<any> = createInstance(className, this) as Component<any>;
+            this.components.set(instance.name, instance);
+        }
     }
 
     /**
@@ -151,14 +142,16 @@ export class Guild {
         await FileSystem.writeFile(filename, JSON.stringify({[this.guildId]: this.getSaveData()}, JSONStringifyReplacer, '\t'));
         console.log(`${filename} saved`);
         if (this.debugMode){
-            const foundChannel = await this.getDebugChannel();
-            const attachment = new MessageAttachment(Buffer.from(JSON.stringify({[this.guildId]: this.getSaveData()}, JSONStringifyReplacer, '\t')), 'config.txt');
-            await foundChannel.send(attachment);
+            const foundChannel = this.getDebugChannel();
+            if (foundChannel) {
+                const attachment = new MessageAttachment(Buffer.from(JSON.stringify({[this.guildId]: this.getSaveData()}, JSONStringifyReplacer, '\t')), 'config.txt');
+                await foundChannel.send(attachment);
+            }
         }
     }
 
-    private async getDebugChannel(): Promise<TextChannel> {
-        return await this.client.channels.fetch(this.debugChannelId) as TextChannel;
+    private getDebugChannel(): TextChannel | undefined {
+        return this.getGuildChannel(this.debugChannelId) as TextChannel;
     }
 
     /**
@@ -171,8 +164,10 @@ export class Guild {
         this.componentData = defaultConfig.componentData;
         console.log(`Reset ${this.guildId} config to default settings.`);
         if (this.debugChannelId) {
-            const debugChannel = await this.getDebugChannel();
-            await debugChannel.send(`Reset this guild's config`);
+            const debugChannel = this.getDebugChannel();
+            if (debugChannel) {
+                await debugChannel.send(`Reset this guild's config`);
+            }
         }
         await this.saveJSON();
         await this.loadJSON();
@@ -184,11 +179,22 @@ export class Guild {
      * Relay's the discord client's 'ready' event to all components
      */
     async onReady(): Promise<void> {
-        const cachedGuild = this.client.guilds.cache.find(guild => guild.id === this.guildId);
-        console.log(`[${this.guildId}] Guild Ready! [${cachedGuild?.name}]`);
+        try {
+            this.guild = await (await DJMTbot.getInstance()).client.guilds.fetch(this.guildId);
+        } catch (e) {
+            console.error(`[${this.guildId}] ${e}`);
+        }
+        if(!this.guild) {
+            console.log(`[${this.guildId}] Could not fetch guild with this id, guild cannot be readied.`);
+            return;
+        }
+        await this.loadJSON();
+        console.log(`[${this.guild.id}] Loaded JSON!`);
         for (const component of Array.from(this.components.values())) {
             await component.onReady();
         }
+        console.log(`[${this.guild.id}] Guild Fetched and Ready! [${this.guild.name}]`);
+        this.isReady = true;
     }
 
     /**
@@ -196,8 +202,10 @@ export class Guild {
      * @param member The added guild member
      */
     async onGuildMemberAdd(member: GuildMember): Promise<void> {
-        for (const component of Array.from(this.components.values())) {
-            await component.onGuildMemberAdd(member);
+        if (this.isReady) {
+            for (const component of Array.from(this.components.values())) {
+                await component.onGuildMemberAdd(member);
+            }
         }
     }
 
@@ -207,18 +215,20 @@ export class Guild {
      * @param message the Message object
      */
     async onMessage(args: string[], message: Message): Promise<void> {
-        // Display the prefix when mentioned
-        if (this.client?.user && message.mentions.has(this.client.user)) {
-            await message.channel.send(`Type \`\`${this._prefix}help\`\` to see my commands!`);
-        }
-        for (const component of Array.from(this.components.values())) {
-            await component.onMessage(args, message); // All messages go through here
+        if (this.isReady) {
+            // Display the prefix when mentioned
+            if (this.guild?.client.user && message.mentions.has(this.guild?.client.user)) {
+                await message.channel.send(`Type \`\`${this._prefix}help\`\` to see my commands!`);
+            }
+            for (const component of Array.from(this.components.values())) {
+                await component.onMessage(args, message); // All messages go through here
 
-            // Additionally, messages will go through here if the msg starts with our guild prefix
-            if (message.content.indexOf(this._prefix) === 0) {
-                // set args to be everything after the prefix, separated by spaces
-                args = message.content.slice(this._prefix.length).trim().split(/ +/g);
-                await component.onMessageWithGuildPrefix(args, message);
+                // Additionally, messages will go through here if the msg starts with our guild prefix
+                if (message.content.indexOf(this._prefix) === 0) {
+                    // set args to be everything after the prefix, separated by spaces
+                    args = message.content.slice(this._prefix.length).trim().split(/ +/g);
+                    await component.onMessageWithGuildPrefix(args, message);
+                }
             }
         }
     }
@@ -229,8 +239,10 @@ export class Guild {
      * @param newMessage the message after updating
      */
     async onMessageUpdate(oldMessage: Message, newMessage: Message): Promise<void> {
-        for (const component of Array.from(this.components.values())) {
-            await component.onMessageUpdate(oldMessage, newMessage);
+        if (this.isReady) {
+            for (const component of Array.from(this.components.values())) {
+                await component.onMessageUpdate(oldMessage, newMessage);
+            }
         }
     }
 
@@ -240,8 +252,10 @@ export class Guild {
      * @param newState the new voice state
      */
     async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
-        for (const component of Array.from(this.components.values())) {
-            await component.onVoiceStateUpdate(oldState, newState);
+        if (this.isReady) {
+            for (const component of Array.from(this.components.values())) {
+                await component.onVoiceStateUpdate(oldState, newState);
+            }
         }
     }
 
@@ -251,8 +265,10 @@ export class Guild {
      * @param user the user who added the reaction
      */
     async onMessageReactionAdd(messageReaction: MessageReaction, user: User): Promise<void> {
-        for (const component of Array.from(this.components.values())) {
-            await component.onMessageReactionAdd(messageReaction, user);
+        if (this.isReady) {
+            for (const component of Array.from(this.components.values())) {
+                await component.onMessageReactionAdd(messageReaction, user);
+            }
         }
     }
 
@@ -262,9 +278,15 @@ export class Guild {
      * @param user the user who removed the reaction
      */
     async onMessageReactionRemove(messageReaction: MessageReaction, user: User): Promise<void> {
-        for (const component of Array.from(this.components.values())) {
-            await component.onMessageReactionRemove(messageReaction, user);
+        if (this.isReady) {
+            for (const component of Array.from(this.components.values())) {
+                await component.onMessageReactionRemove(messageReaction, user);
+            }
         }
+    }
+
+    getGuildChannel(channelId: string) : GuildChannel | undefined {
+        return this.guild?.channels.cache.find(channel => channel.id === channelId);
     }
 
     // Getters / Setters

@@ -15,9 +15,7 @@ import {Cron} from "../Cron";
 import {ComponentCommands} from "../Constants/ComponentCommands";
 
 // Declare data you want to save in JSON here
-export interface VCHoursComponentSave {
-
-}
+interface VCHoursComponentSave {}
 
 export class VCHoursComponent extends Component<VCHoursComponentSave> {
 
@@ -33,7 +31,7 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
     }
 
     async onReady(): Promise<void> {
-        const vcChannelPairs: VoiceTextPair[] = (this.guild.getComponent(ComponentNames.VOICE_TEXT_PAIR) as VoiceTextPairComponent).voiceTextPairs;
+        const vcChannelPairs: VoiceTextPair[] = (this.djmtGuild.getComponent(ComponentNames.VOICE_TEXT_PAIR) as VoiceTextPairComponent).voiceTextPairs;
         for (const pair of vcChannelPairs) {
             this.consecutiveHours.set(pair, 0);
         }
@@ -86,7 +84,7 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
             let voiceId = args[0];
             let textId = args[1];
             let hours = Number(args[2]);
-            const vcChannelPairs: VoiceTextPair[] = (this.guild.getComponent(ComponentNames.VOICE_TEXT_PAIR) as VoiceTextPairComponent).voiceTextPairs;
+            const vcChannelPairs: VoiceTextPair[] = (this.djmtGuild.getComponent(ComponentNames.VOICE_TEXT_PAIR) as VoiceTextPairComponent).voiceTextPairs;
             for (const pair of vcChannelPairs) {
                 if (pair.voiceChannel.id === voiceId && pair.textChannel.id === textId) {
                     this.consecutiveHours.set(pair, hours);
@@ -101,12 +99,16 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
     }
 
     async vcRemindersJob() {
-        console.log(`[${this.guild.guildId}] Running VC Reminder Job`);
-        const vcChannelPairs: VoiceTextPair[] = (this.guild.getComponent(ComponentNames.VOICE_TEXT_PAIR) as VoiceTextPairComponent).voiceTextPairs;
+        console.log(`[${this.djmtGuild.guildId}] Running VC Reminder Job`);
+        const vcChannelPairs: VoiceTextPair[] = (this.djmtGuild.getComponent(ComponentNames.VOICE_TEXT_PAIR) as VoiceTextPairComponent).voiceTextPairs;
         // For each channel pair
         for (const pair of vcChannelPairs) {
-            const voiceChannel = (await this.guild.client.channels.fetch(pair.voiceChannel.id) as VoiceChannel);
-            const textChannel = (await this.guild.client.channels.fetch(pair.textChannel.id) as TextChannel);
+            const voiceChannel = (this.djmtGuild.getGuildChannel(pair.voiceChannel.id) as VoiceChannel);
+            const textChannel = (this.djmtGuild.getGuildChannel(pair.textChannel.id) as TextChannel);
+            if (!voiceChannel || !textChannel) {
+                console.error(`[VCRemindersJob] Could not find voice channel ${pair.voiceChannel.id} or text channel ${pair.textChannel.id}`)
+                return;
+            }
             // If someone is in the channel during the check and they are not a bot, add an hour
             if (voiceChannel.members.size > 0 && !voiceChannel.members.every(member => member.user.bot)) {
                 const hoursSoFar = this.consecutiveHours.get(pair) ?? 0;

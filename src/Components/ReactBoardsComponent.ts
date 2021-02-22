@@ -13,7 +13,7 @@ import {isAdmin} from "../HelperFunctions";
 import {ComponentCommands} from "../Constants/ComponentCommands";
 
 // Declare data you want to save in JSON here
-export interface ReactBoardSave {
+interface ReactBoardSave {
     emoteReactBoardMap: Map<string, ReactBoardMapValue>,
     autoReactMap: Map<string, string[]>
     starChannels: string[];
@@ -124,16 +124,14 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
             let emoteId = rawEmote.substring(rawEmote.lastIndexOf(':') + 1, rawEmote.indexOf('>'));
             let foundEmote = undefined;
             // let foundTextChannel = undefined;
-            foundEmote = this.guild.client.emojis.cache.get(emoteId);
+            foundEmote = this.djmtGuild.guild?.emojis.cache.get(emoteId);
             if (!foundEmote) {
                 await message.channel.send(`The given emote is invalid, is it in this server?`);
                 return;
             }
             let channelId = rawChannelId.substring(2, rawChannelId.indexOf('>'));
-            try {
-                const foundChannel = await this.guild.client.channels.fetch(channelId);
-            } catch (e) {
-                console.error(e);
+            const foundChannel = this.djmtGuild.getGuildChannel(channelId);
+            if (!foundChannel) {
                 await message.channel.send("The given channel is invalid!");
                 return;
             }
@@ -146,16 +144,16 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
                     if (this.autoReactMap.get(rawEmote).length < 1) {
                         this.autoReactMap.delete(rawEmote)
                     }
-                    await this.guild.saveJSON();
+                    await this.djmtGuild.saveJSON();
                     await message.channel.send(`Removed ${rawChannelId} from the auto react list for ${rawEmote}`);
                 } else {
                     this.autoReactMap.get(rawEmote)?.push(channelId);
-                    await this.guild.saveJSON();
+                    await this.djmtGuild.saveJSON();
                     await message.channel.send(`Added ${rawChannelId} to the auto react list for ${rawEmote}!`);
                 }
             } else {
                 this.autoReactMap.set(rawEmote, [channelId]);
-                await this.guild.saveJSON();
+                await this.djmtGuild.saveJSON();
                 await message.channel.send(`Added ${rawChannelId} to the auto react list for ${rawEmote}!`);
             }
         } else {
@@ -176,7 +174,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
                 let msg = '';
                 this.emoteReactBoardMap.forEach((value, key) => {
                     const emoteId = key.substring(key.lastIndexOf(':') + 1, key.indexOf('>'));
-                    const emoji = this.guild.client.emojis.cache.get(emoteId);
+                    const emoji = this.djmtGuild.guild?.emojis.cache.get(emoteId);
                     msg += `${emoji?.toString()} => <#${value.channelId}> (threshold: ${value.threshold})\n`;
                 });
                 await message.channel.send(`React Channels:\n${msg}`);
@@ -196,18 +194,14 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
             }
             let emoteId = rawEmote.substring(rawEmote.lastIndexOf(':') + 1, rawEmote.indexOf('>'));
             let channelId = rawChannelId.substring(2, rawChannelId.indexOf('>'));
-            let foundEmote = undefined;
-            let foundTextChannel = undefined;
-            try {
-                foundEmote = this.guild.client.emojis.cache.get(emoteId);
-                foundTextChannel = await this.guild.client.channels.fetch(channelId);
-            } catch (e) {
-                console.error(e);
-                await message.channel.send("The given channel or emote is invalid! Make sure the given channels are the correct types (use help command for more info)");
+            let foundEmote = this.djmtGuild.guild?.emojis.cache.get(emoteId);
+            let foundTextChannel = this.djmtGuild.getGuildChannel(channelId);
+            if (!foundEmote || !foundTextChannel) {
+                await message.channel.send("The given channel or emote is invalid!");
                 return;
             }
-            if (foundEmote && foundTextChannel.type !== "text") {
-                await message.channel.send(`The given args are invalid`);
+            if (foundTextChannel.type !== "text") {
+                await message.channel.send(`The given channel is not a Text Channel`);
                 return;
             }
             if (this.emoteReactBoardMap.has(rawEmote) &&
@@ -217,7 +211,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
                 // If we have a match delete it from the map and the config
                 this.emoteReactBoardMap.delete(rawEmote);
 
-                await this.guild.saveJSON();
+                await this.djmtGuild.saveJSON();
                 await message.channel.send(`Removed [${rawEmote}, ${val.channelId}, ${val.threshold}] from React Channels list!`);
                 return;
 
@@ -230,7 +224,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
                     recentMsgIds: [],
                 }
                 this.emoteReactBoardMap.set(rawEmote, reactBoardMapValue);
-                await this.guild.saveJSON();
+                await this.djmtGuild.saveJSON();
                 await message.channel.send(`Added ${rawEmote} => <#${channelId}> to the React Channels list (threshold ${threshold})!`);
             }
 
@@ -244,7 +238,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
         let channelId = message.channel.id;
         this.autoReactMap.forEach((channelIds, rawEmojiId) => {
             const emoteId = rawEmojiId.substring(rawEmojiId.lastIndexOf(':') + 1, rawEmojiId.indexOf('>'));
-            const foundEmote = this.guild.client.emojis.cache.get(emoteId);
+            const foundEmote = this.djmtGuild.guild?.emojis.cache.get(emoteId);
             channelIds.forEach(async mapChannelId => { // TODO: async might be weird here
                 if (foundEmote && channelId === mapChannelId) {
                     await message.react(foundEmote);
@@ -261,7 +255,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
             const reactMapValue = this.emoteReactBoardMap.get(rawEmoteId);
             if (reaction.count === reactMapValue?.threshold && reactMapValue?.channelId) {
                 const message = reaction.message;
-                const channel = (await this.guild.client.channels.fetch(reactMapValue.channelId) as TextChannel);
+                const destinationChannel = this.djmtGuild.getGuildChannel(reactMapValue.channelId) as TextChannel;
                 const embed = new MessageEmbed();
                 embed.type = 'rich';
                 embed.setDescription(`[Original Message](${message.url})`)
@@ -274,7 +268,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
                 .setImage(message.attachments.array().length > 0 ? message.attachments.array()[0].url : '')
                 .setAuthor(`${message.author.username}#${message.author.discriminator} (${message.author.id})`, message.author.displayAvatarURL({size: 128, dynamic: true}))
                 .setFooter(`${reaction.count} ⭐ | ${message.id}`);
-                await channel.send({embed: embed});
+                await destinationChannel.send({embed: embed});
                 this.emoteReactBoardMap?.get(rawEmoteId)?.recentMsgIds?.push(message.id);
                 // We dont care about recent msg ids being saved to file, so dont save here.
             }
@@ -300,23 +294,21 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
         } else {
             for (const rawChannelId of args) {
                 let channelId = rawChannelId.substring(2, rawChannelId.indexOf('>'));
-                try {
-                    const foundChannel = await this.guild.client.channels.fetch(channelId);
-                } catch (e) {
-                    console.error(e);
+                const foundChannel = await this.djmtGuild.getGuildChannel(channelId);
+                if (!foundChannel) {
                     await message.channel.send("The given channel is invalid!");
                     continue;
                 }
                 if (this.starChannels?.includes(channelId)) {
                     this.starChannels.splice(this.starChannels.indexOf(channelId), 1);
-                    await this.guild.saveJSON();
+                    await this.djmtGuild.saveJSON();
                     await message.channel.send(`Removed ${rawChannelId} from the star channels list!`);
                 } else {
                     if (!this.starChannels) {
                         this.starChannels = [];
                     }
                     this.starChannels.push(channelId);
-                    await this.guild.saveJSON();
+                    await this.djmtGuild.saveJSON();
                     await message.channel.send(`Added ${rawChannelId} to the star channels list!`);
                 }
             }

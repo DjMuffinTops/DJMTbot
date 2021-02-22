@@ -5,9 +5,7 @@ import {isAdmin} from "../HelperFunctions";
 import {ComponentCommands} from "../Constants/ComponentCommands";
 
 // Declare data you want to save in JSON here
-export interface DebugComponentSave {
-
-}
+interface DebugComponentSave {}
 
 export class GuildSettersComponent extends Component<DebugComponentSave> {
 
@@ -68,9 +66,9 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
-        this.guild.debugMode = !this.guild.debugMode;
+        this.djmtGuild.debugMode = !this.djmtGuild.debugMode;
         // await updateConfig(gConfig, message);
-        await message.channel.send(`Dev Mode ${this.guild.debugMode ? "enabled" : "disabled" }.`);
+        await message.channel.send(`Dev Mode ${this.djmtGuild.debugMode ? "enabled" : "disabled" }.`);
     }
 
     async setDebugChannel(args: string[], message: Message) {
@@ -79,11 +77,11 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
-        if (this.guild.debugChannelId === message.channel.id) {
-            this.guild.debugChannelId = "";
+        if (this.djmtGuild.debugChannelId === message.channel.id) {
+            this.djmtGuild.debugChannelId = "";
             await message.channel.send(`${message.channel.toString()} is no longer set as the debugChannel`);
         } else {
-            this.guild.debugChannelId = message.channel.id;
+            this.djmtGuild.debugChannelId = message.channel.id;
             await message.channel.send(`${message.channel.toString()} is now set as the debugChannel channel`);
         }
     }
@@ -95,11 +93,11 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
             return;
         }
         if (args.length === 0) {
-            this.guild.prefix = process.env.DEFAULT_PREFIX as string;
+            this.djmtGuild.prefix = process.env.DEFAULT_PREFIX as string;
             await message.channel.send(`Set my prefix to \`\`${process.env.DEFAULT_PREFIX}\`\``);
         } else if (args.length === 1) {
-            this.guild.prefix = args[0] ? args[0] : process.env.DEFAULT_PREFIX as string;
-            await message.channel.send(`Set my prefix to \`\`${this.guild.prefix}\`\``);
+            this.djmtGuild.prefix = args[0] ? args[0] : process.env.DEFAULT_PREFIX as string;
+            await message.channel.send(`Set my prefix to \`\`${this.djmtGuild.prefix}\`\``);
         } else {
             await message.channel.send(`Please enter a single prefix.`);
         }

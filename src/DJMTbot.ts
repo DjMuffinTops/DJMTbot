@@ -6,7 +6,7 @@ import Discord, {
     VoiceState
 } from "discord.js";
 import {promises as FileSystem} from "fs";
-import {Guild} from "./Guild";
+import {DJMTGuild} from "./DJMTGuild";
 import {Cron} from "./Cron";
 // Here we load the guildConfigs.json file that contains our token and our prefix values.
 require('dotenv').config();
@@ -15,11 +15,11 @@ Cron.getInstance();
 export class DJMTbot {
     private static instance: DJMTbot;
     client: Client;
-    guilds: Map<string, Guild>;
+    guilds: Map<string, DJMTGuild>;
     private constructor() {
         this.client = new Discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'] });
-        this.guilds = new Map<string, Guild>();
-        this.initGuildInstancesFromFiles().then(r => console.log('Guilds Initialized'));
+        this.guilds = new Map<string, DJMTGuild>();
+        this.initGuildInstancesFromFiles().then(r => console.log(`${this.guilds.size} DJMT Guilds Initialized`));
     }
 
     public static async getInstance(): Promise<DJMTbot> {
@@ -30,10 +30,10 @@ export class DJMTbot {
     }
 
     private async initGuildInstancesFromFiles(): Promise<void> {
-        const files = await FileSystem.readdir('./json/guilds');
-        const guildIds = files.map((filename) => filename.substr(0, filename.indexOf('.')));
+        const filenames = await FileSystem.readdir('./json/guilds');
+        const guildIds = filenames.map((filename) => filename.substr(0, filename.indexOf('.')));
         for (const id of guildIds) {
-            const guild = new Guild(this.client, id);
+            const guild = new DJMTGuild(id);
             this.guilds.set(id, guild);
         }
     }
@@ -44,7 +44,7 @@ export class DJMTbot {
             for (let cachedGuild of this.client.guilds.cache.array()) {
                 const guildId = cachedGuild.id;
                 if (!this.guilds.get(guildId)) {
-                    const guild = new Guild(this.client, guildId);
+                    const guild = new DJMTGuild(guildId);
                     this.guilds.set(guildId, guild);
                 }
             }
@@ -52,7 +52,7 @@ export class DJMTbot {
             for (const id of Array.from(this.guilds.keys())) {
                 await this.guilds.get(id)?.onReady();
             }
-            console.log(`Bot is ready!`);
+            console.log(`DJMTbot is ready!`);
         });
 
         this.client.on('guildMemberAdd', async (member) => {
