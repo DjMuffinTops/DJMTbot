@@ -1,6 +1,6 @@
 import {
     Channel,
-    Client, GuildChannel,
+    Client, Guild, GuildChannel,
     GuildMember,
     Message, MessageAttachment, MessageEmbed,
     MessageReaction, TextChannel,
@@ -20,10 +20,15 @@ import {ComponentNames} from "./Constants/ComponentNames";
 import {GuildSettersComponent} from "./Components/GuildSettersComponent";
 import {VoiceTextPairComponent} from "./Components/VoiceTextPairComponent";
 import {ReactBoardsComponent} from "./Components/ReactBoardsComponent";
-import {JSONStringifyReplacer, JSONStringifyReviver} from "./HelperFunctions";
+import {
+    channelMentionToChannelId,
+    JSONStringifyReplacer,
+    JSONStringifyReviver
+} from "./HelperFunctions";
 import {DayOfTheWeekComponent} from "./Components/DayOfTheWeekComponent";
 import {VCHoursComponent} from "./Components/VCHoursComponent";
 import {PNGResolutionCheck} from "./Components/PNGResolutionCheck";
+import {DJMTbot} from "./DJMTbot";
 const defaultConfig = require("../json/defaultConfig.json");
 
 // The structure of a Guild's save data JSON.
@@ -39,8 +44,8 @@ export interface GuildConfig {
  * maintains its own component instances as well. When creating a new component for guilds, make sure
  * to add it to initializeComponents().
  */
-export class Guild {
-    client: Client;
+export class DJMTGuild {
+    guild: Guild | undefined;
     isReady: boolean = false;
     readonly guildId: string;
     // Config
@@ -50,13 +55,12 @@ export class Guild {
     private componentData = defaultConfig.componentData;
     private components: Map<ComponentNames, Component<any>>;
 
-    constructor(client: Client, guildId: string) {
-        this.client = client;
+    constructor(guildId: string) {
         this.guildId = guildId;
         this.components = new Map<ComponentNames, Component<any>>();
         try {
             this.initializeComponents().then(() => {
-                console.log(`[${guildId}] Guild initialized`);
+                console.log(`[${guildId}] DJMTGuild initialized`);
             })
         } catch (e) {
             console.log(`[${guildId}]: ${e}`);
@@ -152,14 +156,16 @@ export class Guild {
         await FileSystem.writeFile(filename, JSON.stringify({[this.guildId]: this.getSaveData()}, JSONStringifyReplacer, '\t'));
         console.log(`${filename} saved`);
         if (this.debugMode){
-            const foundChannel = await this.getDebugChannel();
-            const attachment = new MessageAttachment(Buffer.from(JSON.stringify({[this.guildId]: this.getSaveData()}, JSONStringifyReplacer, '\t')), 'config.txt');
-            await foundChannel.send(attachment);
+            const foundChannel = this.getDebugChannel();
+            if (foundChannel) {
+                const attachment = new MessageAttachment(Buffer.from(JSON.stringify({[this.guildId]: this.getSaveData()}, JSONStringifyReplacer, '\t')), 'config.txt');
+                await foundChannel.send(attachment);
+            }
         }
     }
 
-    private async getDebugChannel(): Promise<TextChannel> {
-        return await this.client.channels.fetch(this.debugChannelId) as TextChannel;
+    private getDebugChannel(): TextChannel | undefined {
+        return this.getGuildChannel(this.debugChannelId) as TextChannel;
     }
 
     /**
@@ -172,8 +178,10 @@ export class Guild {
         this.componentData = defaultConfig.componentData;
         console.log(`Reset ${this.guildId} config to default settings.`);
         if (this.debugChannelId) {
-            const debugChannel = await this.getDebugChannel();
-            await debugChannel.send(`Reset this guild's config`);
+            const debugChannel = this.getDebugChannel();
+            if (debugChannel) {
+                await debugChannel.send(`Reset this guild's config`);
+            }
         }
         await this.saveJSON();
         await this.loadJSON();
@@ -185,13 +193,21 @@ export class Guild {
      * Relay's the discord client's 'ready' event to all components
      */
     async onReady(): Promise<void> {
+        try {
+            this.guild = await (await DJMTbot.getInstance()).client.guilds.fetch(this.guildId);
+        } catch (e) {
+            console.error(`[${this.guildId}] ${e}`);
+        }
+        if(!this.guild) {
+            console.log(`[${this.guildId}] Could not fetch guild with this id, guild cannot be readied.`);
+            return;
+        }
         await this.loadJSON();
-        console.log('Loaded JSON!');
+        console.log(`[${this.guild.id}] Loaded JSON!`);
         for (const component of Array.from(this.components.values())) {
             await component.onReady();
         }
-        const cachedGuild = this.client.guilds.cache.find(guild => guild.id === this.guildId);
-        console.log(`[${this.guildId}] Guild Ready! [${cachedGuild?.name}]`);
+        console.log(`[${this.guild.id}] Guild Fetched and Ready! [${this.guild.name}]`);
         this.isReady = true;
     }
 
@@ -215,7 +231,7 @@ export class Guild {
     async onMessage(args: string[], message: Message): Promise<void> {
         if (this.isReady) {
             // Display the prefix when mentioned
-            if (this.client?.user && message.mentions.has(this.client.user)) {
+            if (this.guild?.client.user && message.mentions.has(this.guild?.client.user)) {
                 await message.channel.send(`Type \`\`${this._prefix}help\`\` to see my commands!`);
             }
             for (const component of Array.from(this.components.values())) {
@@ -281,6 +297,10 @@ export class Guild {
                 await component.onMessageReactionRemove(messageReaction, user);
             }
         }
+    }
+
+    getGuildChannel(channelId: string) : GuildChannel | undefined {
+        return this.guild?.channels.cache.find(channel => channel.id === channelId);
     }
 
     // Getters / Setters
