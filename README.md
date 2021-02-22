@@ -47,7 +47,8 @@ interface ExampleComponentSave {
 ```
 When you've defined this interface, you must apply it to your Component as a generic through the <> syntax.
 ```
-export class DynamicBanner extends Component<ExampleComponentSave> { // Component<YOUR_INTERFACE_HERE> means your giving your interface to your class as a generic
+// Component<YOUR_INTERFACE_HERE> means your giving your interface to your class as a generic
+export class DynamicBanner extends Component<ExampleComponentSave> {
   ...
 }
 ```
