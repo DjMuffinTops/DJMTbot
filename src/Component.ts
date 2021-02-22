@@ -11,8 +11,7 @@ import {ComponentNames} from "./Constants/ComponentNames";
  * The componentData object is what gets written and loaded from file, and is expected in the
  * getSaveData and afterLoadJSON methods below.
  *
- * When your make your component, make sure to add it to the initializeComponents function in Guild.ts,
- * or else your component will never run.
+ * When your make your component, make sure to export your Component class within the Components index.ts file.
  *
  * See ExampleComponentTemplate.ts for how this class should be implemented (copy and paste it!)
  */
