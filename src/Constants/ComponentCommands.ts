@@ -18,4 +18,6 @@ export enum ComponentCommands {
     PING  = "ping",
     SAY = "say",
     SET_PNGRC = "setpngrc",
+    SET_BANNER= "setbanner",
+    NEXT_BANNER= "nextbanner"
 }

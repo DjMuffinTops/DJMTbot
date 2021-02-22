@@ -366,6 +366,9 @@
 						]
 					]
 				}
+			},
+			"DYNAMIC_BANNER": {
+				"imageUrls": []
 			}
 		}
 	}
