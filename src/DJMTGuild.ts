@@ -1,34 +1,22 @@
 import {
-    Channel,
-    Client, Guild, GuildChannel,
+    Guild, GuildChannel,
     GuildMember,
-    Message, MessageAttachment, MessageEmbed,
+    Message, MessageAttachment,
     MessageReaction, TextChannel,
     User,
     VoiceState
 } from "discord.js";
-import {Component} from "./Component";
-import {SayComponent} from "./Components/SayComponent";
-import {CheemsComponent} from "./Components/CheemsComponent";
-import {BSpeakComponent} from "./Components/BSpeakComponent";
-import {HelpComponent} from "./Components/HelpComponent";
-import {PingComponent} from "./Components/PingComponent";
-import {BruhComponent} from "./Components/BruhComponent";
-import {promises as FileSystem} from "fs";
-import {ConfigComponent} from "./Components/ConfigComponent";
-import {ComponentNames} from "./Constants/ComponentNames";
-import {GuildSettersComponent} from "./Components/GuildSettersComponent";
-import {VoiceTextPairComponent} from "./Components/VoiceTextPairComponent";
-import {ReactBoardsComponent} from "./Components/ReactBoardsComponent";
+
 import {
-    channelMentionToChannelId,
     JSONStringifyReplacer,
     JSONStringifyReviver
 } from "./HelperFunctions";
-import {DayOfTheWeekComponent} from "./Components/DayOfTheWeekComponent";
-import {VCHoursComponent} from "./Components/VCHoursComponent";
-import {PNGResolutionCheck} from "./Components/PNGResolutionCheck";
+
 import {DJMTbot} from "./DJMTbot";
+import {ComponentNames} from "./Constants/ComponentNames";
+import {Component} from "./Component";
+import * as components from "./Components"; // All components are imported from here!
+import {promises as FileSystem} from "fs";
 const defaultConfig = require("../json/defaultConfig.json");
 
 // The structure of a Guild's save data JSON.
@@ -41,8 +29,8 @@ export interface GuildConfig {
 
 /**
  * Represents a single discord server (referred to as a Guild by discord js api). Each guild instance
- * maintains its own component instances as well. When creating a new component for guilds, make sure
- * to add it to initializeComponents().
+ * maintains its own component instances as well. Every Component class exported within the Components index.ts file
+ * will be instantiated.
  */
 export class DJMTGuild {
     guild: Guild | undefined;
@@ -69,24 +57,22 @@ export class DJMTGuild {
     }
 
     /**
-     * Initializes each component for this guild. Any new components NEED to be added to the
-     * components map to be run and receive events.
+     * Initializes each component class exported in the /Components index.ts file for this guild.
      * @private
      */
     private async initializeComponents(): Promise<void> {
-        this.components.set(ComponentNames.CONFIG, new ConfigComponent(this));
-        this.components.set(ComponentNames.SAY, new SayComponent(this));
-        this.components.set(ComponentNames.CHEEMS, new CheemsComponent(this));
-        this.components.set(ComponentNames.BSPEAK, new BSpeakComponent(this));
-        this.components.set(ComponentNames.HELP, new HelpComponent(this));
-        this.components.set(ComponentNames.PING, new PingComponent(this));
-        this.components.set(ComponentNames.BRUH, new BruhComponent(this));
-        this.components.set(ComponentNames.DEBUG, new GuildSettersComponent(this));
-        this.components.set(ComponentNames.VOICE_TEXT_PAIR, new VoiceTextPairComponent(this));
-        this.components.set(ComponentNames.REACT_BOARDS, new ReactBoardsComponent(this));
-        this.components.set(ComponentNames.DAY_OF_THE_WEEK, new DayOfTheWeekComponent(this));
-        this.components.set(ComponentNames.VC_HOURS, new VCHoursComponent(this));
-        this.components.set(ComponentNames.PNG_RESOLUTION_CHECK, new PNGResolutionCheck(this));
+        /**
+         * Creates an instance of a component class, from the import 'components'
+         * @param className The name of the class as a string
+         * @param args Arguments to pass to that classes constructor
+         */
+        function createInstance(className: string, ...args: any[]) {
+            return new (<any>components)[className](...args);
+        }
+        for (const className of Object.keys(components)) {
+            const instance: Component<any> = createInstance(className, this) as Component<any>;
+            this.components.set(instance.name, instance);
+        }
     }
 
     /**
