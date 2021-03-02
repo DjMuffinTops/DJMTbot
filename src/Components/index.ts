@@ -13,3 +13,4 @@ export { SayComponent } from './SayComponent';
 export { VCHoursComponent } from './VCHoursComponent';
 export { VoiceTextPairComponent } from './VoiceTextPairComponent';
 export { DynamicBanner } from './DynamicBanner';
+export { DynamicVoiceChannels } from './DynamicVoiceChannels';
