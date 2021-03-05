@@ -97,6 +97,7 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
             await message.channel.send('Toggles a channel as a media channel, or multiple channels at the same time.');
             await message.channel.send('Command syntax: \`setmc #channel1 #channel2 #channel3 ...\`');
             await message.channel.send('You can also use \`getmc\` to see a list of set channels.');
+            return
         }
         // TODO: also accept channels by name - make getGuildChannels accept channel names as well?
         else {
