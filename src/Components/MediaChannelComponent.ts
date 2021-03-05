@@ -10,7 +10,7 @@ import {ComponentCommands} from "../Constants/ComponentCommands";
  * afterLoadJSON, as it tells Typescript what data you're expecting to write and load.
  */
 interface MediaComponentSave {
-    channels: Array<string>;
+    channels: string[];
 }
 
 /**
