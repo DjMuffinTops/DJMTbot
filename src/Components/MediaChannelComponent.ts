@@ -25,12 +25,8 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
     // may move to constants in future if needed?
 
     async getSaveData(): Promise<MediaComponentSave> {
-        let ids = new Array<string>();
-        for (const c of this.channelsArray) {
-            ids.push((<TextChannel>c).id);
-        }
         return {
-            channels: ids
+            channels: this.channelsArray.map(channel => channel.id)
         };
     }
 
