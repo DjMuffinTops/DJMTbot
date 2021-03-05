@@ -20,7 +20,7 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
 
     // MANDATORY: Define a name in ComponentNames.ts and place it here.
     name: ComponentNames = ComponentNames.MEDIA_CHANNEL;
-    channelsArray: Array<TextChannel> = new Array<TextChannel>();
+    channelsArray:TextChannel[] = [];
     linkRegex: RegExp = /(https?:\/\/[^\s]+)/g; // not great but should work for all but weird edge cases
     // may move to constants in future if needed?
 
