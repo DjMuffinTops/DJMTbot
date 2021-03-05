@@ -65,13 +65,6 @@
     /* Advanced Options */
     "skipLibCheck": true,                     /* Skip type checking of declaration files. */
     "forceConsistentCasingInFileNames": true,  /* Disallow inconsistently-cased references to the same file. */
-    "resolveJsonModule": true,
-    "lib": [
-      "dom",
-      "es5",
-      "scripthost",
-      "es2015.collection",
-      "es2015.promise"
-    ]
+    "resolveJsonModule": true
   }
 }

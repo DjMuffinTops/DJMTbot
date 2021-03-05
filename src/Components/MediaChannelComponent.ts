@@ -20,7 +20,7 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
 
     // MANDATORY: Define a name in ComponentNames.ts and place it here.
     name: ComponentNames = ComponentNames.MEDIA_CHANNEL;
-    channelsArray:TextChannel[] = [];
+    channelsArray: TextChannel[] = [];
     linkRegex: RegExp = /(https?:\/\/[^\s]+)/g; // not great but should work for all but weird edge cases
     // may move to constants in future if needed?
 
@@ -75,7 +75,6 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
         } else if (command === ComponentCommands.GET_MEDIA_CHANNEL) {
             await this.getMediaChannel(message);
         }
-        return Promise.resolve(undefined);
     }
 
     async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
@@ -97,34 +96,31 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
             await message.channel.send('Toggles a channel as a media channel, or multiple channels at the same time.');
             await message.channel.send('Command syntax: \`setmc #channel1 #channel2 #channel3 ...\`');
             await message.channel.send('You can also use \`getmc\` to see a list of set channels.');
-            return
+            return;
         }
         // TODO: also accept channels by name - make getGuildChannels accept channel names as well?
-        else {
-            for (const arg of args) {
-                let chid = arg.replace(/(\<|\>|\#)/gi, "");
-                const channel = this.djmtGuild.getGuildChannel(chid) as TextChannel;
-                if (!channel) {
-                    await message.channel.send(`${arg} is not a valid channel`);
+        for (const arg of args) {
+            let chid = arg.replace(/(\<|\>|\#)/gi, "");
+            const channel = this.djmtGuild.getGuildChannel(chid) as TextChannel;
+            if (!channel) {
+                await message.channel.send(`${arg} is not a valid channel`);
+                continue;
+            }
+            // find channel in the list of media channels, if it exists
+            let exists = false;
+            this.channelsArray.forEach( (item, index) => {
+                if(item.id === chid) {
+                    exists = true;
+                    // really, js? why is this a thing
+                    this.channelsArray.splice(index,1);
                 }
-                else {
-                    // find channel in the list of media channels, if it exists
-                    let exists = false;
-                    this.channelsArray.forEach( (item, index) => {
-                        if(item.id === chid) {
-                            exists = true;
-                            // really, js? why is this a thing
-                            this.channelsArray.splice(index,1);
-                        }
-                    });
-                    if (exists) {
-                        await message.channel.send(`Removed ${arg} as a media channel.`);
-                    }
-                    else {
-                        this.channelsArray.push(channel);
-                        await message.channel.send(`Successfully added ${arg} as a media channel.`);
-                    }
-                }
+            });
+            if (exists) {
+                await message.channel.send(`Removed ${arg} as a media channel.`);
+            }
+            else {
+                this.channelsArray.push(channel);
+                await message.channel.send(`Successfully added ${arg} as a media channel.`);
             }
         }
         await this.djmtGuild.saveJSON();
@@ -161,7 +157,12 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
             // delete all messages without attachments or links
             if (message.attachments.size === 0 && !(this.linkRegex.test(message.content))) {
                 let msg = `${message.author.toString()}, your message has been deleted because it does not have media.`;
-                await message.delete();
+                try {
+                    await message.delete();
+                }
+                catch (e) {
+                    console.error(e);
+                }
                 const warningMsg: Message = await message.channel.send(msg);
                 // Delete the warning message after some time
                 setTimeout(async () => {
