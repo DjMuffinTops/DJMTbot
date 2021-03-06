@@ -46,7 +46,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
     name: ComponentNames = ComponentNames.DYNAMIC_VOICE_CHANNELS;
     markedVoiceChannels: DynamicVoiceChannel[] = [];
     private readonly GUILD_MAXIMUM_GENERATED_CHANNELS = 7;
-    private readonly MINIMUM_NUMBER_OF_OCCUPANTS = 2;
+    private readonly MINIMUM_NUMBER_OF_OCCUPANTS = 4;
     creatingChannel: Map<string, boolean> = new Map();
 
     async getSaveData(): Promise<DynamicVoiceChannelsSave> {
