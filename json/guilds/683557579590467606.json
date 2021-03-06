@@ -368,7 +368,10 @@
 				}
 			},
 			"DYNAMIC_BANNER": {
-				"imageUrls": []
+				"imageUrls": [
+					"https://cdn.discordapp.com/attachments/767457371257307186/816103837093199892/PW_February_2021_Collab_Night_FINAL.png",
+					"https://cdn.discordapp.com/attachments/767457371257307186/816103723008786482/PW_February_2021_Collab_Day_FINAL.png"
+				]
 			}
 		}
 	}
