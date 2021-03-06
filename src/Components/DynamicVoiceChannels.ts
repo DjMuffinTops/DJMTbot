@@ -1,17 +1,16 @@
 import {Component} from "../Component";
 import {
-    Channel, GuildChannel,
+    Channel,
     GuildMember,
     Message,
-    MessageReaction, TextChannel,
+    MessageReaction,
     User,
     VoiceChannel,
     VoiceState
 } from "discord.js";
 import {ComponentNames} from "../Constants/ComponentNames";
 import {ComponentCommands} from "../Constants/ComponentCommands";
-import {channelIdToChannel, isAdmin} from "../HelperFunctions";
-import {VoiceTextPair} from "./VoiceTextPairComponent";
+import {isAdmin} from "../HelperFunctions";
 
 interface DynamicVoiceChannelsSave {
     markedRootVoiceChannelIds: RootDynamicVoiceChannelSave[]
@@ -20,6 +19,13 @@ interface DynamicVoiceChannelsSave {
 interface RootDynamicVoiceChannelSave {
     channelId: string,
     maxChildren: number
+}
+
+interface DynamicVoiceChannelNameInfo {
+    name: string,
+    count: number,
+    nameWithoutCount: string,
+    possibleChildrenNames: string[]
 }
 
 interface DynamicVoiceChannel extends VoiceChannel {
@@ -31,16 +37,16 @@ interface DynamicVoiceChannel extends VoiceChannel {
 /**
  * Component that generate extra voice channels for marked channels when they are occupied.
  * When a marked channel is occupied by at least one user, it generate a duplicate voice channel
- * (denoted by a number at the end like VC 2).If that channel has a user in it, generate another,
- * and so forth for a maximum of 5 times. An extra channel deletes itself when the previous channel
- * has no users in it and the channel itself has no users in it.
+ * (denoted by a number at the end of its name). If that channel has a user in it, it will generate
+ * another, and so forth until the maxChildren threshold is reached. An extra channel deletes itself
+ * when it's parent channel has no users in it and the channel itself has no users in it.
  */
 export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
 
-    // MANDATORY: Define a name in ComponentNames.ts and place it here.
     name: ComponentNames = ComponentNames.DYNAMIC_VOICE_CHANNELS;
     markedVoiceChannels: DynamicVoiceChannel[] = [];
-    private readonly GUILD_MAXIMUM_GENERATED_CHANNELS = 5;
+    private readonly GUILD_MAXIMUM_GENERATED_CHANNELS = 7;
+    private readonly MINIMUM_NUMBER_OF_OCCUPANTS = 2;
     creatingChannel: Map<string, boolean> = new Map();
 
     async getSaveData(): Promise<DynamicVoiceChannelsSave> {
@@ -71,45 +77,36 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
     }
 
     async onReady(): Promise<void> {
-        console.log('READY');
         // Check if any leftover child channels exist for all marked root channels
-        const rootLength = this.markedVoiceChannels.length; // We add to this list add we go, so get the original length to prevent infinite loop
-        for (let i = 0; i < rootLength; i++){
+        const rootLength = this.markedVoiceChannels.length; // We add to the end of this list add as we go, so get the original length to prevent infinite loop
+        for (let i = 0; i < rootLength; i++) { // Loop over the original length
             let rootVC = this.markedVoiceChannels[i];
             // Get the number at the end of the marked channel
-            const rootChannelName: string = rootVC.name;
-            const lastSpaceIndex: number = rootChannelName.lastIndexOf(" "); // The number should be right after the last space
-            const rootChannelCount: number = lastSpaceIndex === -1 ? 1 : Number(rootChannelName.substring(lastSpaceIndex)); // Start generating names from this number
-            const rootChannelNameWithoutNumber: string = lastSpaceIndex === -1 ? rootChannelName : rootChannelName.substring(0, lastSpaceIndex);
-            const possibleChildVCNames: string[] = Array.from(Array(rootVC.rootsMaxChildren).keys()).map((x, index) => `${rootChannelNameWithoutNumber} ${index + rootChannelCount}`);
-            // console.log(possibleChildVCNames);
-            // Iterate through all channels, and see if any are named after the possible children
+            const rootVCInfo = this.getDynamicVoiceChannelInfo(rootVC);
+            // Iterate through all channels in this guild, and see if any are named after the possible children
             const allGuildVoiceChannels: VoiceChannel[] = this.djmtGuild.guild?.channels.cache.filter(channel => channel.type === 'voice').array() as VoiceChannel[] ?? [];
             for (const guildVoiceChannel of allGuildVoiceChannels) {
-                // For each possible child name
-                for (let nameIndex = 0; nameIndex < possibleChildVCNames.length; nameIndex++) {
-                    console.log(`current index: ${nameIndex} = ${possibleChildVCNames[nameIndex]} | ${guildVoiceChannel.name} || ${rootVC.name}`);
-                    let childVCName = possibleChildVCNames[nameIndex];
-                    // If we find a channel with the name of a child channel we expect
+                // Search for existing child channels with each possible child name
+                for (let nameIndex = 0; nameIndex < rootVCInfo.possibleChildrenNames.length; nameIndex++) {
+                    let childVCName = rootVCInfo.possibleChildrenNames[nameIndex];
+                    // If we find a channel with the name of a child channel we expect, delete it if its empty, or attempt to 'rewire' it
                     if (childVCName === guildVoiceChannel.name) {
-                        // console.log(`found leftover child: ${childVCName}`);
                         // Delete
                         if (guildVoiceChannel.members.size === 0) {
                             await guildVoiceChannel.delete(`${guildVoiceChannel.name} is empty`);
-                        } else {
-                            try {
-                                // Keep it and add it to marked voice channel
-                                let newRootDynamicChannel = guildVoiceChannel as DynamicVoiceChannel;
-                                newRootDynamicChannel.root = false;
-                                newRootDynamicChannel.parentChannel = this.markedVoiceChannels.find(voiceChannel => voiceChannel.name === possibleChildVCNames[nameIndex - 1]) as DynamicVoiceChannel;
-                                newRootDynamicChannel.childChannel = this.markedVoiceChannels.find(voiceChannel => voiceChannel.name === possibleChildVCNames[nameIndex + 1]) as DynamicVoiceChannel;
-                                newRootDynamicChannel.rootsMaxChildren = rootVC.rootsMaxChildren;
-                                this.markedVoiceChannels.push(newRootDynamicChannel);
-                                // console.log(newRootDynamicChannel);
-                            } catch (e) {
-                                console.log(e);
-                            }
-
+                            console.log(`[${this.djmtGuild.guildId}] Deleted detected child ${guildVoiceChannel.name} ${guildVoiceChannel.id}. VC was empty`);
+                            continue;
+                        }
+                        try {
+                            // Keep it and add it to marked voice channel by 'rewiring' it's parent and child if they exist
+                            let newRootDynamicChannel = guildVoiceChannel as DynamicVoiceChannel;
+                            newRootDynamicChannel.root = false;
+                            newRootDynamicChannel.parentChannel = this.markedVoiceChannels.find(voiceChannel => voiceChannel.name === rootVCInfo.possibleChildrenNames[nameIndex - 1]) as DynamicVoiceChannel;
+                            newRootDynamicChannel.childChannel = this.markedVoiceChannels.find(voiceChannel => voiceChannel.name === rootVCInfo.possibleChildrenNames[nameIndex + 1]) as DynamicVoiceChannel;
+                            newRootDynamicChannel.rootsMaxChildren = rootVC.rootsMaxChildren;
+                            this.markedVoiceChannels.push(newRootDynamicChannel);
+                        } catch (e) {
+                            console.log(`[${this.djmtGuild.guildId}] Caught error rewiring on ready. ${e}`);
                         }
                     }
                 }
@@ -146,6 +143,67 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
         return Promise.resolve(undefined);
     }
 
+    async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
+        // Whenever Voice Channel State Updates for any marked channel
+        if (this.markedVoiceChannels.some(markedVC => markedVC.id === oldState.channel?.id || markedVC.id === newState.channel?.id)) {
+            await this.markedChannelCreationCheck(newState);
+            await this.markedChannelDeletionCheck();
+        }
+    }
+
+
+
+    /**
+     * Checks if any of the marked channels need to be deleted.
+     * @private
+     */
+    private async markedChannelDeletionCheck() {
+        // Now check for deletion, Since we're removing from the array, loop in reverse to make sure we hit our original items
+        for (let i = this.markedVoiceChannels.length - 1; i >= 0; i--) {
+            let markedVC = this.markedVoiceChannels[i];
+            // Always check if we need to delete empty dynamic channels.
+            // Deleting should only be done to channels that aren't root channels and that are empty
+            if (!markedVC.root && markedVC.members.size === 0) {
+                // Delete if the marked channel is empty and it has no parent
+                if (!markedVC.parentChannel) {
+                    await this.deleteChildVC(markedVC, `${markedVC.name} is empty`);
+                    continue;
+                }
+                // Delete if the marked channel is empty, and if it has a parent channel with nobody in it
+                if (markedVC.parentChannel.members.size === 0) {
+                    await this.deleteChildVC(markedVC, `${markedVC.name} and parent channel ${markedVC.parentChannel.name} are empty.`);
+                }
+            }
+        }
+    }
+
+    /**
+     * Checks if any of the marked channels needs to have a child created for it.
+     * Any occupied marked channel should have a child.
+     * @param newState The newState for the user that just joined a vc
+     * @private
+     */
+    private async markedChannelCreationCheck(newState: VoiceState) {
+        // Check if we need to create dynamic channel
+        const originalLength = this.markedVoiceChannels.length; // We add to the end of this list add as we go, so get the original length to prevent infinite loop
+        for (let i = 0; i < originalLength; i++) {
+            let markedVC = this.markedVoiceChannels[i];
+            // Create one for a marked channel we just joined
+            if (markedVC.id === newState.channel?.id) {
+                // If there's no child channel, create one
+                if (!markedVC.childChannel) {
+                    await this.createChildVC(markedVC);
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Command to add or remove a voice channel to be marked as a root dynamic voice channel
+     * @param args
+     * @param message
+     */
     async setRootDynamicVoiceChannel(args: string[], message: Message) {
         // Admin only
         if (!isAdmin(message)) {
@@ -158,7 +216,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
             if (rootChannels.length > 0) {
                 let channelString = "";
                 rootChannels.forEach((channel: DynamicVoiceChannel) => {
-                    channelString += `${channel} => Max Children: ${channel.rootsMaxChildren}\n`;
+                    channelString += `${channel.toString()} => Max Children: ${channel.rootsMaxChildren}\n`;
                 });
                 await message.channel.send(`Dynamic Voice Channels:\n${channelString}`);
             } else {
@@ -194,21 +252,31 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
         }
     }
 
+    /**
+     * Attempts to add or remove a root dynamic voice channel from the marked channels list
+     * @param voiceChannel The root voice channel to add or remove
+     * @param maxChildren The maximum amount of chidlren this voice channel should have
+     */
     async addOrRemoveRootDynamicVoiceChannel(voiceChannel: VoiceChannel, maxChildren?: number): Promise<string> {
         const removed = await this.removeRootDynamicVoiceChannel(voiceChannel);
         if (removed) {
-            return `Removed ${voiceChannel} from VC Channels list!`;
+            return `Removed ${voiceChannel.toString()} from VC Channels list!`;
         } else {
             if (maxChildren) {
-                await this.addDynamicVoiceChannel(voiceChannel, maxChildren);
-                return `Added ${voiceChannel} to the VC Channels list!`;
+                await this.addRootDynamicVoiceChannel(voiceChannel, maxChildren);
+                return `Added ${voiceChannel.toString()}${voiceChannel} to the VC Channels list!`;
             } else {
                 return `Adding channel requires an integer for the maximum amount of child channels`;
             }
         }
     }
 
-    async addDynamicVoiceChannel(voiceChannel: VoiceChannel, maxChildren: number): Promise<void> {
+    /**
+     *  Adds a voice channel as a Root dynamic voice channel to the marked voice channels list
+     * @param voiceChannel The voice channel to add
+     * @param maxChildren The max amount of children channels the root should have
+     */
+    async addRootDynamicVoiceChannel(voiceChannel: VoiceChannel, maxChildren: number): Promise<void> {
         let newRootDynamicChannel = voiceChannel as DynamicVoiceChannel;
         newRootDynamicChannel.root = true;
         newRootDynamicChannel.parentChannel = undefined;
@@ -218,10 +286,14 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
         await this.djmtGuild.saveJSON();
     }
 
+    /**
+     * Removes a Root dynamic voice channel from the marked voice channels list.
+     * @param voiceChannel The root voice channel to remove
+     */
     async removeRootDynamicVoiceChannel(voiceChannel: VoiceChannel): Promise<boolean> {
         let rootDynamicChannel = voiceChannel as DynamicVoiceChannel;
         for (const rootChannel of this.markedVoiceChannels) {
-            if (rootChannel.id === rootDynamicChannel.id) {
+            if (rootChannel.root && rootChannel.id === rootDynamicChannel.id) {
                 this.markedVoiceChannels.splice(this.markedVoiceChannels.indexOf(rootChannel), 1);
                 await this.djmtGuild.saveJSON();
                 return true;
@@ -231,44 +303,87 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
     }
 
 
-    async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
-        console.log('voice state update');
-        // Whenever Voice Channel State Updates for any marked channel
-        if (this.markedVoiceChannels.some(markedVC => {
-            console.log(`${markedVC.id} vs ${oldState.channel?.id} - ${newState.channel?.id}`);
-            return (markedVC.id === oldState.channel?.id) || (markedVC.id === newState.channel?.id)
-        })) {
-            // Check if we need to create or delete a dynamic channel
-            for (const markedVC of this.markedVoiceChannels) {
-                // If the user joined a Marked Voice Channel
-                if (markedVC.id === newState.channel?.id) {
-                    console.log('channel found');
-                    console.log(markedVC.name);
-                    // If there's no child channel, create one
-                    if (!markedVC.childChannel) {
-                        console.log('creating');
-                        await this.createChildVC(markedVC);
-                    }
-                    break;
-                }
-            }
-            for(const markedVC of this.markedVoiceChannels) {
-                // Always check if we need to delete empty dynamic channels.
-                // Deleting should only be done to channels that aren't root channels and that are empty
-                if (!markedVC.root && markedVC.members.size === 0) {
-                    // Delete if the marked channel is empty and it has no parent
-                    if (!markedVC.parentChannel) {
-                        await this.deleteChildVC(markedVC, `${markedVC.name} is empty`);
-                    }
-                    // Delete if the marked channel is empty, and if it has a parent channel with nobody in it
-                    else if (markedVC.parentChannel.members.size === 0) {
-                        await this.deleteChildVC(markedVC, `${markedVC.name} and parent channel ${markedVC.parentChannel.name} are empty.`);
-                    }
-                }
-            }
+    /**
+     * Gets name and count information from a Dynamic Voice Channel
+     * @param dvc The dynamic voice channel
+     * @private
+     */
+    private getDynamicVoiceChannelInfo(dvc: DynamicVoiceChannel): DynamicVoiceChannelNameInfo {
+        const rootChannelName: string = dvc.name;
+        const lastSpaceIndex: number = rootChannelName.lastIndexOf(" "); // The number should be right after the last space
+        let rootChannelCount: number = lastSpaceIndex === -1  ? 1 : Number(rootChannelName.substring(lastSpaceIndex)); // Start generating names from this number
+        let rootChannelNameWithoutNumber: string;
+        if (isNaN(rootChannelCount)){
+            rootChannelCount = 1;
+            rootChannelNameWithoutNumber = rootChannelName;
+        } else {
+            rootChannelNameWithoutNumber = lastSpaceIndex === -1 ? rootChannelName : rootChannelName.substring(0, lastSpaceIndex);
         }
+        const possibleChildVCNames: string[] = Array.from(Array(dvc.rootsMaxChildren).keys()).map((x, index) => `${rootChannelNameWithoutNumber} ${index + rootChannelCount + 1}`);
+        return {
+            count: rootChannelCount,
+            name: rootChannelName,
+            nameWithoutCount: rootChannelNameWithoutNumber,
+            possibleChildrenNames: possibleChildVCNames
+
+        };
     }
 
+    /**
+     * Creates a child voice channel for the given dynamic voice channel
+     * @param voiceChannel The dynamic voice channel to create a child for
+     * @private
+     */
+    private async createChildVC(voiceChannel: DynamicVoiceChannel) {
+        console.log(`[${this.djmtGuild.guildId}] Attempting to create child for ${voiceChannel.name}`);
+        const markedChannelInfo = this.getDynamicVoiceChannelInfo(voiceChannel);
+        const nextChannelCount = markedChannelInfo.count + 1;
+        const nextChannelName: string = `${markedChannelInfo.nameWithoutCount} ${nextChannelCount}`;
+        // Don't create if we're already in the process of making this channel
+        if (this.creatingChannel.get(nextChannelName)) {
+            console.log(`[${this.djmtGuild.guildId}] Not creating, already creating for this channel`);
+            return;
+        }
+        // If max count, don't create a child
+        if (markedChannelInfo.count >= (voiceChannel.rootsMaxChildren || this.GUILD_MAXIMUM_GENERATED_CHANNELS)) {
+            console.log(`[${this.djmtGuild.guildId}] Did not generate Child VC, at Maximum Child Limit.`);
+            return;
+        }
+        // If one of the marked channels already has the name of our next child. Don't generate a child, fix the child parent connection instead.
+        if (this.markedVoiceChannels.some(voiceChannel => voiceChannel.name === nextChannelName)) {
+            const foundChannel: DynamicVoiceChannel = this.markedVoiceChannels.find(voiceChannel => voiceChannel.name === nextChannelName) as DynamicVoiceChannel;
+            voiceChannel.childChannel = foundChannel;
+            foundChannel.parentChannel = voiceChannel;
+            console.log(`[${this.djmtGuild.guildId}] Did not generate Child VC, channel with the name ${foundChannel.name} already exists.`);
+            return;
+        }
+        // Mark that we're creating this child, this is to prevent duplicate creation
+        this.creatingChannel.set(nextChannelName, true);
+        let childVoiceChannel: DynamicVoiceChannel = (await this.djmtGuild.guild?.channels.create(nextChannelName ?? "Extra", {
+            type: 'voice',
+            parent: voiceChannel.parent as Channel,
+            reason: `Dynamic Voice Channel created for ${markedChannelInfo.name}`
+        })) as DynamicVoiceChannel;
+        // Wire up the child channel
+        childVoiceChannel.parentChannel = voiceChannel;
+        childVoiceChannel.childChannel = undefined;
+        childVoiceChannel.rootsMaxChildren = voiceChannel.rootsMaxChildren;
+        childVoiceChannel.root = false;
+        await childVoiceChannel.setPosition(voiceChannel.position + 1);
+        await childVoiceChannel.setUserLimit((childVoiceChannel.rootsMaxChildren - nextChannelCount) + this.MINIMUM_NUMBER_OF_OCCUPANTS);
+        voiceChannel.childChannel = childVoiceChannel;
+        this.markedVoiceChannels.push(childVoiceChannel); // add to the end of the list
+        console.log(`[${this.djmtGuild.guildId}] Generated child VC ${childVoiceChannel.name} ${childVoiceChannel.id}`);
+        this.creatingChannel.set(nextChannelName, false);
+    }
+
+
+    /**
+     * Deletes a given child dynamic voice channel. Will not delete root channels.
+     * @param voiceChannel The dynamic voice channel to delete
+     * @param reason
+     * @private
+     */
     private async deleteChildVC(voiceChannel: DynamicVoiceChannel, reason?: string) {
         if (voiceChannel.root) {
             console.log(`[${this.djmtGuild.guildId}] Attempted to delete a root DynamicVoiceChannel. skipping`);
@@ -288,48 +403,5 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
         this.markedVoiceChannels.splice(this.markedVoiceChannels.indexOf(voiceChannel), 1);
         await voiceChannel.delete(reason);
         console.log(`[${this.djmtGuild.guildId}] Deleted ${voiceChannel.name} ${voiceChannel.id}`);
-    }
-
-    private async createChildVC(voiceChannel: DynamicVoiceChannel) {
-            console.log(`creating for  ${voiceChannel.name}`);
-            // Get the number at the end of the marked channel
-            const markedChannelName: string = voiceChannel.name ?? "Extra Channel";
-            const lastSpaceIndex: number = markedChannelName.lastIndexOf(" "); // The number should be right after the last space
-            const markedChannelCount: number = lastSpaceIndex === -1 ? 1 : Number(markedChannelName.substring(lastSpaceIndex));
-            const markedChannelNameWithoutNumber: string = lastSpaceIndex === -1 ? markedChannelName : markedChannelName.substring(0, lastSpaceIndex);
-            const nextChannelName: string = `${markedChannelNameWithoutNumber} ${markedChannelCount + 1}`;
-        if (!this.creatingChannel.get(nextChannelName)) {
-            this.creatingChannel.set(nextChannelName, true);
-            if (markedChannelCount >= (voiceChannel.rootsMaxChildren || this.GUILD_MAXIMUM_GENERATED_CHANNELS)) {
-                console.log(`[${this.djmtGuild.guildId}] Did not generate Child VC, at Maximum Child Limit.`);
-            } else if (this.markedVoiceChannels.some(voiceChannel => voiceChannel.name === nextChannelName)) {
-                const foundChannel: DynamicVoiceChannel = this.markedVoiceChannels.find(voiceChannel => voiceChannel.name === nextChannelName) as DynamicVoiceChannel;
-                voiceChannel.childChannel = foundChannel;
-                foundChannel.parentChannel = voiceChannel;
-                console.log(`[${this.djmtGuild.guildId}] Did not generate Child VC, channel with the name ${foundChannel.name} already exists.`);
-            } else {
-                this.creatingChannel.set(nextChannelName, true);
-                console.log(`POSITION ${voiceChannel.position}`);
-                let childVoiceChannel: DynamicVoiceChannel = (await this.djmtGuild.guild?.channels.create(nextChannelName ?? "Extra", {
-                    type: 'voice',
-                    userLimit: 7,
-                    parent: voiceChannel.parent as Channel,
-                    position: voiceChannel.position + 1,
-                    reason: `Dynamic Voice Channel created for ${markedChannelName}`
-                })) as DynamicVoiceChannel;
-                console.log(`created: ${childVoiceChannel}`);
-                childVoiceChannel.parentChannel = voiceChannel;
-                childVoiceChannel.childChannel = undefined;
-                childVoiceChannel.rootsMaxChildren = voiceChannel.rootsMaxChildren;
-                childVoiceChannel.root = false;
-                voiceChannel.childChannel = childVoiceChannel;
-                this.markedVoiceChannels.push(childVoiceChannel);
-                console.log(`[${this.djmtGuild.guildId}] Generated child VC ${childVoiceChannel.name} ${childVoiceChannel.id}`);
-
-                this.creatingChannel.set(nextChannelName, false)
-            }
-        } else {
-            console.log(`Not creating, already creating for this channel`);
-        }
     }
 }
