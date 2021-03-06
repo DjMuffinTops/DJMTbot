@@ -110,55 +110,6 @@
 						"voiceChannel": {
 							"type": "voice",
 							"deleted": false,
-							"id": "686308858246856840",
-							"name": "🔊 General VC 2",
-							"rawPosition": 2,
-							"parentID": "687891218272747520",
-							"permissionOverwrites": [
-								"758110296832737321"
-							],
-							"bitrate": 64000,
-							"userLimit": 0,
-							"guild": "683557579590467606",
-							"createdTimestamp": 1583699182808
-						},
-						"textChannel": {
-							"type": "text",
-							"deleted": false,
-							"id": "696275411478249483",
-							"name": "vc-chat-2",
-							"rawPosition": 46,
-							"parentID": "687891218272747520",
-							"permissionOverwrites": [
-								"758110296832737321"
-							],
-							"topic": null,
-							"nsfw": false,
-							"lastMessageID": "806411125541175306",
-							"rateLimitPerUser": 0,
-							"lastPinTimestamp": 1608955890482,
-							"guild": "683557579590467606",
-							"messages": [
-								"806409701654921226",
-								"806409934034960384",
-								"806409990108610561",
-								"806410032500834314",
-								"806410258787467314",
-								"806410304451641355",
-								"806410463754715157",
-								"806410644303773717",
-								"806410740789149726",
-								"806410828537659422",
-								"806410841078628352",
-								"806411125541175306"
-							],
-							"createdTimestamp": 1586075394268
-						}
-					},
-					{
-						"voiceChannel": {
-							"type": "voice",
-							"deleted": false,
 							"id": "712862825655042050",
 							"name": "🎮 Gaming",
 							"rawPosition": 3,
@@ -268,6 +219,44 @@
 							"messages": [],
 							"createdTimestamp": 1600123018294
 						}
+					},
+					{
+						"voiceChannel": {
+							"type": "voice",
+							"deleted": false,
+							"id": "817627583565791322",
+							"name": "🔊 General VC 2",
+							"rawPosition": 1,
+							"parentID": "687891218272747520",
+							"permissionOverwrites": [
+								"758110296832737321"
+							],
+							"bitrate": 64000,
+							"userLimit": 0,
+							"guild": "683557579590467606",
+							"root": true,
+							"rootsMaxChildren": 5,
+							"createdTimestamp": 1615008006708
+						},
+						"textChannel": {
+							"type": "text",
+							"deleted": false,
+							"id": "696275411478249483",
+							"name": "vc-chat-2",
+							"rawPosition": 46,
+							"parentID": "687891218272747520",
+							"permissionOverwrites": [
+								"758110296832737321"
+							],
+							"topic": null,
+							"lastMessageID": "817610985245245440",
+							"rateLimitPerUser": 0,
+							"lastPinTimestamp": 1608955890482,
+							"guild": "683557579590467606",
+							"messages": [],
+							"nsfw": false,
+							"createdTimestamp": 1586075394268
+						}
 					}
 				]
 			},
@@ -369,6 +358,45 @@
 			},
 			"DYNAMIC_BANNER": {
 				"imageUrls": []
+			},
+			"MEDIA_CHANNEL": {
+				"channels": [
+					"683557850454556675",
+					"683557873686806528",
+					"753682755191177277",
+					"767457371257307186",
+					"758687791244378152",
+					"689936520374648910",
+					"816103167024562187",
+					"695482939038892083",
+					"695483831117021244",
+					"685420826509574154",
+					"719688049671405658"
+				]
+			},
+			"DYNAMIC_VOICE_CHANNELS": {
+				"markedRootVoiceChannelIds": [
+					{
+						"channelId": "712862825655042050",
+						"maxChildren": 5
+					},
+					{
+						"channelId": "807342883765092372",
+						"maxChildren": 5
+					},
+					{
+						"channelId": "693269995689345074",
+						"maxChildren": 5
+					},
+					{
+						"channelId": "755195307981144154",
+						"maxChildren": 5
+					},
+					{
+						"channelId": "817627583565791322",
+						"maxChildren": 5
+					}
+				]
 			}
 		}
 	}
