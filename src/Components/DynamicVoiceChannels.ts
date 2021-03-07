@@ -85,6 +85,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
             const rootVCInfo = this.getDynamicVoiceChannelInfo(rootVC);
             // Iterate through all channels in this guild, and see if any are named after the possible children
             const allGuildVoiceChannels: VoiceChannel[] = this.djmtGuild.guild?.channels.cache.filter(channel => channel.type === 'voice').array() as VoiceChannel[] ?? [];
+            // Delete Children that mightve been left over first
             for (const guildVoiceChannel of allGuildVoiceChannels) {
                 // Search for existing child channels with each possible child name
                 for (let nameIndex = 0; nameIndex < rootVCInfo.possibleChildrenNames.length; nameIndex++) {
@@ -111,6 +112,8 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
                     }
                 }
             }
+            // Finally check if we need to create any children
+            await this.markedChannelCreationCheck();
         }
     }
 
@@ -146,7 +149,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
     async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
         // Whenever Voice Channel State Updates for any marked channel
         if (this.markedVoiceChannels.some(markedVC => markedVC.id === oldState.channel?.id || markedVC.id === newState.channel?.id)) {
-            await this.markedChannelCreationCheck(newState);
+            await this.markedChannelCreationCheck();
             await this.markedChannelDeletionCheck();
         }
     }
@@ -179,22 +182,17 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
 
     /**
      * Checks if any of the marked channels needs to have a child created for it.
-     * Any occupied marked channel should have a child.
-     * @param newState The newState for the user that just joined a vc
+     * Only occupied marked channel should have a child.
      * @private
      */
-    private async markedChannelCreationCheck(newState: VoiceState) {
+    private async markedChannelCreationCheck() {
         // Check if we need to create dynamic channel
         const originalLength = this.markedVoiceChannels.length; // We add to the end of this list add as we go, so get the original length to prevent infinite loop
         for (let i = 0; i < originalLength; i++) {
             let markedVC = this.markedVoiceChannels[i];
-            // Create one for a marked channel we just joined
-            if (markedVC.id === newState.channel?.id) {
-                // If there's no child channel, create one
-                if (!markedVC.childChannel) {
-                    await this.createChildVC(markedVC);
-                    break;
-                }
+            // If the channel is occupied and there's no child channel, create one
+            if (markedVC.members.size > 0 && !markedVC.childChannel) {
+                await this.createChildVC(markedVC);
             }
         }
     }
@@ -369,6 +367,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
         childVoiceChannel.childChannel = undefined;
         childVoiceChannel.rootsMaxChildren = voiceChannel.rootsMaxChildren;
         childVoiceChannel.root = false;
+        await childVoiceChannel.overwritePermissions(voiceChannel.permissionOverwrites);
         await childVoiceChannel.setPosition(voiceChannel.position + 1);
         await childVoiceChannel.setUserLimit((childVoiceChannel.rootsMaxChildren - nextChannelCount) + this.MINIMUM_NUMBER_OF_OCCUPANTS);
         voiceChannel.childChannel = childVoiceChannel;
