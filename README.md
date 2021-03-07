@@ -1,6 +1,9 @@
 # DJMTbot
 A bot running Discord.js w/ Typescript, designed for the Pokemon Workshop Discord Server
 
+## Install Node.js
+To use discord.js, you'll need to [install Node.js here](https://nodejs.org)
+
 ## Install Yarn
 [Install it here!](https://classic.yarnpkg.com/en/docs/install)
 
