@@ -22,7 +22,7 @@ export class DJMTbot {
         this.initGuildInstancesFromFiles().then(r => console.log(`${this.guilds.size} DJMT Guilds Initialized`));
     }
 
-    public static async getInstance(): Promise<DJMTbot> {
+    public static getInstance(): DJMTbot {
         if (!DJMTbot.instance) {
             DJMTbot.instance = new DJMTbot();
         }

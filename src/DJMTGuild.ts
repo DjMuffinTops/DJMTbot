@@ -180,7 +180,7 @@ export class DJMTGuild {
      */
     async onReady(): Promise<void> {
         try {
-            this.guild = await (await DJMTbot.getInstance()).client.guilds.fetch(this.guildId);
+            this.guild = await DJMTbot.getInstance().client.guilds.fetch(this.guildId);
         } catch (e) {
             console.error(`[${this.guildId}] ${e}`);
         }
