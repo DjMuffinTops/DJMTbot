@@ -1,5 +1,3 @@
 import {DJMTbot} from "./DJMTbot";
 
-DJMTbot.getInstance().then(bot => {
-   bot.run();
-});
+DJMTbot.getInstance().run().then(r => console.log('Bot has been run'));

@@ -32,7 +32,7 @@ export async function channelIdToChannel(channelId: string): Promise<Channel> {
         throw new Error("channelId must be numerical")
     }
     console.log(id);
-    return await (await DJMTbot.getInstance()).client.channels.fetch(id);
+    return await DJMTbot.getInstance().client.channels.fetch(id);
 }
 
 export function mapKeys<T, V, U>(m: Map<T, V>, fn: (this: void, v: V) => U): Map<T, U> {

@@ -11,6 +11,7 @@ import {
 import {ComponentNames} from "../Constants/ComponentNames";
 import {isAdmin} from "../HelperFunctions";
 import {ComponentCommands} from "../Constants/ComponentCommands";
+import {DJMTbot} from "../DJMTbot";
 
 // Declare data you want to save in JSON here
 interface ReactBoardSave {
@@ -124,9 +125,9 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
             let emoteId = rawEmote.substring(rawEmote.lastIndexOf(':') + 1, rawEmote.indexOf('>'));
             let foundEmote = undefined;
             // let foundTextChannel = undefined;
-            foundEmote = this.djmtGuild.guild?.emojis.cache.get(emoteId);
+            foundEmote = DJMTbot.getInstance().client.emojis.cache.get(emoteId);
             if (!foundEmote) {
-                await message.channel.send(`The given emote is invalid, is it in this server?`);
+                await message.channel.send(`The given emote could not be found, make sure this bot in is the server the emote is from!`);
                 return;
             }
             let channelId = rawChannelId.substring(2, rawChannelId.indexOf('>'));
@@ -174,7 +175,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
                 let msg = '';
                 this.emoteReactBoardMap.forEach((value, key) => {
                     const emoteId = key.substring(key.lastIndexOf(':') + 1, key.indexOf('>'));
-                    const emoji = this.djmtGuild.guild?.emojis.cache.get(emoteId);
+                    const emoji = DJMTbot.getInstance().client.emojis.cache.get(emoteId);
                     msg += `${emoji?.toString()} => <#${value.channelId}> (threshold: ${value.threshold})\n`;
                 });
                 await message.channel.send(`React Channels:\n${msg}`);
@@ -194,7 +195,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
             }
             let emoteId = rawEmote.substring(rawEmote.lastIndexOf(':') + 1, rawEmote.indexOf('>'));
             let channelId = rawChannelId.substring(2, rawChannelId.indexOf('>'));
-            let foundEmote = this.djmtGuild.guild?.emojis.cache.get(emoteId);
+            let foundEmote = DJMTbot.getInstance().client.emojis.cache.get(emoteId);
             let foundTextChannel = this.djmtGuild.getGuildChannel(channelId);
             if (!foundEmote || !foundTextChannel) {
                 await message.channel.send("The given channel or emote is invalid!");
@@ -238,7 +239,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
         let channelId = message.channel.id;
         this.autoReactMap.forEach((channelIds, rawEmojiId) => {
             const emoteId = rawEmojiId.substring(rawEmojiId.lastIndexOf(':') + 1, rawEmojiId.indexOf('>'));
-            const foundEmote = this.djmtGuild.guild?.emojis.cache.get(emoteId);
+            const foundEmote = DJMTbot.getInstance().client.emojis.cache.get(emoteId);
             channelIds.forEach(async mapChannelId => { // TODO: async might be weird here
                 if (foundEmote && channelId === mapChannelId) {
                     await message.react(foundEmote);
