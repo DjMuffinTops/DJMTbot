@@ -1,6 +1,9 @@
 # DJMTbot
 A bot running Discord.js w/ Typescript, designed for the Pokemon Workshop Discord Server
 
+## Install Node.js
+To use discord.js, you'll need to [install Node.js here](https://nodejs.org)
+
 ## Install Yarn
 [Install it here!](https://classic.yarnpkg.com/en/docs/install)
 
@@ -15,7 +18,7 @@ To get your own bot token, [create a bot!](https://discordjs.guide/preparations/
 You may also ask me for access to the PW Test server and dev bot token on Discord!
 
 ## Create a .env file in the root directory
-```TOKEN``` and ```DEFAULT_PREFIX``` envrionment variables must be defined, one easy way to set them is by creating an `.env` file.
+```TOKEN``` and ```DEFAULT_PREFIX``` environment variables must be defined, one easy way to set them is by creating an `.env` file.
 
 Your .env should look like this
 ```
