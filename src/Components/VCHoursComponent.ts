@@ -112,7 +112,7 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
             // If someone is in the channel during the check and they are not a bot, add an hour
             if (voiceChannel.members.size > 0 && !voiceChannel.members.every(member => member.user.bot)) {
                 const hoursSoFar = this.consecutiveHours.get(pair) ?? 0;
-                const hoursMsg = `${hoursSoFar > 0 ? `(-${hoursSoFar} consecutive hours)` : ''}`;
+                const hoursMsg = `${hoursSoFar > 0 ? `(${hoursSoFar} consecutive hours)` : ''}`;
                 const finalMsg = `Don't forget to save your work and stay hydrated! ${hoursMsg}`;
                 await textChannel.send(finalMsg);
                 console.log(`Sent to ${pair.toString()} :${finalMsg}`);
