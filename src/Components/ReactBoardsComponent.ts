@@ -242,8 +242,15 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
             const foundEmote = DJMTbot.getInstance().client.emojis.cache.get(emoteId);
             channelIds.forEach(async mapChannelId => { // TODO: async might be weird here
                 if (foundEmote && channelId === mapChannelId) {
-                    await message.react(foundEmote);
-                    return
+                    try {
+                        await message.react(foundEmote);
+                    } catch (e) {
+                        if (e.message === 'Unknown Message') {
+                            console.log(`[${this.djmtGuild.guildId}] checkAutoReact Unknown message error, message was probably already deleted`);
+                        } else {
+                            console.log(`[${this.djmtGuild.guildId}] checkAutoReact error: ${e}`);
+                        }
+                    }
                 }
             });
         });
@@ -319,7 +326,15 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
     async autoStar(args: string[], message: Message) {
         let channelId = message.channel.id;
         if (this.starChannels?.includes(channelId)) {
-            await message.react('⭐');
+            try {
+                await message.react('⭐');
+            } catch (e) {
+                if (e.message === 'Unknown Message') {
+                    console.log(`[${this.djmtGuild.guildId}] autoStar Unknown message error, message was probably already deleted`);
+                } else {
+                    console.log(`[${this.djmtGuild.guildId}] autoStar error: ${e}`);
+                }
+            }
         }
     }
 }
