@@ -295,14 +295,6 @@
 								"channelId": "687887082365911085",
 								"recentMsgIds": []
 							}
-						],
-						[
-							"<:ArtFight:860363510931390505>",
-							{
-								"threshold": 12,
-								"channelId": "692290853145673750",
-								"recentMsgIds": []
-							}
 						]
 					]
 				},
@@ -326,12 +318,6 @@
 							[
 								"685420826509574154"
 							]
-						],
-						[
-							"<:ArtFight:860363510931390505>",
-							[
-								"860357527157997599"
-							]
 						]
 					]
 				},
@@ -352,9 +338,9 @@
 					"dataType": "Map",
 					"value": [
 						[
-							"860348982781018173",
+							"871594446083465296",
 							{
-								"channel": "860348982781018173",
+								"channel": "871594446083465296",
 								"width": 5120,
 								"height": 2880
 							}
@@ -364,7 +350,7 @@
 			},
 			"DYNAMIC_BANNER": {
 				"imageUrls": [
-					"https://cdn.discordapp.com/attachments/767457371257307186/860348265131802644/PW-June_2021_Art_Collab.png"
+					"https://cdn.discordapp.com/attachments/767457371257307186/871566925665271858/PW_July_Collab_final.png"
 				]
 			},
 			"MEDIA_CHANNEL": {
