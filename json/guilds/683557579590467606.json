@@ -338,9 +338,9 @@
 					"dataType": "Map",
 					"value": [
 						[
-							"871594446083465296",
+							"882771240744534067",
 							{
-								"channel": "871594446083465296",
+								"channel": "882771240744534067",
 								"width": 5120,
 								"height": 2880
 							}
@@ -350,7 +350,7 @@
 			},
 			"DYNAMIC_BANNER": {
 				"imageUrls": [
-					"https://cdn.discordapp.com/attachments/767457371257307186/871566925665271858/PW_July_Collab_final.png"
+					"https://cdn.discordapp.com/attachments/685355983727362061/882793125167366154/augustcompressed.png"
 				]
 			},
 			"MEDIA_CHANNEL": {
@@ -369,17 +369,13 @@
 					"841125098655842344",
 					"860348982781018173",
 					"860357527157997599",
-					"871594446083465296"
+					"882771240744534067"
 				]
 			},
 			"DYNAMIC_VOICE_CHANNELS": {
 				"markedRootVoiceChannelIds": [
 					{
 						"channelId": "712862825655042050",
-						"maxChildren": 5
-					},
-					{
-						"channelId": "807342883765092372",
 						"maxChildren": 5
 					},
 					{
