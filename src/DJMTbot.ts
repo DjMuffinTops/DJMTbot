@@ -140,6 +140,6 @@ export class DJMTbot {
             console.log(`I have been removed from: ${guild.name} (id: ${guild.id})`);
         });
 
-        await this.client.login(process.env.DEV_TOKEN);
+        await this.client.login(process.env.TOKEN);
     }
 }
