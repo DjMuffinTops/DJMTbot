@@ -126,7 +126,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
             const entry: PNGResolutionEntry | undefined = this.channelsMap.get(message.channel.id);
             if (entry) {
                 // Verify every attachment
-                for (const attachment of message.attachments.array()) {
+                for (const attachment of [...message.attachments.values()]) {
                     let image: ProbeResult;
                     try {
                         image = await probe(attachment.url);
