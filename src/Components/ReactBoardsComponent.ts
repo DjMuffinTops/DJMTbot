@@ -201,7 +201,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
                 await message.channel.send("The given channel or emote is invalid!");
                 return;
             }
-            if (foundTextChannel.type !== "text") {
+            if (foundTextChannel.type !== "GUILD_TEXT") {
                 await message.channel.send(`The given channel is not a Text Channel`);
                 return;
             }
