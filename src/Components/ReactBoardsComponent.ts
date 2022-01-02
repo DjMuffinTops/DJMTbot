@@ -262,10 +262,11 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
             !this.emoteReactBoardMap?.get(rawEmoteId)?.recentMsgIds?.includes(reaction.message.id)) {
             const reactMapValue = this.emoteReactBoardMap.get(rawEmoteId);
             if (reaction.count === reactMapValue?.threshold && reactMapValue?.channelId) {
-                const message = reaction.message;
+                const message = await reaction.message.fetch();
                 const destinationChannel = this.djmtGuild.getGuildChannel(reactMapValue.channelId) as TextChannel;
                 const embed = new MessageEmbed();
                 embed.type = 'rich';
+                let msgAttachments = [...message.attachments.values()];
                 embed.setDescription(`[Original Message](${message.url})`)
                 .setColor(16755763)
                 .setTimestamp(message.createdAt)
@@ -273,10 +274,10 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
                 .addField('Message', message.content || '\u200b', true)
                 .addField('Media URL', message.attachments.first()?.url || '\u200b', false)
                 .setThumbnail(message.author.displayAvatarURL({size: 128, dynamic: true}))
-                .setImage(message.attachments.array().length > 0 ? message.attachments.array()[0].url : '')
-                .setAuthor(`${message.author.username}#${message.author.discriminator} (${message.author.id})`, message.author.displayAvatarURL({size: 128, dynamic: true}))
-                .setFooter(`${reaction.count} ⭐ | ${message.id}`);
-                await destinationChannel.send({embed: embed});
+                .setImage(msgAttachments.length > 0 ? msgAttachments[0].url : '')
+                .setAuthor({name: `${message.author.username}#${message.author.discriminator} (${message.author.id})`, iconURL: message.author.displayAvatarURL({size: 128, dynamic: true})})
+                .setFooter({text: `${reaction.count} ⭐ | ${message.id}`});
+                await destinationChannel.send({embeds: [embed]});
                 this.emoteReactBoardMap?.get(rawEmoteId)?.recentMsgIds?.push(message.id);
                 // We dont care about recent msg ids being saved to file, so dont save here.
             }
@@ -329,7 +330,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
             try {
                 await message.react('⭐');
             } catch (e) {
-                if (e.message === 'Unknown Message') {
+                if (e instanceof Error && e.message === 'Unknown Message') {
                     console.log(`[${this.djmtGuild.guildId}] autoStar Unknown message error, message was probably already deleted`);
                 } else {
                     console.log(`[${this.djmtGuild.guildId}] autoStar error: ${e}`);
