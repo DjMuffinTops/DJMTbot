@@ -141,10 +141,11 @@ export class BruhComponent extends Component<BruhComponentSave> {
                         options.before = last_id
                     }
                     messages = await channel?.messages?.fetch(options);
-                    messagesArray.push(...messages.array());
+                    let msgArray = [...messages.values()];
+                    messagesArray.push(...msgArray);
                     // console.log(`msg length ${messages.array().length}`);
-                    if (messages.array().length > 0) {
-                        last_id = messages.array()[(messages.array().length - 1)].id;
+                    if (msgArray.length > 0) {
+                        last_id = msgArray[(msgArray.length - 1)].id;
                     }
                     // iterations--;
                 } while (messages.size > 0);
