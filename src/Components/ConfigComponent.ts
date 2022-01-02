@@ -70,7 +70,7 @@ export class ConfigComponent extends Component<ConfigComponentSave>{
         }
         const jsonString = `${JSON.stringify({[this.djmtGuild.guildId]: this.djmtGuild.getSaveData()}, JSONStringifyReplacer, '  ')}`;
         const attachment = new MessageAttachment(Buffer.from(jsonString), `config_${this.djmtGuild.guildId}_${DateTime.local().toLocaleString(DateTime.DATETIME_FULL_WITH_SECONDS)}.txt`);
-        await message.channel.send(attachment);
+        await message.channel.send({attachments: [attachment]});
     }
 
     async resetConfig(message: Message) {
