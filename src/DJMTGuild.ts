@@ -145,7 +145,7 @@ export class DJMTGuild {
             const foundChannel = this.getDebugChannel();
             if (foundChannel) {
                 const attachment = new MessageAttachment(Buffer.from(JSON.stringify({[this.guildId]: this.getSaveData()}, JSONStringifyReplacer, '\t')), 'config.txt');
-                await foundChannel.send({attachments: [attachment]});
+                await foundChannel.send({files: [attachment]});
             }
         }
     }
