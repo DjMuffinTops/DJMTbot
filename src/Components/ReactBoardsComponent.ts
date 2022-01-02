@@ -245,7 +245,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
                     try {
                         await message.react(foundEmote);
                     } catch (e) {
-                        if (e.message === 'Unknown Message') {
+                        if (e instanceof Error && e.message === 'Unknown Message') {
                             console.log(`[${this.djmtGuild.guildId}] checkAutoReact Unknown message error, message was probably already deleted`);
                         } else {
                             console.log(`[${this.djmtGuild.guildId}] checkAutoReact error: ${e}`);
