@@ -2,7 +2,7 @@ import {Channel, Message, TextChannel} from "discord.js";
 import {DJMTbot} from "./DJMTbot";
 
 export function isAdmin(message: Message) {
-    return message?.member?.hasPermission("ADMINISTRATOR");
+    return message?.member?.permissions.has("ADMINISTRATOR");
 }
 
 /**
