@@ -106,7 +106,7 @@ export class DJMTbot {
                 }
             }
             const guild = this.guilds.get(messageReaction.message.guild?.id || '');
-            if (guild) {
+            if (!messageReaction.partial && guild) {
                 await guild.onMessageReactionAdd(messageReaction, user as User);
             } else {
                 console.log(`Reaction does not have an associated guild instance: ${messageReaction}`)
@@ -125,7 +125,7 @@ export class DJMTbot {
                 }
             }
             const guild = this.guilds.get(messageReaction.message.guild?.id || '');
-            if (guild) {
+            if (!messageReaction.partial && guild) {
                 await guild.onMessageReactionRemove(messageReaction, user as User);
             } else {
                 console.log(`Reaction does not have an associated guild instance: ${messageReaction}`)
