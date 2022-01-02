@@ -140,7 +140,10 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
                     await this.addImageUrl(imageUrl);
                     await message.channel.send(`Added ${imageUrl} to Dynamic Banner queue`);
                 } catch(e) {
-                    await message.channel.send(e.message);
+                    if (e instanceof Error) {
+                        await message.channel.send(e.message);
+                    }
+                    console.log(e);
                 }
             }
         }
