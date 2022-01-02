@@ -120,7 +120,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
 
     async sendBruh(message: Message) {
         try {
-            let attachmentList = [];
+            let attachmentList: MessageAttachment[] = [];
             let msgContent = '';
             if (this.bruhChannels && this.bruhChannels?.length > 0) {
                 let bruhChannelId = this.bruhChannels[Math.floor(this.bruhChannels.length * Math.random())]; // pick a random bruh channel id
@@ -215,7 +215,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
                     // console.log(msgContent);
                     // console.log(matches);
                     // console.log(`size: ${messagesArray.length} | index: ${randomIndex}`);
-                    await message.channel.send(`\ ${msgContent}`, attachmentList);
+                    await message.channel.send({content:`\ ${msgContent}`, attachments: attachmentList});
                 } else {
                     console.error('NO RANDOM MSG');
                     console.log(`size: ${messagesArray.length} | index: ${randomIndex}`);
