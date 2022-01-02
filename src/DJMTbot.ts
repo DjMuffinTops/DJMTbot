@@ -41,7 +41,7 @@ export class DJMTbot {
     async run() {
         this.client.on("ready", async () => {
             // Make guild instances for guilds we didnt have a file for
-            for (let cachedGuild of this.client.guilds.cache.array()) {
+            for (let cachedGuild of [...this.client.guilds.cache.values()]) {
                 const guildId = cachedGuild.id;
                 if (!this.guilds.get(guildId)) {
                     const guild = new DJMTGuild(guildId);
