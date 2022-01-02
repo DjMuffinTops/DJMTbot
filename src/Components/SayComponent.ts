@@ -9,7 +9,7 @@ export class SayComponent extends Component<SayComponentSave> {
 
     name: ComponentNames = ComponentNames.SAY;
 
-    async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
+    async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
         if (command === ComponentCommands.SAY) {
             await this.sayCmd(args, message);
@@ -58,7 +58,7 @@ export class SayComponent extends Component<SayComponentSave> {
         return Promise.resolve(undefined);
     }
 
-    async onMessage(args: string[], message: Message): Promise<void> {
+    async onMessageCreate(args: string[], message: Message): Promise<void> {
         return Promise.resolve(undefined);
     }
 

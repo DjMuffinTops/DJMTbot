@@ -126,7 +126,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
         return Promise.resolve(undefined);
     }
 
-    async onMessage(args: string[], message: Message): Promise<void> {
+    async onMessageCreate(args: string[], message: Message): Promise<void> {
         return Promise.resolve(undefined);
     }
 
@@ -142,7 +142,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
         return Promise.resolve(undefined);
     }
 
-    async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
+    async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
         // Any interactive commands should be defined in CompoentCommands.ts
         if (command === ComponentCommands.SET_DYNAMIC_VC) {

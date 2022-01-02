@@ -45,7 +45,7 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
         return Promise.resolve(undefined);
     }
 
-    async onMessage(args: string[], message: Message): Promise<void> {
+    async onMessageCreate(args: string[], message: Message): Promise<void> {
         return Promise.resolve(undefined);
     }
 
@@ -61,7 +61,7 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
         return Promise.resolve(undefined);
     }
 
-    async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
+    async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
         if (command === ComponentCommands.SET_BANNER) {
             await this.addOrRemoveImageUrl(args, message);

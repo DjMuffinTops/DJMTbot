@@ -65,12 +65,12 @@ export class DJMTbot {
             }
         });
 
-        this.client.on("message", async (message: Message) => {
+        this.client.on("messageCreate", async (message: Message) => {
             if (message.author.bot) return; // Ignore bot messages
             let args: string[] = message.content.trim().split(/ +/g);
             const guild = this.guilds.get(message.guild?.id || '');
             if (guild) {
-                await guild.onMessage(args, message);
+                await guild.onMessageCreate(args, message);
             } else {
                 console.log(`Message does not have an associated guild instance: ${message}`)
             }

@@ -49,20 +49,20 @@ export abstract class Component<T> {
     abstract onGuildMemberAdd(member: GuildMember): Promise<void>;
 
     /**
-     * Function that fires on the discord client's 'message' event for this guild
+     * Function that fires on the discord client's 'messageCreate' event for this guild
      * @param args array of strings containing the message content, separated by spaces
      * @param message the Message object
      */
-    abstract onMessage(args: string[], message: Message): Promise<void>;
+    abstract onMessageCreate(args: string[], message: Message): Promise<void>;
 
     /**
      * Function that fires on messages that start with this guild's prefix on the discord
-     * client's 'message' event. Note: This message will also pass through onMessage first. Please
+     * client's 'messageCreate' event. Note: This message will also pass through onMessage first. Please
      * use this function for text based commands rather than onMessage!
      * @param args array of strings containing the message content after the guild prefix, separated by spaces
      * @param message the Message object
      */
-    abstract onMessageWithGuildPrefix(args: string[], message: Message): Promise<void>;
+    abstract onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void>;
 
     /**
      * Function that fires on the discord client's 'messageUpdate' event for this guild

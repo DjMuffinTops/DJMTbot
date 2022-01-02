@@ -63,7 +63,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
         return Promise.resolve(undefined);
     }
 
-    async onMessage(args: string[], message: Message): Promise<void> {
+    async onMessageCreate(args: string[], message: Message): Promise<void> {
         await this.autoStar(args, message);
         await this.checkAutoReact(args, message);
         return Promise.resolve(undefined);
@@ -82,7 +82,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
         return Promise.resolve(undefined);
     }
 
-    async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
+    async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
         if (command === ComponentCommands.SET_AUTO_REACT) {
             await this.setAutoReactCmd(args, message);

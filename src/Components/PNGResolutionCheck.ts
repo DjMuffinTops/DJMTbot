@@ -91,7 +91,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
         return Promise.resolve(undefined);
     }
 
-    async onMessage(args: string[], message: Message): Promise<void> {
+    async onMessageCreate(args: string[], message: Message): Promise<void> {
         await this.checkPNGAndResolution(message);
     }
 
@@ -107,7 +107,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
         return Promise.resolve(undefined);
     }
 
-    async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
+    async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
         // Any interactive commands should be defined in CompoentCommands.ts
         if (command === ComponentCommands.SET_PNGRC) {

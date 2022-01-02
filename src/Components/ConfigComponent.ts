@@ -17,7 +17,7 @@ export class ConfigComponent extends Component<ConfigComponentSave>{
 
     name: ComponentNames = ComponentNames.CONFIG;
 
-    async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
+    async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
         if (command === ComponentCommands.EXPORT_CONFIG) {
             await this.exportConfig(args, message);
@@ -42,7 +42,7 @@ export class ConfigComponent extends Component<ConfigComponentSave>{
         return Promise.resolve(undefined);
     }
 
-    async onMessage(args: string[], message: Message): Promise<void> {
+    async onMessageCreate(args: string[], message: Message): Promise<void> {
         return Promise.resolve(undefined);
     }
 
