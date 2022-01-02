@@ -17,7 +17,7 @@ export class DJMTbot {
     client: Client;
     guilds: Map<string, DJMTGuild>;
     private constructor() {
-        this.client = new Discord.Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS, Intents.FLAGS.GUILD_MESSAGE_TYPING, Intents.FLAGS.GUILD_SCHEDULED_EVENTS],
+        this.client = new Discord.Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS, Intents.FLAGS.GUILD_MESSAGE_TYPING, Intents.FLAGS.GUILD_VOICE_STATES, Intents.FLAGS.GUILD_SCHEDULED_EVENTS],
         partials: ['MESSAGE', 'CHANNEL', 'REACTION'] });
         this.guilds = new Map<string, DJMTGuild>();
         this.initGuildInstancesFromFiles().then(r => console.log(`${this.guilds.size} DJMT Guilds Initialized`));
