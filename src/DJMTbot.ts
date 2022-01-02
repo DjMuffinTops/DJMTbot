@@ -1,6 +1,6 @@
 import Discord, {
     Client,
-    GuildMember,
+    GuildMember, Intents,
     Message,
     User,
     VoiceState
@@ -17,7 +17,7 @@ export class DJMTbot {
     client: Client;
     guilds: Map<string, DJMTGuild>;
     private constructor() {
-        this.client = new Discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'] });
+        this.client = new Discord.Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS, Intents.FLAGS.GUILD_MESSAGE_TYPING, Intents.FLAGS.GUILD_SCHEDULED_EVENTS] });
         this.guilds = new Map<string, DJMTGuild>();
         this.initGuildInstancesFromFiles().then(r => console.log(`${this.guilds.size} DJMT Guilds Initialized`));
     }
@@ -139,6 +139,6 @@ export class DJMTbot {
             console.log(`I have been removed from: ${guild.name} (id: ${guild.id})`);
         });
 
-        await this.client.login(process.env.TOKEN);
+        await this.client.login(process.env.DEV_TOKEN);
     }
 }
