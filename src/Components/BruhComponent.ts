@@ -45,7 +45,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
         return Promise.resolve(undefined);
     }
 
-    async onMessage(args: string[], message: Message): Promise<void> {
+    async onMessageCreate(args: string[], message: Message): Promise<void> {
         return Promise.resolve(undefined);
     }
 
@@ -61,7 +61,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
         return Promise.resolve(undefined);
     }
 
-    async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
+    async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
         if (command === ComponentCommands.BRUH) {
             await this.bruhCmd(args, message);
@@ -120,7 +120,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
 
     async sendBruh(message: Message) {
         try {
-            let attachmentList = [];
+            let attachmentList: MessageAttachment[] = [];
             let msgContent = '';
             if (this.bruhChannels && this.bruhChannels?.length > 0) {
                 let bruhChannelId = this.bruhChannels[Math.floor(this.bruhChannels.length * Math.random())]; // pick a random bruh channel id
@@ -141,10 +141,11 @@ export class BruhComponent extends Component<BruhComponentSave> {
                         options.before = last_id
                     }
                     messages = await channel?.messages?.fetch(options);
-                    messagesArray.push(...messages.array());
+                    let msgArray = [...messages.values()];
+                    messagesArray.push(...msgArray);
                     // console.log(`msg length ${messages.array().length}`);
-                    if (messages.array().length > 0) {
-                        last_id = messages.array()[(messages.array().length - 1)].id;
+                    if (msgArray.length > 0) {
+                        last_id = msgArray[(msgArray.length - 1)].id;
                     }
                     // iterations--;
                 } while (messages.size > 0);
@@ -214,7 +215,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
                     // console.log(msgContent);
                     // console.log(matches);
                     // console.log(`size: ${messagesArray.length} | index: ${randomIndex}`);
-                    await message.channel.send(`\ ${msgContent}`, attachmentList);
+                    await message.channel.send({content:`\ ${msgContent}`, attachments: attachmentList});
                 } else {
                     console.error('NO RANDOM MSG');
                     console.log(`size: ${messagesArray.length} | index: ${randomIndex}`);

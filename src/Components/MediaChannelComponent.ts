@@ -51,7 +51,7 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
         return Promise.resolve(undefined);
     }
 
-    async onMessage(args: string[], message: Message): Promise<void> {
+    async onMessageCreate(args: string[], message: Message): Promise<void> {
         await this.checkMedia(message);
     }
 
@@ -67,7 +67,7 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
         return Promise.resolve(undefined);
     }
 
-    async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
+    async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
         // Any interactive commands should be defined in ComponentCommands.ts
         if (command === ComponentCommands.SET_MEDIA_CHANNEL) {

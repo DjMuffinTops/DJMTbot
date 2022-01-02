@@ -1,6 +1,6 @@
 import Discord, {
     Client,
-    GuildMember,
+    GuildMember, Intents,
     Message,
     User,
     VoiceState
@@ -17,12 +17,13 @@ export class DJMTbot {
     client: Client;
     guilds: Map<string, DJMTGuild>;
     private constructor() {
-        this.client = new Discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'] });
+        this.client = new Discord.Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS, Intents.FLAGS.GUILD_MESSAGE_TYPING, Intents.FLAGS.GUILD_VOICE_STATES, Intents.FLAGS.GUILD_SCHEDULED_EVENTS],
+        partials: ['MESSAGE', 'CHANNEL', 'REACTION'] });
         this.guilds = new Map<string, DJMTGuild>();
         this.initGuildInstancesFromFiles().then(r => console.log(`${this.guilds.size} DJMT Guilds Initialized`));
     }
 
-    public static async getInstance(): Promise<DJMTbot> {
+    public static getInstance(): DJMTbot {
         if (!DJMTbot.instance) {
             DJMTbot.instance = new DJMTbot();
         }
@@ -41,7 +42,7 @@ export class DJMTbot {
     async run() {
         this.client.on("ready", async () => {
             // Make guild instances for guilds we didnt have a file for
-            for (let cachedGuild of this.client.guilds.cache.array()) {
+            for (let cachedGuild of [...this.client.guilds.cache.values()]) {
                 const guildId = cachedGuild.id;
                 if (!this.guilds.get(guildId)) {
                     const guild = new DJMTGuild(guildId);
@@ -64,12 +65,12 @@ export class DJMTbot {
             }
         });
 
-        this.client.on("message", async (message: Message) => {
+        this.client.on("messageCreate", async (message: Message) => {
             if (message.author.bot) return; // Ignore bot messages
             let args: string[] = message.content.trim().split(/ +/g);
             const guild = this.guilds.get(message.guild?.id || '');
             if (guild) {
-                await guild.onMessage(args, message);
+                await guild.onMessageCreate(args, message);
             } else {
                 console.log(`Message does not have an associated guild instance: ${message}`)
             }
@@ -105,7 +106,7 @@ export class DJMTbot {
                 }
             }
             const guild = this.guilds.get(messageReaction.message.guild?.id || '');
-            if (guild) {
+            if (!messageReaction.partial && guild) {
                 await guild.onMessageReactionAdd(messageReaction, user as User);
             } else {
                 console.log(`Reaction does not have an associated guild instance: ${messageReaction}`)
@@ -124,7 +125,7 @@ export class DJMTbot {
                 }
             }
             const guild = this.guilds.get(messageReaction.message.guild?.id || '');
-            if (guild) {
+            if (!messageReaction.partial && guild) {
                 await guild.onMessageReactionRemove(messageReaction, user as User);
             } else {
                 console.log(`Reaction does not have an associated guild instance: ${messageReaction}`)
@@ -139,6 +140,6 @@ export class DJMTbot {
             console.log(`I have been removed from: ${guild.name} (id: ${guild.id})`);
         });
 
-        await this.client.login(process.env.TOKEN);
+        await this.client.login(process.env.DEV_TOKEN);
     }
 }

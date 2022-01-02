@@ -47,7 +47,7 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
         return Promise.resolve(undefined);
     }
 
-    async onMessage(args: string[], message: Message): Promise<void> {
+    async onMessageCreate(args: string[], message: Message): Promise<void> {
         return Promise.resolve(undefined);
     }
 
@@ -63,7 +63,7 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
         return Promise.resolve(undefined);
     }
 
-    async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
+    async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
         if (command === ComponentCommands.SET_VC_PAIRS) {
             await this.stringToVoiceTextPair(args, message);
@@ -117,7 +117,7 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
                 await message.channel.send("The given channel is invalid! Make sure the given channels are the correct types (use help command for more info)");
                 return;
             }
-            if (foundVoiceChannel.type !== "voice" && foundTextChannel.type !== "text") {
+            if (foundVoiceChannel.type !== "GUILD_VOICE" && foundTextChannel.type !== "GUILD_TEXT") {
                 await message.channel.send(`The given channels are not the correct types`);
                 return;
             }

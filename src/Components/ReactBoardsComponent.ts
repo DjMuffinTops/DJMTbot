@@ -11,6 +11,7 @@ import {
 import {ComponentNames} from "../Constants/ComponentNames";
 import {isAdmin} from "../HelperFunctions";
 import {ComponentCommands} from "../Constants/ComponentCommands";
+import {DJMTbot} from "../DJMTbot";
 
 // Declare data you want to save in JSON here
 interface ReactBoardSave {
@@ -62,7 +63,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
         return Promise.resolve(undefined);
     }
 
-    async onMessage(args: string[], message: Message): Promise<void> {
+    async onMessageCreate(args: string[], message: Message): Promise<void> {
         await this.autoStar(args, message);
         await this.checkAutoReact(args, message);
         return Promise.resolve(undefined);
@@ -81,7 +82,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
         return Promise.resolve(undefined);
     }
 
-    async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
+    async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
         if (command === ComponentCommands.SET_AUTO_REACT) {
             await this.setAutoReactCmd(args, message);
@@ -124,9 +125,9 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
             let emoteId = rawEmote.substring(rawEmote.lastIndexOf(':') + 1, rawEmote.indexOf('>'));
             let foundEmote = undefined;
             // let foundTextChannel = undefined;
-            foundEmote = this.djmtGuild.guild?.emojis.cache.get(emoteId);
+            foundEmote = DJMTbot.getInstance().client.emojis.cache.get(emoteId);
             if (!foundEmote) {
-                await message.channel.send(`The given emote is invalid, is it in this server?`);
+                await message.channel.send(`The given emote could not be found, make sure this bot in is the server the emote is from!`);
                 return;
             }
             let channelId = rawChannelId.substring(2, rawChannelId.indexOf('>'));
@@ -174,7 +175,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
                 let msg = '';
                 this.emoteReactBoardMap.forEach((value, key) => {
                     const emoteId = key.substring(key.lastIndexOf(':') + 1, key.indexOf('>'));
-                    const emoji = this.djmtGuild.guild?.emojis.cache.get(emoteId);
+                    const emoji = DJMTbot.getInstance().client.emojis.cache.get(emoteId);
                     msg += `${emoji?.toString()} => <#${value.channelId}> (threshold: ${value.threshold})\n`;
                 });
                 await message.channel.send(`React Channels:\n${msg}`);
@@ -194,13 +195,13 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
             }
             let emoteId = rawEmote.substring(rawEmote.lastIndexOf(':') + 1, rawEmote.indexOf('>'));
             let channelId = rawChannelId.substring(2, rawChannelId.indexOf('>'));
-            let foundEmote = this.djmtGuild.guild?.emojis.cache.get(emoteId);
+            let foundEmote = DJMTbot.getInstance().client.emojis.cache.get(emoteId);
             let foundTextChannel = this.djmtGuild.getGuildChannel(channelId);
             if (!foundEmote || !foundTextChannel) {
                 await message.channel.send("The given channel or emote is invalid!");
                 return;
             }
-            if (foundTextChannel.type !== "text") {
+            if (foundTextChannel.type !== "GUILD_TEXT") {
                 await message.channel.send(`The given channel is not a Text Channel`);
                 return;
             }
@@ -238,11 +239,18 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
         let channelId = message.channel.id;
         this.autoReactMap.forEach((channelIds, rawEmojiId) => {
             const emoteId = rawEmojiId.substring(rawEmojiId.lastIndexOf(':') + 1, rawEmojiId.indexOf('>'));
-            const foundEmote = this.djmtGuild.guild?.emojis.cache.get(emoteId);
+            const foundEmote = DJMTbot.getInstance().client.emojis.cache.get(emoteId);
             channelIds.forEach(async mapChannelId => { // TODO: async might be weird here
                 if (foundEmote && channelId === mapChannelId) {
-                    await message.react(foundEmote);
-                    return
+                    try {
+                        await message.react(foundEmote);
+                    } catch (e) {
+                        if (e instanceof Error && e.message === 'Unknown Message') {
+                            console.log(`[${this.djmtGuild.guildId}] checkAutoReact Unknown message error, message was probably already deleted`);
+                        } else {
+                            console.log(`[${this.djmtGuild.guildId}] checkAutoReact error: ${e}`);
+                        }
+                    }
                 }
             });
         });
@@ -254,10 +262,11 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
             !this.emoteReactBoardMap?.get(rawEmoteId)?.recentMsgIds?.includes(reaction.message.id)) {
             const reactMapValue = this.emoteReactBoardMap.get(rawEmoteId);
             if (reaction.count === reactMapValue?.threshold && reactMapValue?.channelId) {
-                const message = reaction.message;
+                const message = await reaction.message.fetch();
                 const destinationChannel = this.djmtGuild.getGuildChannel(reactMapValue.channelId) as TextChannel;
                 const embed = new MessageEmbed();
                 embed.type = 'rich';
+                let msgAttachments = [...message.attachments.values()];
                 embed.setDescription(`[Original Message](${message.url})`)
                 .setColor(16755763)
                 .setTimestamp(message.createdAt)
@@ -265,10 +274,10 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
                 .addField('Message', message.content || '\u200b', true)
                 .addField('Media URL', message.attachments.first()?.url || '\u200b', false)
                 .setThumbnail(message.author.displayAvatarURL({size: 128, dynamic: true}))
-                .setImage(message.attachments.array().length > 0 ? message.attachments.array()[0].url : '')
-                .setAuthor(`${message.author.username}#${message.author.discriminator} (${message.author.id})`, message.author.displayAvatarURL({size: 128, dynamic: true}))
-                .setFooter(`${reaction.count} ⭐ | ${message.id}`);
-                await destinationChannel.send({embed: embed});
+                .setImage(msgAttachments.length > 0 ? msgAttachments[0].url : '')
+                .setAuthor({name: `${message.author.username}#${message.author.discriminator} (${message.author.id})`, iconURL: message.author.displayAvatarURL({size: 128, dynamic: true})})
+                .setFooter({text: `${reaction.count} ⭐ | ${message.id}`});
+                await destinationChannel.send({embeds: [embed]});
                 this.emoteReactBoardMap?.get(rawEmoteId)?.recentMsgIds?.push(message.id);
                 // We dont care about recent msg ids being saved to file, so dont save here.
             }
@@ -318,7 +327,15 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
     async autoStar(args: string[], message: Message) {
         let channelId = message.channel.id;
         if (this.starChannels?.includes(channelId)) {
-            await message.react('⭐');
+            try {
+                await message.react('⭐');
+            } catch (e) {
+                if (e instanceof Error && e.message === 'Unknown Message') {
+                    console.log(`[${this.djmtGuild.guildId}] autoStar Unknown message error, message was probably already deleted`);
+                } else {
+                    console.log(`[${this.djmtGuild.guildId}] autoStar error: ${e}`);
+                }
+            }
         }
     }
 }

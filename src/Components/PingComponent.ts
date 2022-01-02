@@ -8,7 +8,7 @@ export class PingComponent extends Component<PingComponentSave>{
 
     name: ComponentNames = ComponentNames.PING;
 
-    async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
+    async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
         if (command === ComponentCommands.PING) {
             await this.pingCmd(args, message);
@@ -31,7 +31,7 @@ export class PingComponent extends Component<PingComponentSave>{
         return Promise.resolve(undefined);
     }
 
-    async onMessage(args: string[], message: Message): Promise<void> {
+    async onMessageCreate(args: string[], message: Message): Promise<void> {
         return Promise.resolve(undefined);
     }
 

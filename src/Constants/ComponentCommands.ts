@@ -22,6 +22,5 @@ export enum ComponentCommands {
     ROTATE_BANNER= "rotatebanner",
     SET_MEDIA_CHANNEL= "setmc",
     GET_MEDIA_CHANNEL= "getmc",
-    SET_DYNAMIC_VC = "setdynamicvc"
-
+    SET_DYNAMIC_VC= "setdynamicvc"
 }

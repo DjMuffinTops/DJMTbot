@@ -84,7 +84,12 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
             // Get the number at the end of the marked channel
             const rootVCInfo = this.getDynamicVoiceChannelInfo(rootVC);
             // Iterate through all channels in this guild, and see if any are named after the possible children
-            const allGuildVoiceChannels: VoiceChannel[] = this.djmtGuild.guild?.channels.cache.filter(channel => channel.type === 'voice').array() as VoiceChannel[] ?? [];
+            const allGuildChannels = this.djmtGuild.guild?.channels;
+            if (!allGuildChannels) {
+                console.log(`[${this.djmtGuild.guildId}]: Could not retrieve all channels for Dynamic Voice Channels component.`)
+                return;
+            }
+            const allGuildVoiceChannels: VoiceChannel[] = [...allGuildChannels.cache.filter(channel => channel.type === 'GUILD_VOICE').values()] as VoiceChannel[] ?? [];
             // Delete Children that mightve been left over first
             for (const guildVoiceChannel of allGuildVoiceChannels) {
                 // Search for existing child channels with each possible child name
@@ -121,7 +126,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
         return Promise.resolve(undefined);
     }
 
-    async onMessage(args: string[], message: Message): Promise<void> {
+    async onMessageCreate(args: string[], message: Message): Promise<void> {
         return Promise.resolve(undefined);
     }
 
@@ -137,7 +142,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
         return Promise.resolve(undefined);
     }
 
-    async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
+    async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
         // Any interactive commands should be defined in CompoentCommands.ts
         if (command === ComponentCommands.SET_DYNAMIC_VC) {
@@ -238,7 +243,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
                 return;
             }
             // Verify it is a voice channel
-            if (channel.type !== 'voice') {
+            if (channel.type !== 'GUILD_VOICE') {
                 await message.channel.send("The given channel is not a voice channel!");
                 return;
             }
@@ -358,8 +363,8 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
         // Mark that we're creating this child, this is to prevent duplicate creation
         this.creatingChannel.set(nextChannelName, true);
         let childVoiceChannel: DynamicVoiceChannel = (await this.djmtGuild.guild?.channels.create(nextChannelName ?? "Extra", {
-            type: 'voice',
-            parent: voiceChannel.parent as Channel,
+            type: 'GUILD_VOICE',
+            parent: voiceChannel.parent ?? undefined,
             reason: `Dynamic Voice Channel created for ${markedChannelInfo.name}`
         })) as DynamicVoiceChannel;
         // Wire up the child channel
@@ -367,7 +372,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
         childVoiceChannel.childChannel = undefined;
         childVoiceChannel.rootsMaxChildren = voiceChannel.rootsMaxChildren;
         childVoiceChannel.root = false;
-        await childVoiceChannel.overwritePermissions(voiceChannel.permissionOverwrites);
+        await childVoiceChannel.permissionOverwrites.set(voiceChannel.permissionOverwrites.cache);
         await childVoiceChannel.setPosition(voiceChannel.position + 1);
         await childVoiceChannel.setUserLimit((childVoiceChannel.rootsMaxChildren - nextChannelCount) + this.MINIMUM_NUMBER_OF_OCCUPANTS);
         voiceChannel.childChannel = childVoiceChannel;
