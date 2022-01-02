@@ -1,5 +1,5 @@
 import {
-    Guild, GuildChannel,
+    Guild, GuildBasedChannel, GuildChannel,
     GuildMember,
     Message, MessageAttachment,
     MessageReaction, TextChannel,
@@ -145,7 +145,7 @@ export class DJMTGuild {
             const foundChannel = this.getDebugChannel();
             if (foundChannel) {
                 const attachment = new MessageAttachment(Buffer.from(JSON.stringify({[this.guildId]: this.getSaveData()}, JSONStringifyReplacer, '\t')), 'config.txt');
-                await foundChannel.send(attachment);
+                await foundChannel.send({attachments: [attachment]});
             }
         }
     }
@@ -285,7 +285,7 @@ export class DJMTGuild {
         }
     }
 
-    getGuildChannel(channelId: string) : GuildChannel | undefined {
+    getGuildChannel(channelId: string) : GuildBasedChannel | undefined {
         return this.guild?.channels.cache.find(channel => channel.id === channelId);
     }
 
