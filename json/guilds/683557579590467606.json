@@ -336,21 +336,12 @@
 			"PNG_RESOLUTION_CHECK": {
 				"channels": {
 					"dataType": "Map",
-					"value": [
-						[
-							"918664773762187294",
-							{
-								"channel": "918664773762187294",
-								"width": 5120,
-								"height": 2880
-							}
-						]
-					]
+					"value": []
 				}
 			},
 			"DYNAMIC_BANNER": {
 				"imageUrls": [
-					"https://cdn.discordapp.com/attachments/767457371257307186/915794890401677395/PW_November_Collab_FINAL.png"
+					"https://cdn.discordapp.com/attachments/685355983727362061/927411873354248222/PW-DECEMBER-ART-COLLAB-2021-FINAL-min.png"
 				]
 			},
 			"MEDIA_CHANNEL": {
@@ -366,9 +357,7 @@
 					"685420826509574154",
 					"719688049671405658",
 					"683564830556291081",
-					"918664773762187294",
-					"698735608750800896",
-					"924044756013707305"
+					"698735608750800896"
 				]
 			},
 			"DYNAMIC_VOICE_CHANNELS": {
@@ -390,6 +379,12 @@
 						"maxChildren": 5
 					}
 				]
+			},
+			"AUTO_THREAD": {
+				"channels": {
+					"dataType": "Map",
+					"value": []
+				}
 			}
 		}
 	}
