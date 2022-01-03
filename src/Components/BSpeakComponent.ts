@@ -8,7 +8,7 @@ export class BSpeakComponent extends Component<BSpeakComponentSave> {
 
     name: ComponentNames = ComponentNames.BSPEAK;
 
-    async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
+    async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
         if (command === ComponentCommands.B_SPEAK) {
             await this.bCmd(args, message);
@@ -31,7 +31,7 @@ export class BSpeakComponent extends Component<BSpeakComponentSave> {
         return Promise.resolve(undefined);
     }
 
-    async onMessage(args: string[], message: Message): Promise<void> {
+    async onMessageCreate(args: string[], message: Message): Promise<void> {
         return Promise.resolve(undefined);
     }
 

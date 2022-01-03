@@ -1,5 +1,5 @@
 import {
-    Guild, GuildChannel,
+    Guild, GuildBasedChannel, GuildChannel,
     GuildMember,
     Message, MessageAttachment,
     MessageReaction, TextChannel,
@@ -145,7 +145,7 @@ export class DJMTGuild {
             const foundChannel = this.getDebugChannel();
             if (foundChannel) {
                 const attachment = new MessageAttachment(Buffer.from(JSON.stringify({[this.guildId]: this.getSaveData()}, JSONStringifyReplacer, '\t')), 'config.txt');
-                await foundChannel.send(attachment);
+                await foundChannel.send({files: [attachment]});
             }
         }
     }
@@ -210,24 +210,24 @@ export class DJMTGuild {
     }
 
     /**
-     * Relay's the discord client's 'message' event to all components
+     * Relay's the discord client's 'messageCreate' event to all components
      * @param args array of strings containing the message content, separated by spaces
      * @param message the Message object
      */
-    async onMessage(args: string[], message: Message): Promise<void> {
+    async onMessageCreate(args: string[], message: Message): Promise<void> {
         if (this.isReady) {
             // Display the prefix when mentioned
             if (this.guild?.client.user && message.mentions.has(this.guild?.client.user)) {
                 await message.channel.send(`Type \`\`${this._prefix}help\`\` to see my commands!`);
             }
             for (const component of Array.from(this.components.values())) {
-                await component.onMessage(args, message); // All messages go through here
+                await component.onMessageCreate(args, message); // All messages go through here
 
                 // Additionally, messages will go through here if the msg starts with our guild prefix
                 if (message.content.indexOf(this._prefix) === 0) {
                     // set args to be everything after the prefix, separated by spaces
                     args = message.content.slice(this._prefix.length).trim().split(/ +/g);
-                    await component.onMessageWithGuildPrefix(args, message);
+                    await component.onMessageCreateWithGuildPrefix(args, message);
                 }
             }
         }
@@ -285,7 +285,7 @@ export class DJMTGuild {
         }
     }
 
-    getGuildChannel(channelId: string) : GuildChannel | undefined {
+    getGuildChannel(channelId: string) : GuildBasedChannel | undefined {
         return this.guild?.channels.cache.find(channel => channel.id === channelId);
     }
 

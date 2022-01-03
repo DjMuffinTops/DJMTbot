@@ -9,7 +9,7 @@ export class HelpComponent extends Component<HelpComponentSave> {
 
     name: ComponentNames = ComponentNames.HELP;
 
-    async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
+    async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
         if (command === ComponentCommands.HELP) {
             await this.helpCmd(args, message);
@@ -32,7 +32,7 @@ export class HelpComponent extends Component<HelpComponentSave> {
         return Promise.resolve(undefined);
     }
 
-    async onMessage(args: string[], message: Message): Promise<void> {
+    async onMessageCreate(args: string[], message: Message): Promise<void> {
         return Promise.resolve(undefined);
     }
 
