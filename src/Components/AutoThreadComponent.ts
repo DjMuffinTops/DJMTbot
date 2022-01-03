@@ -33,9 +33,8 @@ interface AutoThreadEntry {
 
 
 /**
- * Describe your component here! Be sure to mention what its for and if it has any command strings
- * that users can use to interact.
- * NOTE: This component class file must be exported in the index.ts within the Components folder to be run by the bot!
+ * Component that allows for automatic thread generation on every message sent in marked channels.
+ * The thread name will be based on the most appropriate information within the message.
  */
 export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
 
@@ -118,8 +117,8 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
 
 
     /**
-     * Checks and deletes a message if it's in a media channel and doesn't have media.
-     * @param message The message to be checked.
+     * Starts a thread on the given message.
+     * @param message The message to start a thread on.
      * @private
      */
     private async createThread(message: Message): Promise<void> {
@@ -131,10 +130,15 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
                 autoArchiveDuration: 1440,
                 reason: 'DJMTbot Auto Thread',
             });
-            console.log(`Created thread: ${thread.name}`);
         }
     }
 
+    /**
+     * Extracts the best name for a thread from a given message.
+     * @param message The message to generate a thread name from
+     * @param prefix String to append to the front of the thread name
+     * @private
+     */
     private extractThreadName(message: Message<boolean>, prefix: string): string {
         // Generally prioritize title of embed first, then embed description, then message content, and lastly attachment filename
         const attachments = [...message.attachments.values()];
@@ -148,8 +152,8 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
     }
 
     /**
-     * Checks and deletes a message if it's in a media channel and doesn't have media.
-     * @param message The message to be checked.
+     * Updates the thread attached to the given message with a new thread name using the latest message update information.
+     * @param message The message have the updated based on.
      * @private
      */
     private async updateThread(message: Message): Promise<void> {
@@ -165,6 +169,12 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
         }
     }
 
+    /**
+     * Sets and removes auto thread channels based on the given message args
+     * @param args
+     * @param message
+     * @private
+     */
     private async parseAndSetChannel(args: string[], message: Message) {
         // Admin only
         if (!isAdmin(message)) {
