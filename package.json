@@ -7,6 +7,9 @@
     "build": "tsc --build tsconfig.json",
     "start": "yarn build && node --trace-warnings dist/app.js"
   },
+  "engines": {
+    "node": "16.x"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
