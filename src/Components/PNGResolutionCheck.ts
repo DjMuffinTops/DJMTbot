@@ -1,5 +1,6 @@
 import {Component} from "../Component";
 import {
+    AnyChannel,
     Channel,
     GuildMember,
     Message,
@@ -90,7 +91,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
         return Promise.resolve(undefined);
     }
 
-    async onMessage(args: string[], message: Message): Promise<void> {
+    async onMessageCreate(args: string[], message: Message): Promise<void> {
         await this.checkPNGAndResolution(message);
     }
 
@@ -106,7 +107,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
         return Promise.resolve(undefined);
     }
 
-    async onMessageWithGuildPrefix(args: string[], message: Message): Promise<void> {
+    async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
         // Any interactive commands should be defined in CompoentCommands.ts
         if (command === ComponentCommands.SET_PNGRC) {
@@ -125,7 +126,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
             const entry: PNGResolutionEntry | undefined = this.channelsMap.get(message.channel.id);
             if (entry) {
                 // Verify every attachment
-                for (const attachment of message.attachments.array()) {
+                for (const attachment of [...message.attachments.values()]) {
                     let image: ProbeResult;
                     try {
                         image = await probe(attachment.url);
@@ -182,8 +183,13 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
         } else if (args.length === 1) {
             const channelMention = args[0];
             try {
-                const res = await this.removePNGRCChannel(await channelIdToChannel(channelMention) as TextChannel);
-                await message.channel.send(res);
+                const textChannel = await channelIdToChannel(channelMention);
+                if (textChannel) {
+                    const res = await this.removePNGRCChannel(textChannel as TextChannel);
+                    await message.channel.send(res);
+                } else {
+                    await message.channel.send(`Invalid text channel: ${channelMention}`);
+                }
             } catch (e) {
                 console.error(e);
                 await message.channel.send("The given channel is invalid!");
@@ -211,7 +217,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
             }
 
             // Verify the channel exists by fetching it
-            let channel: Channel | undefined;
+            let channel: AnyChannel | null;
             try {
                 channel = await channelIdToChannel(channelMention);
             } catch (e) {
@@ -221,7 +227,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
             }
 
             // Verify it is a text channel
-            if (channel.type !== 'text') {
+            if (channel?.type !== 'GUILD_TEXT') {
                 await message.channel.send("The given channel is not a text channel!");
                 return;
             }
