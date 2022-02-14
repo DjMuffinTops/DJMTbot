@@ -125,13 +125,20 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
         // Is this one of the marked channels?
         const entry: AutoThreadEntry | undefined = this.channelsMap.get(message.channel.id);
         if (entry) {
+			try {
             const thread = await message.startThread({
                 name: this.extractThreadName(message, entry.namePrefix),
                 autoArchiveDuration: 1440,
                 reason: 'DJMTbot Auto Thread',
             });
+			} catch (e) {
+			if (e instanceof Error && e.message === 'Unknown Message')
+            console.log(`[${this.djmtGuild.guildId}] checkAutoThread Unknown message error, message was probably already deleted`);
+            else
+            console.log(`[${this.djmtGuild.guildId}] checkAutoThread error: ${e}`);
+            }
+			}
         }
-    }
 
     /**
      * Extracts the best name for a thread from a given message.
