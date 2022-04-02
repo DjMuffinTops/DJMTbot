@@ -125,7 +125,6 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
         // Is this one of the marked channels?
         const entry: AutoThreadEntry | undefined = this.channelsMap.get(message.channel.id);
         if (entry) {
-			try {
             const thread = await message.startThread({
                 name: this.extractThreadName(message, entry.namePrefix),
                 autoArchiveDuration: 1440,
