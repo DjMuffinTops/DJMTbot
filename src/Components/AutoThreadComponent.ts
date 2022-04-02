@@ -131,7 +131,6 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
                 autoArchiveDuration: 1440,
                 reason: 'DJMTbot Auto Thread',
             });
-			} catch (e) {
 
     /**
      * Extracts the best name for a thread from a given message.
