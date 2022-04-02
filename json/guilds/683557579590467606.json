@@ -338,9 +338,9 @@
 					"dataType": "Map",
 					"value": [
 						[
-							"918664773762187294",
+							"928014229334810684",
 							{
-								"channel": "918664773762187294",
+								"channel": "928014229334810684",
 								"width": 5120,
 								"height": 2880
 							}
@@ -350,7 +350,7 @@
 			},
 			"DYNAMIC_BANNER": {
 				"imageUrls": [
-					"https://cdn.discordapp.com/attachments/767457371257307186/915794890401677395/PW_November_Collab_FINAL.png"
+					"https://cdn.discordapp.com/attachments/928014229334810684/938293307858120815/January-2022-Collab-FINAL.png"
 				]
 			},
 			"MEDIA_CHANNEL": {
@@ -366,9 +366,8 @@
 					"685420826509574154",
 					"719688049671405658",
 					"683564830556291081",
-					"918664773762187294",
 					"698735608750800896",
-					"924044756013707305"
+					"928014229334810684"
 				]
 			},
 			"DYNAMIC_VOICE_CHANNELS": {
@@ -390,6 +389,41 @@
 						"maxChildren": 5
 					}
 				]
+			},
+			"AUTO_THREAD": {
+				"channels": {
+					"dataType": "Map",
+					"value": [
+						[
+							"683557850454556675",
+							{
+								"channel": "683557850454556675",
+								"namePrefix": "ART"
+							}
+						],
+						[
+							"683557873686806528",
+							{
+								"channel": "683557873686806528",
+								"namePrefix": "ART"
+							}
+						],
+						[
+							"695482939038892083",
+							{
+								"channel": "695482939038892083",
+								"namePrefix": "MUS"
+							}
+						],
+						[
+							"685420826509574154",
+							{
+								"channel": "685420826509574154",
+								"namePrefix": "WRI"
+							}
+						]
+					]
+				}
 			}
 		}
 	}
