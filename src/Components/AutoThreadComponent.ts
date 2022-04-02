@@ -133,7 +133,6 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
             });
 			} catch (e) {
 			if (e instanceof Error && e.message === 'Unknown Message')
-            console.log(`[${this.djmtGuild.guildId}] checkAutoThread Unknown message error, message was probably already deleted`);
 
     /**
      * Extracts the best name for a thread from a given message.
