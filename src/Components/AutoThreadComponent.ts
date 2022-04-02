@@ -132,7 +132,6 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
                 reason: 'DJMTbot Auto Thread',
             });
 			} catch (e) {
-			if (e instanceof Error && e.message === 'Unknown Message')
 
     /**
      * Extracts the best name for a thread from a given message.
