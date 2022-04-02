@@ -138,7 +138,6 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
             console.log(`[${this.djmtGuild.guildId}] checkAutoThread error: ${e}`);
             }
 			}
-        }
 
     /**
      * Extracts the best name for a thread from a given message.
