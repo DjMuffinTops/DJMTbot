@@ -363,9 +363,7 @@
 				}
 			},
 			"DYNAMIC_BANNER": {
-				"imageUrls": [
-					"https://cdn.discordapp.com/attachments/928014229334810684/970481825967382578/egg_4.png"
-				]
+				"imageUrls": []
 			},
 			"MEDIA_CHANNEL": {
 				"channels": [
