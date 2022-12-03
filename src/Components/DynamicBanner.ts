@@ -95,13 +95,22 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
         } else {
             const nextUrl = this.imageUrls.shift();
             if (nextUrl) {
-                await this.djmtGuild.guild?.setBanner(nextUrl, `DJMTbot Dynamic Banner Change`);
-                this.imageUrls.push(nextUrl); // Push to the back of the array
-                await this.djmtGuild.saveJSON();
-                console.log(`[${this.djmtGuild.guildId}] Changed server banner to ${nextUrl} successfully`);
-                if (message) {
-                    await message.channel.send(`Changed server banner to ${nextUrl} successfully!`);
+                try {
+                    await this.djmtGuild.guild?.setBanner(nextUrl, `DJMTbot Dynamic Banner Change`);
+                    this.imageUrls.push(nextUrl); // Push to the back of the array
+                    await this.djmtGuild.saveJSON();
+                    console.log(`[${this.djmtGuild.guildId}] Changed server banner to ${nextUrl} successfully`);
+                    if (message) {
+                        await message.channel.send(`Changed server banner to ${nextUrl} successfully!`);
+                    }
+                } catch(e) {
+                    console.log(`[${this.djmtGuild.guildId}] Failed to change server banner to ${nextUrl}: ${e}`);
+                    if (message) {
+                        await message.channel.send(`Failed to change server banner to ${nextUrl}: ${e}`);
+                    }
                 }
+
+
             }
         }
     }
