@@ -277,7 +277,13 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
                 .setImage(msgAttachments.length > 0 ? msgAttachments[0].url : '')
                 .setAuthor({name: `${message.author.username}#${message.author.discriminator} (${message.author.id})`, iconURL: message.author.displayAvatarURL({size: 128, dynamic: true})})
                 .setFooter({text: `${reaction.count} ⭐ | ${message.id}`});
-                await destinationChannel.send({embeds: [embed]});
+                try {
+                    await destinationChannel.send({embeds: [embed]});
+                } catch(e) {
+                    console.error(e);
+                    console.error(`[${this.djmtGuild.guildId}] Could not set starboard message for ${message.url}`);
+
+                }
                 this.emoteReactBoardMap?.get(rawEmoteId)?.recentMsgIds?.push(message.id);
                 // We dont care about recent msg ids being saved to file, so dont save here.
             }
