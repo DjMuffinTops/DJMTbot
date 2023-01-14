@@ -115,7 +115,7 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
                 const hoursMsg = `${hoursSoFar > 0 ? `(${hoursSoFar} consecutive hours)` : ''}`;
                 const finalMsg = `Don't forget to save your work and stay hydrated! ${hoursMsg}`;
                 await textChannel.send(finalMsg);
-                console.log(`Sent to ${pair.toString()} :${finalMsg}`);
+                console.log(`Sent to ${textChannel.name} :${finalMsg}`);
                 this.consecutiveHours.set(pair, hoursSoFar + 1);
             } else {
                 this.consecutiveHours.set(pair, 0);
