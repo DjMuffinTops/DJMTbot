@@ -99,8 +99,12 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
                     if (childVCName === guildVoiceChannel.name) {
                         // Delete
                         if (guildVoiceChannel.members.size === 0) {
-                            await guildVoiceChannel.delete(`${guildVoiceChannel.name} is empty`);
-                            console.log(`[${this.djmtGuild.guildId}] Deleted detected child ${guildVoiceChannel.name} ${guildVoiceChannel.id}. VC was empty`);
+                            try {
+                                await guildVoiceChannel.delete(`${guildVoiceChannel.name} is empty`);
+                                console.log(`[${this.djmtGuild.guildId}] Deleted detected child ${guildVoiceChannel.name} ${guildVoiceChannel.id}. VC was empty`);
+                            } catch (e) {
+                                console.error(`[${this.djmtGuild.guildId}] Error deleting child voice channel ${guildVoiceChannel.name} ${guildVoiceChannel.id}: ${e}`);
+                            }
                             continue;
                         }
                         try {
@@ -405,7 +409,11 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
 
         // Delete it from the marked voice channels array
         this.markedVoiceChannels.splice(this.markedVoiceChannels.indexOf(voiceChannel), 1);
-        await voiceChannel.delete(reason);
-        console.log(`[${this.djmtGuild.guildId}] Deleted ${voiceChannel.name} ${voiceChannel.id}`);
+        try {
+            await voiceChannel.delete(reason);
+            console.log(`[${this.djmtGuild.guildId}] Deleted ${voiceChannel.name} ${voiceChannel.id}`);
+        } catch (e) {
+            console.error(`[${this.djmtGuild.guildId}] Error deleting voice channel ${voiceChannel.name} ${voiceChannel.id}: ${e}`);
+        }
     }
 }
