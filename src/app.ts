@@ -1,7 +1,7 @@
 import { DJMTbot } from "./DJMTbot";
 const express = require('express')
 const app = express()
-const PORT = 3000;
+const PORT = process.env.PORT ?? 8080;
 
 app.get('/', (req: any, res: any) => {
     const data = {
