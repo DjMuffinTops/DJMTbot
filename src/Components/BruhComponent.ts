@@ -6,12 +6,14 @@ import {
     MessageReaction,
     TextChannel,
     User,
-    VoiceState
+    VoiceState,
+    Collection,
+    FetchMessagesOptions
 } from "discord.js";
-import {Component} from "../Component";
-import {ComponentCommands} from "../Constants/ComponentCommands";
-import {isAdmin} from "../HelperFunctions";
-import {ComponentNames} from "../Constants/ComponentNames";
+import { Component } from "../Component";
+import { ComponentCommands } from "../Constants/ComponentCommands";
+import { isAdmin } from "../HelperFunctions";
+import { ComponentNames } from "../Constants/ComponentNames";
 
 interface BruhComponentSave {
     bruhChannels: string[];
@@ -20,6 +22,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
 
     name = ComponentNames.BRUH;
     bruhChannels: string[] = [];
+    messageCache: Message[] = [];
     // This is local as its not very important to store
     onCooldown: boolean = false;
 
@@ -38,9 +41,9 @@ export class BruhComponent extends Component<BruhComponentSave> {
     }
 
     async onReady(): Promise<void> {
+        await this.cacheAllBruhMessages();
         return Promise.resolve(undefined);
     }
-
     async onGuildMemberAdd(member: GuildMember): Promise<void> {
         return Promise.resolve(undefined);
     }
@@ -67,6 +70,9 @@ export class BruhComponent extends Component<BruhComponentSave> {
             await this.bruhCmd(args, message);
         } else if (command === ComponentCommands.SET_BRUH) {
             await this.setBruhCmd(args, message);
+            await this.cacheAllBruhMessages(args, message);
+        } else if (command === ComponentCommands.BRUH_RECACHE) {
+            await this.cacheAllBruhMessages(args, message);
         }
         return Promise.resolve(undefined);
     }
@@ -123,36 +129,11 @@ export class BruhComponent extends Component<BruhComponentSave> {
             let attachmentList: AttachmentBuilder[] = [];
             let msgContent = '';
             if (this.bruhChannels && this.bruhChannels?.length > 0) {
-                let bruhChannelId = this.bruhChannels[Math.floor(this.bruhChannels.length * Math.random())]; // pick a random bruh channel id
-                let channel: TextChannel | undefined = (message?.guild?.channels?.cache?.get(bruhChannelId) as TextChannel); // get the channel object
 
-
-                let messagesArray = [];
-                let last_id = "";
-                let messages = null;
-                // TODO:: implement an option to limit how many messages to parse
-                // let iterations = (limit / 100) + (limit % 100 ? 1 : 0);
-                do {
-                    const options = {
-                        limit: 100
-                    };
-                    if (last_id.length > 0) {
-                        // @ts-ignore
-                        options.before = last_id
-                    }
-                    messages = await channel?.messages?.fetch(options);
-                    let msgArray = [...messages.values()];
-                    messagesArray.push(...msgArray);
-                    // console.log(`msg length ${messages.array().length}`);
-                    if (msgArray.length > 0) {
-                        last_id = msgArray[(msgArray.length - 1)].id;
-                    }
-                    // iterations--;
-                } while (messages.size > 0);
                 // let messages = await channel.messages.fetch(); // get the messages
                 // let messagesArray = messages.array(); // get it as an array
-                let randomIndex = Math.floor(messagesArray.length * Math.random()); // choose a random message index
-                let randomMsg = await messagesArray[randomIndex]; // get the random message
+                let randomIndex = Math.floor(this.messageCache.length * Math.random()); // choose a random message index
+                let randomMsg = await this.messageCache[randomIndex]; // get the random message
                 if (randomMsg) {
                     // If theres an embed, its probably a floof bot star embed
                     if (randomMsg.embeds && randomMsg.embeds.length > 0) {
@@ -215,10 +196,10 @@ export class BruhComponent extends Component<BruhComponentSave> {
                     // console.log(msgContent);
                     // console.log(matches);
                     // console.log(`size: ${messagesArray.length} | index: ${randomIndex}`);
-                    await message.channel.send({content:`\ ${msgContent}`, files: attachmentList});
+                    await message.channel.send({ content: `\ ${msgContent}`, files: attachmentList });
                 } else {
                     console.error('NO RANDOM MSG');
-                    console.log(`size: ${messagesArray.length} | index: ${randomIndex}`);
+                    console.log(`size: ${this.messageCache.length} | index: ${randomIndex}`);
                     await message.channel.send('there was a missing bruh bug... bruh');
                 }
             } else {
@@ -245,4 +226,39 @@ export class BruhComponent extends Component<BruhComponentSave> {
             await this.sendBruh(message);
         }
     }
+
+    private async cacheAllBruhMessages(args?: string[], message?: Message) {
+        // Admin only
+        if (message && !isAdmin(message)) {
+            await message.channel.send(`This command requires administrator permissions.`);
+            return;
+        }
+        this.messageCache = [];
+        for (const bruhChannelId of this.bruhChannels) {
+            let channel: TextChannel | undefined = (this.djmtGuild.guild?.channels?.cache?.get(bruhChannelId) as TextChannel); // get the channel object
+            let last_id = "";
+            let messages: Collection<string, Message> | undefined = undefined;
+            do {
+                const options: FetchMessagesOptions = {
+                    limit: 100,
+                    cache: true
+                };
+                if (last_id.length > 0) {
+                    // @ts-ignore
+                    options.before = last_id;
+                }
+                messages = await channel?.messages?.fetch(options);
+                let msgArray = messages ? [...messages.values()] : [];
+                this.messageCache.push(...msgArray);
+                if (msgArray.length > 0) {
+                    last_id = msgArray[(msgArray.length - 1)].id;
+                }
+            } while (messages?.size > 0);
+        }
+        if (message) {
+            message?.channel?.send(`Bruh cache is ready with ${this.messageCache.length} bruhs`);
+        }
+        console.log(`[${this.djmtGuild.guildId}] Bruh cache size: ${this.messageCache.length}`);
+    }
+
 }
