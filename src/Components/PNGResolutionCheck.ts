@@ -1,21 +1,21 @@
-import {Component} from "../Component";
+import { Component } from "../Component";
 import {
-    AnyChannel,
     Channel,
+    ChannelType,
     GuildMember,
     Message,
     MessageReaction, TextChannel,
     User,
     VoiceState
 } from "discord.js";
-import {ComponentNames} from "../Constants/ComponentNames";
+import { ComponentNames } from "../Constants/ComponentNames";
 import {
     channelIdToChannel, channelMentionToChannelId,
     isAdmin,
     mapKeys,
 } from "../HelperFunctions";
-import {ComponentCommands} from "../Constants/ComponentCommands";
-import probe, {ProbeResult} from 'probe-image-size';
+import { ComponentCommands } from "../Constants/ComponentCommands";
+import probe, { ProbeResult } from 'probe-image-size';
 
 /**
  * Declare data you want to save in JSON here. This interface is used for getSaveData and
@@ -179,7 +179,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
                 });
                 await message.channel.send(`PNG Resolution Checking Channels:\n${msg}`);
             }
-        // Shortcut for removing marked channels: Expects a single channel mention
+            // Shortcut for removing marked channels: Expects a single channel mention
         } else if (args.length === 1) {
             const channelMention = args[0];
             try {
@@ -195,7 +195,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
                 await message.channel.send("The given channel is invalid!");
                 return;
             }
-        // Warn that this needs exactly 3 args to set
+            // Warn that this needs exactly 3 args to set
         } else if (args.length !== 3) {
             await message.channel.send(`Requires exactly three arguments, the text channel mention, an integer width, and integer height. You gave ${args}`);
         } else {
@@ -217,7 +217,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
             }
 
             // Verify the channel exists by fetching it
-            let channel: AnyChannel | null;
+            let channel: Channel | null;
             try {
                 channel = await channelIdToChannel(channelMention);
             } catch (e) {
@@ -227,7 +227,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
             }
 
             // Verify it is a text channel
-            if (channel?.type !== 'GUILD_TEXT') {
+            if (channel?.type !== ChannelType.GuildText) {
                 await message.channel.send("The given channel is not a text channel!");
                 return;
             }
@@ -236,7 +236,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
             if (this.channelsMap.get(channel.id)) {
                 res = await this.removePNGRCChannel(channel as TextChannel);
             } else {
-                res = await this.addPNGRCChannel({channel: channel as TextChannel, width, height});
+                res = await this.addPNGRCChannel({ channel: channel as TextChannel, width, height });
             }
             await message.channel.send(res);
         }

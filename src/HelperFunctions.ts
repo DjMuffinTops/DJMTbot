@@ -1,8 +1,8 @@
-import {AnyChannel, Channel, Message, TextChannel} from "discord.js";
+import {Channel, Message} from "discord.js";
 import {DJMTbot} from "./DJMTbot";
 
 export function isAdmin(message: Message) {
-    return message?.member?.permissions.has("ADMINISTRATOR");
+    return message?.member?.permissions.has("Administrator");
 }
 
 /**
@@ -22,7 +22,7 @@ export function channelMentionToChannelId(channelMention: string): string {
  * (Mentions
  * @param channelId The channel id or the channel mention string
  */
-export async function channelIdToChannel(channelId: string): Promise<AnyChannel | null> {
+export async function channelIdToChannel(channelId: string): Promise<Channel | null> {
     let id: string = channelId;
     // Determine whether the given id is a mention or just the id
     if (channelId.startsWith('<#') && channelId.endsWith('>')) {

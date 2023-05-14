@@ -2,7 +2,7 @@ import {
     Channel,
     GuildMember,
     Message,
-    MessageAttachment,
+    AttachmentBuilder,
     MessageReaction,
     TextChannel,
     User,
@@ -120,7 +120,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
 
     async sendBruh(message: Message) {
         try {
-            let attachmentList: MessageAttachment[] = [];
+            let attachmentList: AttachmentBuilder[] = [];
             let msgContent = '';
             if (this.bruhChannels && this.bruhChannels?.length > 0) {
                 let bruhChannelId = this.bruhChannels[Math.floor(this.bruhChannels.length * Math.random())]; // pick a random bruh channel id
@@ -166,11 +166,11 @@ export class BruhComponent extends Component<BruhComponentSave> {
                             });
                         }
                         if (embed?.image?.url) {
-                            const attachment = await new MessageAttachment(embed.image.url);
+                            const attachment = await new AttachmentBuilder(embed.image.url);
                             attachmentList.push(attachment);
                         }
                         if (embed?.video?.url) {
-                            const attachment = await new MessageAttachment(embed.video.url);
+                            const attachment = await new AttachmentBuilder(embed.video.url);
                             attachmentList.push(attachment);
                         }
 
@@ -193,19 +193,19 @@ export class BruhComponent extends Component<BruhComponentSave> {
                                 searchMessage = await foundChannel.messages.fetch(messageId);
                                 msgContent = searchMessage.content;
                                 // TODO: if search message isnt found try again with another random message?
-                                searchMessage.attachments.forEach((attachment: MessageAttachment) => {
+                                [...searchMessage.attachments.values()].forEach((attachment) => {
                                     // console.log(attachment);
                                     // do something with the attachment
-                                    const msgattachment = new MessageAttachment(attachment.url);
+                                    const msgattachment = new AttachmentBuilder(attachment.url);
                                     attachmentList.push(msgattachment);
                                 });
                             }
                         }
                     } else {
                         // Its probably a standard message, get the attachments and relay the content
-                        randomMsg.attachments.forEach((attachment: MessageAttachment) => {
+                        [...randomMsg.attachments.values()].forEach((attachment) => {
                             // do something with the attachment
-                            attachmentList.push(new MessageAttachment(attachment.url));
+                            attachmentList.push(new AttachmentBuilder(attachment.url));
                         });
                         msgContent = randomMsg.content;
                     }
@@ -215,7 +215,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
                     // console.log(msgContent);
                     // console.log(matches);
                     // console.log(`size: ${messagesArray.length} | index: ${randomIndex}`);
-                    await message.channel.send({content:`\ ${msgContent}`, attachments: attachmentList});
+                    await message.channel.send({content:`\ ${msgContent}`, files: attachmentList});
                 } else {
                     console.error('NO RANDOM MSG');
                     console.log(`size: ${messagesArray.length} | index: ${randomIndex}`);

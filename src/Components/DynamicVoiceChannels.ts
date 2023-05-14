@@ -1,6 +1,7 @@
-import {Component} from "../Component";
+import { Component } from "../Component";
 import {
     Channel,
+    ChannelType,
     GuildMember,
     Message,
     MessageReaction,
@@ -8,9 +9,9 @@ import {
     VoiceChannel,
     VoiceState
 } from "discord.js";
-import {ComponentNames} from "../Constants/ComponentNames";
-import {ComponentCommands} from "../Constants/ComponentCommands";
-import {isAdmin} from "../HelperFunctions";
+import { ComponentNames } from "../Constants/ComponentNames";
+import { ComponentCommands } from "../Constants/ComponentCommands";
+import { isAdmin } from "../HelperFunctions";
 
 interface DynamicVoiceChannelsSave {
     markedRootVoiceChannelIds: RootDynamicVoiceChannelSave[]
@@ -89,7 +90,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
                 console.log(`[${this.djmtGuild.guildId}]: Could not retrieve all channels for Dynamic Voice Channels component.`)
                 return;
             }
-            const allGuildVoiceChannels: VoiceChannel[] = [...allGuildChannels.cache.filter(channel => channel.type === 'GUILD_VOICE').values()] as VoiceChannel[] ?? [];
+            const allGuildVoiceChannels: VoiceChannel[] = [...allGuildChannels.cache.filter(channel => channel.type === ChannelType.GuildVoice).values()] as VoiceChannel[] ?? [];
             // Delete Children that mightve been left over first
             for (const guildVoiceChannel of allGuildVoiceChannels) {
                 // Search for existing child channels with each possible child name
@@ -247,7 +248,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
                 return;
             }
             // Verify it is a voice channel
-            if (channel.type !== 'GUILD_VOICE') {
+            if (channel.type !== ChannelType.GuildVoice) {
                 await message.channel.send("The given channel is not a voice channel!");
                 return;
             }
@@ -318,9 +319,9 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
     private getDynamicVoiceChannelInfo(dvc: DynamicVoiceChannel): DynamicVoiceChannelNameInfo {
         const rootChannelName: string = dvc.name;
         const lastSpaceIndex: number = rootChannelName.lastIndexOf(" "); // The number should be right after the last space
-        let rootChannelCount: number = lastSpaceIndex === -1  ? 1 : Number(rootChannelName.substring(lastSpaceIndex)); // Start generating names from this number
+        let rootChannelCount: number = lastSpaceIndex === -1 ? 1 : Number(rootChannelName.substring(lastSpaceIndex)); // Start generating names from this number
         let rootChannelNameWithoutNumber: string;
-        if (isNaN(rootChannelCount)){
+        if (isNaN(rootChannelCount)) {
             rootChannelCount = 1;
             rootChannelNameWithoutNumber = rootChannelName;
         } else {
@@ -366,10 +367,10 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
         }
         // Mark that we're creating this child, this is to prevent duplicate creation
         this.creatingChannel.set(nextChannelName, true);
-        let childVoiceChannel: DynamicVoiceChannel = (await this.djmtGuild.guild?.channels.create(nextChannelName ?? "Extra", {
-            type: 'GUILD_VOICE',
-            parent: voiceChannel.parent ?? undefined,
-            reason: `Dynamic Voice Channel created for ${markedChannelInfo.name}`
+        let childVoiceChannel: DynamicVoiceChannel = (await this.djmtGuild.guild?.channels.create({
+            name: nextChannelName ?? "Extra",
+            type: ChannelType.GuildVoice,
+            parent: voiceChannel.parent ?? undefined, reason: `Dynamic Voice Channel created for ${markedChannelInfo.name}`
         })) as DynamicVoiceChannel;
         // Wire up the child channel
         childVoiceChannel.parentChannel = voiceChannel;
