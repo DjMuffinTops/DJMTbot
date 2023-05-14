@@ -1,5 +1,6 @@
 import {Component} from "../Component";
 import {
+    ChannelType,
     GuildMember,
     Message,
     MessageReaction,
@@ -60,7 +61,7 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
                 const value: AutoThreadEntrySave | undefined = loadedObject.channels.get(key);
                 if (value) {
                     const channel = this.djmtGuild.getGuildChannel(value.channel) as TextChannel;
-                    if (!channel || channel.type !== "GUILD_TEXT") {
+                    if (!channel || channel.type !== ChannelType.GuildText) {
                         console.error(`[AutoThread]: could not load ${value}`);
                         continue;
                     }
@@ -211,7 +212,7 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
                     await message.channel.send("The given channel is invalid!");
                     return;
                 }
-                if (textChannel.type !== "GUILD_TEXT") {
+                if (textChannel.type !== ChannelType.GuildText) {
                     await message.channel.send("The given channel is not a text channel!");
                     return;
                 }
