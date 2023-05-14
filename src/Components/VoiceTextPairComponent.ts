@@ -1,5 +1,6 @@
-import {Component} from "../Component";
+import { Component } from "../Component";
 import {
+    ChannelType,
     GuildMember,
     Message,
     MessageReaction, TextChannel,
@@ -7,9 +8,9 @@ import {
     VoiceChannel,
     VoiceState
 } from "discord.js";
-import {ComponentNames} from "../Constants/ComponentNames";
-import {isAdmin} from "../HelperFunctions";
-import {ComponentCommands} from "../Constants/ComponentCommands";
+import { ComponentNames } from "../Constants/ComponentNames";
+import { isAdmin } from "../HelperFunctions";
+import { ComponentCommands } from "../Constants/ComponentCommands";
 
 // Declare data you want to save in JSON here
 interface VoiceTextPairComponentSave {
@@ -77,10 +78,10 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
 
     async setVoiceTextPair(voiceChannel: VoiceChannel, textChannel: TextChannel): Promise<boolean> {
         console.log(this.voiceTextPairs);
-        const pair: VoiceTextPair = {voiceChannel, textChannel};
+        const pair: VoiceTextPair = { voiceChannel, textChannel };
         for (const pair of this.voiceTextPairs) {
             if (pair.voiceChannel.id === voiceChannel.id && pair.textChannel.id === textChannel.id) {
-                this.voiceTextPairs.splice(this.voiceTextPairs.indexOf(pair),  1);
+                this.voiceTextPairs.splice(this.voiceTextPairs.indexOf(pair), 1);
                 await this.djmtGuild.saveJSON();
                 return false;
             }
@@ -117,15 +118,15 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
                 await message.channel.send("The given channel is invalid! Make sure the given channels are the correct types (use help command for more info)");
                 return;
             }
-            if (foundVoiceChannel.type !== "GUILD_VOICE" && foundTextChannel.type !== "GUILD_TEXT") {
+            if (foundVoiceChannel.type !== ChannelType.GuildVoice && foundTextChannel.type !== ChannelType.GuildText) {
                 await message.channel.send(`The given channels are not the correct types`);
                 return;
             }
             const success = await this.setVoiceTextPair(foundVoiceChannel as VoiceChannel, foundTextChannel as TextChannel);
             if (success) {
-                await message.channel.send(`Added ${[foundVoiceChannel.toString(),foundTextChannel.toString()]} to the VC Channels list!`);
+                await message.channel.send(`Added ${[foundVoiceChannel.toString(), foundTextChannel.toString()]} to the VC Channels list!`);
             } else {
-                await message.channel.send(`Removed ${[foundVoiceChannel.toString(),foundTextChannel.toString()]} from VC Channels list!`);
+                await message.channel.send(`Removed ${[foundVoiceChannel.toString(), foundTextChannel.toString()]} from VC Channels list!`);
             }
         } else {
             await message.channel.send(`Requires exactly two arguments, a voice channel id, and a text channel mention. You gave ${args}`);

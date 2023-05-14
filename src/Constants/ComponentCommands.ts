@@ -13,6 +13,7 @@ export enum ComponentCommands {
     RESET_CONFIG = "resetconfig",
     B_SPEAK = "b",
     BRUH = "bruh",
+    BRUH_RECACHE = "rebruh",
     CHEEMS = "cheems",
     HELP = "help",
     PING  = "ping",

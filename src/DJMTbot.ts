@@ -1,13 +1,13 @@
 import Discord, {
     Client,
-    GuildMember, Intents,
+    GuildMember, GatewayIntentBits, Partials,
     Message,
     User,
     VoiceState
 } from "discord.js";
-import {promises as FileSystem} from "fs";
-import {DJMTGuild} from "./DJMTGuild";
-import {Cron} from "./Cron";
+import { promises as FileSystem } from "fs";
+import { DJMTGuild } from "./DJMTGuild";
+import { Cron } from "./Cron";
 // Here we load the guildConfigs.json file that contains our token and our prefix values.
 require('dotenv').config();
 Cron.getInstance();
@@ -17,8 +17,17 @@ export class DJMTbot {
     client: Client;
     guilds: Map<string, DJMTGuild>;
     private constructor() {
-        this.client = new Discord.Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS, Intents.FLAGS.GUILD_MESSAGE_TYPING, Intents.FLAGS.GUILD_VOICE_STATES, Intents.FLAGS.GUILD_SCHEDULED_EVENTS],
-        partials: ['MESSAGE', 'CHANNEL', 'REACTION'] });
+        this.client = new Discord.Client({
+            intents: [
+                GatewayIntentBits.Guilds,
+                GatewayIntentBits.GuildMessages,
+                GatewayIntentBits.MessageContent,
+                GatewayIntentBits.GuildMessageReactions,
+                GatewayIntentBits.GuildMessageTyping,
+                GatewayIntentBits.GuildVoiceStates,
+                GatewayIntentBits.GuildScheduledEvents],
+            partials: [Partials.Message, Partials.Channel, Partials.Reaction]
+        });
         this.guilds = new Map<string, DJMTGuild>();
         this.initGuildInstancesFromFiles().then(r => console.log(`${this.guilds.size} DJMT Guilds Initialized`));
     }
