@@ -18,7 +18,14 @@ export class DJMTbot {
     guilds: Map<string, DJMTGuild>;
     private constructor() {
         this.client = new Discord.Client({
-            intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.GuildMessageTyping, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.GuildScheduledEvents],
+            intents: [
+                GatewayIntentBits.Guilds,
+                GatewayIntentBits.GuildMessages,
+                GatewayIntentBits.MessageContent,
+                GatewayIntentBits.GuildMessageReactions,
+                GatewayIntentBits.GuildMessageTyping,
+                GatewayIntentBits.GuildVoiceStates,
+                GatewayIntentBits.GuildScheduledEvents],
             partials: [Partials.Message, Partials.Channel, Partials.Reaction]
         });
         this.guilds = new Map<string, DJMTGuild>();
