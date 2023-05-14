@@ -1,7 +1,7 @@
 import {
     Guild, GuildBasedChannel, GuildChannel,
     GuildMember,
-    Message, MessageAttachment,
+    Message, AttachmentBuilder,
     MessageReaction, TextChannel,
     User,
     VoiceState
@@ -12,11 +12,11 @@ import {
     JSONStringifyReviver
 } from "./HelperFunctions";
 
-import {DJMTbot} from "./DJMTbot";
-import {ComponentNames} from "./Constants/ComponentNames";
-import {Component} from "./Component";
+import { DJMTbot } from "./DJMTbot";
+import { ComponentNames } from "./Constants/ComponentNames";
+import { Component } from "./Component";
 import * as components from "./Components"; // All components are imported from here!
-import {promises as FileSystem} from "fs";
+import { promises as FileSystem } from "fs";
 const defaultConfig = require("../json/defaultConfig.json");
 
 // The structure of a Guild's save data JSON.
@@ -139,13 +139,13 @@ export class DJMTGuild {
             this.componentData[component.name] = await component.getSaveData();
         }
         // Write getSaveData() content to file
-        await FileSystem.writeFile(filename, JSON.stringify({[this.guildId]: this.getSaveData()}, JSONStringifyReplacer, '\t'));
+        await FileSystem.writeFile(filename, JSON.stringify({ [this.guildId]: this.getSaveData() }, JSONStringifyReplacer, '\t'));
         console.log(`${filename} saved`);
-        if (this.debugMode){
+        if (this.debugMode) {
             const foundChannel = this.getDebugChannel();
             if (foundChannel) {
-                const attachment = new MessageAttachment(Buffer.from(JSON.stringify({[this.guildId]: this.getSaveData()}, JSONStringifyReplacer, '\t')), 'config.txt');
-                await foundChannel.send({files: [attachment]});
+                const attachment = new AttachmentBuilder(Buffer.from(JSON.stringify({ [this.guildId]: this.getSaveData() }, JSONStringifyReplacer, '\t')), { name: 'config.txt' });
+                await foundChannel.send({ files: [attachment] });
             }
         }
     }
@@ -184,7 +184,7 @@ export class DJMTGuild {
         } catch (e) {
             console.error(`[${this.guildId}] ${e}`);
         }
-        if(!this.guild) {
+        if (!this.guild) {
             console.log(`[${this.guildId}] Could not fetch guild with this id, guild cannot be readied.`);
             return;
         }
@@ -285,7 +285,7 @@ export class DJMTGuild {
         }
     }
 
-    getGuildChannel(channelId: string) : GuildBasedChannel | undefined {
+    getGuildChannel(channelId: string): GuildBasedChannel | undefined {
         return this.guild?.channels.cache.find(channel => channel.id === channelId);
     }
 

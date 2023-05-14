@@ -1,17 +1,18 @@
-import {Component} from "../Component";
+import { Component } from "../Component";
 import {
     Channel,
     GuildMember,
     Message,
-    MessageAttachment, MessageEmbed,
+    AttachmentBuilder, EmbedBuilder,
     MessageReaction, TextChannel,
     User,
-    VoiceState
+    VoiceState,
+    ChannelType
 } from "discord.js";
-import {ComponentNames} from "../Constants/ComponentNames";
-import {isAdmin} from "../HelperFunctions";
-import {ComponentCommands} from "../Constants/ComponentCommands";
-import {DJMTbot} from "../DJMTbot";
+import { ComponentNames } from "../Constants/ComponentNames";
+import { isAdmin } from "../HelperFunctions";
+import { ComponentCommands } from "../Constants/ComponentCommands";
+import { DJMTbot } from "../DJMTbot";
 
 // Declare data you want to save in JSON here
 interface ReactBoardSave {
@@ -201,7 +202,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
                 await message.channel.send("The given channel or emote is invalid!");
                 return;
             }
-            if (foundTextChannel.type !== "GUILD_TEXT") {
+            if (foundTextChannel.type !== ChannelType.GuildText) {
                 await message.channel.send(`The given channel is not a Text Channel`);
                 return;
             }
@@ -264,22 +265,22 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
             if (reaction.count === reactMapValue?.threshold && reactMapValue?.channelId) {
                 const message = await reaction.message.fetch();
                 const destinationChannel = this.djmtGuild.getGuildChannel(reactMapValue.channelId) as TextChannel;
-                const embed = new MessageEmbed();
-                embed.type = 'rich';
+                const embed = new EmbedBuilder();
                 let msgAttachments = [...message.attachments.values()];
                 embed.setDescription(`[Original Message](${message.url})`)
-                .setColor(16755763)
-                .setTimestamp(message.createdAt)
-                .addField('Channel', message.channel.toString(), true)
-                .addField('Message', message.content || '\u200b', true)
-                .addField('Media URL', message.attachments.first()?.url || '\u200b', false)
-                .setThumbnail(message.author.displayAvatarURL({size: 128, dynamic: true}))
-                .setImage(msgAttachments.length > 0 ? msgAttachments[0].url : '')
-                .setAuthor({name: `${message.author.username}#${message.author.discriminator} (${message.author.id})`, iconURL: message.author.displayAvatarURL({size: 128, dynamic: true})})
-                .setFooter({text: `${reaction.count} ⭐ | ${message.id}`});
+                    .setColor(16755763)
+                    .setTimestamp(message.createdAt)
+                    .addFields(
+                        { name: 'Channel', value: message.channel.toString(), inline: true },
+                        { name: 'Message', value: message.content || '\u200b', inline: true },
+                        { name: 'Media URL', value: message.attachments.first()?.url || '\u200b', inline: false })
+                    .setThumbnail(message.author.displayAvatarURL({ size: 128 }))
+                    .setImage(msgAttachments.length > 0 ? msgAttachments[0].url : '')
+                    .setAuthor({ name: `${message.author.username}#${message.author.discriminator} (${message.author.id})`, iconURL: message.author.displayAvatarURL({ size: 128 }) })
+                    .setFooter({ text: `${reaction.count} ⭐ | ${message.id}` });
                 try {
-                    await destinationChannel.send({embeds: [embed]});
-                } catch(e) {
+                    await destinationChannel.send({ embeds: [embed] });
+                } catch (e) {
                     console.error(e);
                     console.error(`[${this.djmtGuild.guildId}] Could not set starboard message for ${message.url}`);
 

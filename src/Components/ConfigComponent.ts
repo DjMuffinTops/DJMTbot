@@ -1,18 +1,18 @@
-import {Component} from "../Component";
+import { Component } from "../Component";
 import {
     GuildMember,
     Message,
-    MessageAttachment,
+    AttachmentBuilder,
     MessageReaction,
     User,
     VoiceState
 } from "discord.js";
-import {ComponentCommands} from "../Constants/ComponentCommands";
-import {isAdmin, JSONStringifyReplacer} from "../HelperFunctions";
-import {ComponentNames} from "../Constants/ComponentNames";
-import {DateTime} from "luxon";
+import { ComponentCommands } from "../Constants/ComponentCommands";
+import { isAdmin, JSONStringifyReplacer } from "../HelperFunctions";
+import { ComponentNames } from "../Constants/ComponentNames";
+import { DateTime } from "luxon";
 
-interface ConfigComponentSave {}
+interface ConfigComponentSave { }
 export class ConfigComponent extends Component<ConfigComponentSave>{
 
     name: ComponentNames = ComponentNames.CONFIG;
@@ -62,15 +62,15 @@ export class ConfigComponent extends Component<ConfigComponentSave>{
         return Promise.resolve(undefined);
     }
 
-    async exportConfig(args:string [], message: Message) {
+    async exportConfig(args: string[], message: Message) {
         // Admin only
         if (!isAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
-        const jsonString = `${JSON.stringify({[this.djmtGuild.guildId]: this.djmtGuild.getSaveData()}, JSONStringifyReplacer, '  ')}`;
-        const attachment = new MessageAttachment(Buffer.from(jsonString), `config_${this.djmtGuild.guildId}_${DateTime.local().toLocaleString(DateTime.DATETIME_FULL_WITH_SECONDS)}.txt`);
-        await message.channel.send({files: [attachment]});
+        const jsonString = `${JSON.stringify({ [this.djmtGuild.guildId]: this.djmtGuild.getSaveData() }, JSONStringifyReplacer, '  ')}`;
+        const attachment = new AttachmentBuilder(Buffer.from(jsonString), { name: `config_${this.djmtGuild.guildId}_${DateTime.local().toLocaleString(DateTime.DATETIME_FULL_WITH_SECONDS)}.txt` });
+        await message.channel.send({ files: [attachment] });
     }
 
     async resetConfig(message: Message) {
