@@ -18,12 +18,12 @@ To get your own bot token, [create a bot!](https://discordjs.guide/preparations/
 You may also ask me for access to the PW Test server and dev bot token on Discord!
 
 ## Create a .env file in the root directory
-```TOKEN``` and ```DEFAULT_PREFIX``` environment variables must be defined, one easy way to set them is by creating an `.env` file.
+```TOKEN``` and ```APPLICATION_ID``` environment variables must be defined, one easy way to set them is by creating an `.env` file.
 
 Your .env should look like this
 ```
 TOKEN=YOUR_DISCORD_BOT_TOKEN_HERE
-DEFAULT_PREFIX=djmt!
+APPLICATION_ID=DISCORD_BOT_APPLICATION_ID
 ```
 **DO NOT COMMIT YOUR .ENV file to GIT. 
 If you accidentally expose your token publicly, RESET THE TOKEN through the discord developer page ASAP!**

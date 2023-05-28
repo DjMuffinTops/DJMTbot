@@ -2,6 +2,7 @@ import {Component} from "../Component";
 import {Cron} from "../Cron";
 import {
     GuildMember,
+    Interaction,
     Message,
     MessageReaction,
     TextChannel,
@@ -10,7 +11,7 @@ import {
 } from "discord.js";
 import {ComponentNames} from "../Constants/ComponentNames";
 import {dayOfTheWeekConstants} from "../Constants/DayOfTheWeekConstants";
-import {isAdmin} from "../HelperFunctions";
+import {isMessageAdmin} from "../HelperFunctions";
 import {ComponentCommands} from "../Constants/ComponentCommands";
 
 
@@ -88,6 +89,10 @@ export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> 
         return Promise.resolve(undefined);
     }
 
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
     async dotwJob() {
         const date = new Date();
         const today: DayOfTheWeek = dayOfTheWeekConstants[date.getDay()];
@@ -122,7 +127,7 @@ export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> 
 
     async setDotwCmd(args: string[], message: Message) {
         // Admin only
-        if (!isAdmin(message)) {
+        if (!isMessageAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }

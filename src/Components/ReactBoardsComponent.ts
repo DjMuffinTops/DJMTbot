@@ -7,10 +7,11 @@ import {
     MessageReaction, TextChannel,
     User,
     VoiceState,
-    ChannelType
+    ChannelType,
+    Interaction
 } from "discord.js";
 import { ComponentNames } from "../Constants/ComponentNames";
-import { isAdmin } from "../HelperFunctions";
+import { isMessageAdmin } from "../HelperFunctions";
 import { ComponentCommands } from "../Constants/ComponentCommands";
 import { DJMTbot } from "../DJMTbot";
 
@@ -95,14 +96,17 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
         return Promise.resolve(undefined);
     }
 
-
     async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
         return Promise.resolve(undefined);
     }
 
     async setAutoReactCmd(args: string[], message: Message) {
         // Admin only
-        if (!isAdmin(message)) {
+        if (!isMessageAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
@@ -166,7 +170,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
 
     async setReactPairsCmd(args: string[], message: Message) {
         // Admin only
-        if (!isAdmin(message)) {
+        if (!isMessageAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
@@ -292,7 +296,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
     }
     async setStarCmd(args: string[], message: Message) {
         // Admin only
-        if (!isAdmin(message)) {
+        if (!isMessageAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }

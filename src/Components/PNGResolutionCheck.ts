@@ -3,6 +3,7 @@ import {
     Channel,
     ChannelType,
     GuildMember,
+    Interaction,
     Message,
     MessageReaction, TextChannel,
     User,
@@ -11,7 +12,7 @@ import {
 import { ComponentNames } from "../Constants/ComponentNames";
 import {
     channelIdToChannel, channelMentionToChannelId,
-    isAdmin,
+    isMessageAdmin,
     mapKeys,
 } from "../HelperFunctions";
 import { ComponentCommands } from "../Constants/ComponentCommands";
@@ -120,6 +121,10 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
         return Promise.resolve(undefined);
     }
 
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
     private async checkPNGAndResolution(message: Message) {
         if (message.attachments.size > 0) {
             // Is this one of the marked channels?
@@ -164,7 +169,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
 
     private async parseAndSetChannel(args: string[], message: Message) {
         // Admin only
-        if (!isAdmin(message)) {
+        if (!isMessageAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }

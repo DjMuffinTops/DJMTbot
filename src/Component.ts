@@ -1,4 +1,4 @@
-import {GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
+import {GuildMember, Interaction, Message, MessageReaction, SlashCommandBuilder, User, VoiceState} from "discord.js";
 import {DJMTGuild} from "./DJMTGuild";
 import {ComponentNames} from "./Constants/ComponentNames";
 
@@ -18,6 +18,7 @@ import {ComponentNames} from "./Constants/ComponentNames";
 export abstract class Component<T> {
     abstract name: ComponentNames;
     djmtGuild: DJMTGuild;
+    commands: SlashCommandBuilder[] = [];
 
     public constructor(guild: DJMTGuild) {
         this.djmtGuild = guild;
@@ -91,6 +92,12 @@ export abstract class Component<T> {
      * @param user the user who removed the reaction
      */
     abstract onMessageReactionRemove(messageReaction: MessageReaction, user: User): Promise<void>;
+
+    /**
+     * Function that fires on the discord client's 'interactionCreate' event for this guild
+     * @param interaction the interaction
+     */
+    abstract onInteractionCreate(interaction: Interaction): Promise<void>;
 
 
 

@@ -1,7 +1,7 @@
 import {Component} from "../Component";
-import {GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
+import {GuildMember, Interaction, Message, MessageReaction, User, VoiceState} from "discord.js";
 import {ComponentCommands} from "../Constants/ComponentCommands";
-import {isAdmin} from "../HelperFunctions";
+import {isMessageAdmin} from "../HelperFunctions";
 import {ComponentNames} from "../Constants/ComponentNames";
 
 interface SayComponentSave {}
@@ -30,7 +30,7 @@ export class SayComponent extends Component<SayComponentSave> {
             `${sayMessage}???????`,
             `${args.reverse().join(" ")}`,
             `${sayMessage.toUpperCase().substring(0, Math.round(sayMessage.length / 2))}-`];
-        if (!isAdmin(message) && Math.random() < .95) {
+        if (!isMessageAdmin(message) && Math.random() < .95) {
             await message.channel.send(deniedMsgs[Math.round(Math.random() * deniedMsgs.length)]);
             return;
         }
@@ -75,6 +75,10 @@ export class SayComponent extends Component<SayComponentSave> {
     }
 
     async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+    
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
         return Promise.resolve(undefined);
     }
 }

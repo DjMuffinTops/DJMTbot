@@ -1,7 +1,15 @@
 import { DJMTbot } from "./DJMTbot";
 const express = require('express')
 const app = express()
-const PORT = process.env.PORT ?? 8080;
+const PORT = 8080;
+
+if (!process.env.TOKEN) {
+    throw new Error("TOKEN ENV not set.")
+}
+
+if (!process.env.APPLICATION_ID) {
+    throw new Error("APPLICATION_ID ENV not set.")
+}
 
 app.get('/', (req: any, res: any) => {
     const data = {

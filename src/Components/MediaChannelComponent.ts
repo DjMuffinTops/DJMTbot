@@ -1,7 +1,7 @@
 import {Component} from "../Component";
-import {GuildMember, Message, MessageReaction, TextChannel, User, VoiceState} from "discord.js";
+import {GuildMember, Interaction, Message, MessageReaction, TextChannel, User, VoiceState} from "discord.js";
 import {ComponentNames} from "../Constants/ComponentNames";
-import {isAdmin} from "../HelperFunctions";
+import {isMessageAdmin} from "../HelperFunctions";
 import {DJMTGuild} from "../DJMTGuild";
 import {ComponentCommands} from "../Constants/ComponentCommands";
 
@@ -67,6 +67,10 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
         return Promise.resolve(undefined);
     }
 
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
     async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
         // Any interactive commands should be defined in ComponentCommands.ts
@@ -88,7 +92,7 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
      * @private
      */
     private async setMediaChannel(args: string[], message: Message): Promise<void> {
-        if (!isAdmin(message)) {
+        if (!isMessageAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
@@ -132,7 +136,7 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
      * @private
      */
     private async getMediaChannel(message: Message): Promise<void> {
-        if (!isAdmin(message)) {
+        if (!isMessageAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }

@@ -1,10 +1,10 @@
 import {Component} from "../Component";
-import {GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
+import {GuildMember, Interaction, Message, MessageReaction, User, VoiceState} from "discord.js";
 import {ComponentNames} from "../Constants/ComponentNames";
 import probe, {ProbeResult} from "probe-image-size";
 import {ComponentCommands} from "../Constants/ComponentCommands";
 import {Cron} from "../Cron";
-import {isAdmin} from "../HelperFunctions";
+import {isMessageAdmin} from "../HelperFunctions";
 
 interface DynamicBannerSave {
     imageUrls: string[];
@@ -71,8 +71,11 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
         return Promise.resolve(undefined);
     }
 
-
     async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
         return Promise.resolve(undefined);
     }
 
@@ -82,7 +85,7 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
      */
     async rotateServerBanner(message?: Message) {
         // Admin only
-        if (message && !isAdmin(message)) {
+        if (message && !isMessageAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
@@ -124,7 +127,7 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
      */
     private async addOrRemoveImageUrl(args: string[], message: Message) {
         // Admin only
-        if (!isAdmin(message)) {
+        if (!isMessageAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }

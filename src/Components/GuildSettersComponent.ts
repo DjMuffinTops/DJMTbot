@@ -1,7 +1,7 @@
 import {Component} from "../Component";
-import {GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
+import {GuildMember, Interaction, Message, MessageReaction, User, VoiceState} from "discord.js";
 import {ComponentNames} from "../Constants/ComponentNames";
-import {isAdmin} from "../HelperFunctions";
+import {isMessageAdmin} from "../HelperFunctions";
 import {ComponentCommands} from "../Constants/ComponentCommands";
 
 // Declare data you want to save in JSON here
@@ -43,6 +43,10 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
         return Promise.resolve(undefined);
     }
 
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
     async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
         if (command === ComponentCommands.SET_DEBUG_CHANNEL) {
@@ -62,7 +66,7 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
 
     async debugModeCmd(args: string[], message: Message) {
         // Admin only
-        if (!isAdmin(message)) {
+        if (!isMessageAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
@@ -73,7 +77,7 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
 
     async setDebugChannel(args: string[], message: Message) {
         // Admin only
-        if (!isAdmin(message)) {
+        if (!isMessageAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
@@ -88,15 +92,16 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
 
     async setPrefixCmd(args: string[], message: Message) {
         // Admin only
-        if (!isAdmin(message)) {
+        if (!isMessageAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
+        const defaultPrefix = "djmt!";
         if (args.length === 0) {
-            this.djmtGuild.prefix = process.env.DEFAULT_PREFIX as string;
-            await message.channel.send(`Set my prefix to \`\`${process.env.DEFAULT_PREFIX}\`\``);
+            this.djmtGuild.prefix = defaultPrefix as string;
+            await message.channel.send(`Set my prefix to \`\`${defaultPrefix}\`\``);
         } else if (args.length === 1) {
-            this.djmtGuild.prefix = args[0] ? args[0] : process.env.DEFAULT_PREFIX as string;
+            this.djmtGuild.prefix = args[0] ? args[0] : defaultPrefix;
             await message.channel.send(`Set my prefix to \`\`${this.djmtGuild.prefix}\`\``);
         } else {
             await message.channel.send(`Please enter a single prefix.`);

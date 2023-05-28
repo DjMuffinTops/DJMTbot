@@ -3,6 +3,7 @@ import {
     Channel,
     ChannelType,
     GuildMember,
+    Interaction,
     Message,
     MessageReaction,
     User,
@@ -11,7 +12,7 @@ import {
 } from "discord.js";
 import { ComponentNames } from "../Constants/ComponentNames";
 import { ComponentCommands } from "../Constants/ComponentCommands";
-import { isAdmin } from "../HelperFunctions";
+import { isMessageAdmin } from "../HelperFunctions";
 
 interface DynamicVoiceChannelsSave {
     markedRootVoiceChannelIds: RootDynamicVoiceChannelSave[]
@@ -164,7 +165,9 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
         }
     }
 
-
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
+        return Promise.resolve(undefined);
+    }
 
     /**
      * Checks if any of the marked channels need to be deleted.
@@ -214,7 +217,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
      */
     async setRootDynamicVoiceChannel(args: string[], message: Message) {
         // Admin only
-        if (!isAdmin(message)) {
+        if (!isMessageAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }

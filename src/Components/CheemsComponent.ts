@@ -1,6 +1,6 @@
 import {Component} from "../Component";
 import {ComponentCommands} from "../Constants/ComponentCommands";
-import {GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
+import {GuildMember, Interaction, Message, MessageReaction, User, VoiceState} from "discord.js";
 import {ComponentNames} from "../Constants/ComponentNames";
 
 interface CheemsComponentSave {}
@@ -48,6 +48,10 @@ export class CheemsComponent extends Component<CheemsComponentSave> {
     }
 
     async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
         return Promise.resolve(undefined);
     }
 

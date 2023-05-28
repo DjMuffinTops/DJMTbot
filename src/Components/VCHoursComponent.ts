@@ -1,6 +1,7 @@
 import {Component} from "../Component";
 import {
     GuildMember,
+    Interaction,
     Message,
     MessageReaction,
     TextChannel,
@@ -10,7 +11,7 @@ import {
 } from "discord.js";
 import {ComponentNames} from "../Constants/ComponentNames";
 import {VoiceTextPairComponent, VoiceTextPair} from "./VoiceTextPairComponent";
-import {isAdmin} from "../HelperFunctions";
+import {isMessageAdmin} from "../HelperFunctions";
 import {Cron} from "../Cron";
 import {ComponentCommands} from "../Constants/ComponentCommands";
 
@@ -74,9 +75,13 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
         return Promise.resolve(undefined);
     }
 
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
     async setHoursCmd(args: string[], message: Message) {
         // Admin only
-        if (!isAdmin(message)) {
+        if (!isMessageAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }

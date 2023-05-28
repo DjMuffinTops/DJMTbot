@@ -1,5 +1,5 @@
 import {Component} from "../Component";
-import {GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
+import {GuildMember, Interaction, Message, MessageReaction, User, VoiceState} from "discord.js";
 import {ComponentCommands} from "../Constants/ComponentCommands";
 import {ComponentNames} from "../Constants/ComponentNames";
 
@@ -48,6 +48,10 @@ export class BSpeakComponent extends Component<BSpeakComponentSave> {
     }
 
     async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
         return Promise.resolve(undefined);
     }
 

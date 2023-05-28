@@ -2,6 +2,7 @@ import { Component } from "../Component";
 import {
     ChannelType,
     GuildMember,
+    Interaction,
     Message,
     MessageReaction, TextChannel,
     User,
@@ -9,7 +10,7 @@ import {
     VoiceState
 } from "discord.js";
 import { ComponentNames } from "../Constants/ComponentNames";
-import { isAdmin } from "../HelperFunctions";
+import { isMessageAdmin } from "../HelperFunctions";
 import { ComponentCommands } from "../Constants/ComponentCommands";
 
 // Declare data you want to save in JSON here
@@ -76,6 +77,10 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
         return Promise.resolve(undefined);
     }
 
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
     async setVoiceTextPair(voiceChannel: VoiceChannel, textChannel: TextChannel): Promise<boolean> {
         console.log(this.voiceTextPairs);
         const pair: VoiceTextPair = { voiceChannel, textChannel };
@@ -93,7 +98,7 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
 
     async stringToVoiceTextPair(args: string[], message: Message) {
         // Admin only
-        if (!isAdmin(message)) {
+        if (!isMessageAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }

@@ -1,6 +1,6 @@
-import {Channel, GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
+import {Channel, GuildMember, Interaction, Message, MessageReaction, User, VoiceState} from "discord.js";
 import {Component} from "../Component";
-import {isAdmin} from "../HelperFunctions";
+import {isMessageAdmin} from "../HelperFunctions";
 import {ComponentCommands} from "../Constants/ComponentCommands";
 import {ComponentNames} from "../Constants/ComponentNames";
 
@@ -52,6 +52,10 @@ export class HelpComponent extends Component<HelpComponentSave> {
         return Promise.resolve(undefined);
     }
 
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
     async helpCmd(args: string[], message: Message) {
         let prefix = this.djmtGuild.prefix;
         let helpCommands =
@@ -64,7 +68,7 @@ ${prefix}bruh -> Spits out a random message contained in marked bruh channels. A
 --------------------------------------------------------------------------------------
 If the bot seems to not be responding, try using the resetconfig command (my bad ^^)
 --------------------------------------------------------------------------------------
-${prefix}prefix [text] -> Sets a new command prefix for this bot. Use this command without text to reset to the default: \`${process.env.DEFAULT_PREFIX}\`\n
+${prefix}prefix [text] -> Sets a new command prefix for this bot. Use this command without text to reset to the default: \`djmt!\`\n
 ${prefix}resetconfig -> Restores the guild's config settings to the bot's default config.\n
 ${prefix}exportconfig -> Returns the guild's config as a .txt.\n
 ${prefix}debug -> Toggles debug mode on.\n
@@ -81,7 +85,7 @@ ${prefix}rotatebanner ->  Rotates the server banner to the next image in the que
 ${prefix}setpngrc [TextChannel Mention] [width] [height] ->  Marks/unmarks the mentioned channel for PNG Resolution verification. Expects an integer width and integer height in pixels. Any images that arent pngs, or don't match the dimensions in the marked channel are deleted. \n
 ${prefix}sethours [VoiceChannelId] [TextChannelId] ->  Manually sets the hour count for a given vc text channel pair.\n\n`;
 
-        if (isAdmin(message)) {
+        if (isMessageAdmin(message)) {
             await message.channel.send(`\`\`\`css\n${helpAdminCommands}\`\`\``);
             await message.channel.send(`\`\`\`css\n${helpAdminCommands2}\`\`\``);
         }

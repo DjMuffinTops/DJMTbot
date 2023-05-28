@@ -2,6 +2,7 @@ import {Component} from "../Component";
 import {
     ChannelType,
     GuildMember,
+    Interaction,
     Message,
     MessageReaction,
     TextChannel,
@@ -9,7 +10,7 @@ import {
     VoiceState
 } from "discord.js";
 import {ComponentNames} from "../Constants/ComponentNames";
-import {channelIdToChannel, isAdmin, mapKeys} from "../HelperFunctions";
+import {channelIdToChannel, isMessageAdmin, mapKeys} from "../HelperFunctions";
 import {ComponentCommands} from "../Constants/ComponentCommands";
 
 
@@ -111,11 +112,13 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
         return Promise.resolve(undefined);
     }
 
-
     async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
         return Promise.resolve(undefined);
     }
 
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
+        return Promise.resolve(undefined);
+    }
 
     /**
      * Starts a thread on the given message.
@@ -186,7 +189,7 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
      */
     private async parseAndSetChannel(args: string[], message: Message) {
         // Admin only
-        if (!isAdmin(message)) {
+        if (!isMessageAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }

@@ -5,10 +5,11 @@ import {
     AttachmentBuilder,
     MessageReaction,
     User,
-    VoiceState
+    VoiceState,
+    Interaction
 } from "discord.js";
 import { ComponentCommands } from "../Constants/ComponentCommands";
-import { isAdmin, JSONStringifyReplacer } from "../HelperFunctions";
+import { isMessageAdmin, JSONStringifyReplacer } from "../HelperFunctions";
 import { ComponentNames } from "../Constants/ComponentNames";
 import { DateTime } from "luxon";
 
@@ -62,9 +63,13 @@ export class ConfigComponent extends Component<ConfigComponentSave>{
         return Promise.resolve(undefined);
     }
 
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
     async exportConfig(args: string[], message: Message) {
         // Admin only
-        if (!isAdmin(message)) {
+        if (!isMessageAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
@@ -75,7 +80,7 @@ export class ConfigComponent extends Component<ConfigComponentSave>{
 
     async resetConfig(message: Message) {
         // Admin only
-        if (!isAdmin(message)) {
+        if (!isMessageAdmin(message)) {
             await message.channel.send(`This command requires administrator permissions.`);
             return;
         }
