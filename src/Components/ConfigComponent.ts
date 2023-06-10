@@ -6,12 +6,25 @@ import {
     MessageReaction,
     User,
     VoiceState,
-    Interaction
+    Interaction,
+    SlashCommandBuilder,
+    ChatInputCommandInteraction,
+    PermissionFlagsBits
 } from "discord.js";
 import { ComponentCommands } from "../Constants/ComponentCommands";
-import { isMessageAdmin, JSONStringifyReplacer } from "../HelperFunctions";
+import { isInteractionAdmin, isMessageAdmin, JSONStringifyReplacer } from "../HelperFunctions";
 import { ComponentNames } from "../Constants/ComponentNames";
 import { DateTime } from "luxon";
+
+const exportConfigCommand = new SlashCommandBuilder();
+exportConfigCommand.setName(ComponentCommands.EXPORT_CONFIG);
+exportConfigCommand.setDescription("Exports the guilds djmtbot config");
+exportConfigCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+const resetConfigCommand = new SlashCommandBuilder();
+resetConfigCommand.setName(ComponentCommands.RESET_CONFIG);
+resetConfigCommand.setDescription("Resets the guilds djmtbot config");
+resetConfigCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 interface ConfigComponentSave { }
 export class ConfigComponent extends Component<ConfigComponentSave>{
@@ -19,12 +32,7 @@ export class ConfigComponent extends Component<ConfigComponentSave>{
     name: ComponentNames = ComponentNames.CONFIG;
 
     async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
-        const command = args?.shift()?.toLowerCase() || '';
-        if (command === ComponentCommands.EXPORT_CONFIG) {
-            await this.exportConfig(args, message);
-        } else if (command === ComponentCommands.RESET_CONFIG) {
-            await this.resetConfig(message);
-        }
+        return Promise.resolve(undefined);
     }
 
     async getSaveData(): Promise<ConfigComponentSave> {
@@ -64,28 +72,35 @@ export class ConfigComponent extends Component<ConfigComponentSave>{
     }
 
     async onInteractionCreate(interaction: Interaction): Promise<void> {
-        return Promise.resolve(undefined);
+        if (!interaction.isChatInputCommand()) {
+            return;
+        }
+        if (interaction.commandName === ComponentCommands.EXPORT_CONFIG) {
+            await this.exportConfig(interaction);
+        } else if (interaction.commandName === ComponentCommands.RESET_CONFIG) {
+            await this.resetConfig(interaction);
+        }
     }
 
-    async exportConfig(args: string[], message: Message) {
+    async exportConfig(interaction: ChatInputCommandInteraction) {
         // Admin only
-        if (!isMessageAdmin(message)) {
-            await message.channel.send(`This command requires administrator permissions.`);
+        if (!isInteractionAdmin(interaction)) {
+            await interaction.reply({ content: `This command requires administrator permissions.`, ephemeral: true });
             return;
         }
         const jsonString = `${JSON.stringify({ [this.djmtGuild.guildId]: this.djmtGuild.getSaveData() }, JSONStringifyReplacer, '  ')}`;
         const attachment = new AttachmentBuilder(Buffer.from(jsonString), { name: `config_${this.djmtGuild.guildId}_${DateTime.local().toLocaleString(DateTime.DATETIME_FULL_WITH_SECONDS)}.txt` });
-        await message.channel.send({ files: [attachment] });
+        await interaction.reply({ files: [attachment], ephemeral: true });
     }
 
-    async resetConfig(message: Message) {
+    async resetConfig(interaction: ChatInputCommandInteraction) {
         // Admin only
-        if (!isMessageAdmin(message)) {
-            await message.channel.send(`This command requires administrator permissions.`);
+        if (!isInteractionAdmin(interaction)) {
+            await interaction.reply({ content: `This command requires administrator permissions.`, ephemeral: true });
             return;
         }
         await this.djmtGuild.resetJSON();
-        await message.channel.send(`Reset my guild config to default settings.`);
+        await interaction.reply({ content: `Reset my guild config to default settings.`, ephemeral: true });
     }
 
 }
