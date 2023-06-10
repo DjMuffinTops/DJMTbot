@@ -12,6 +12,7 @@ interface CheemsComponentSave { }
 export class CheemsComponent extends Component<CheemsComponentSave> {
 
     name: ComponentNames = ComponentNames.CHEEMS;
+    commands: SlashCommandBuilder[] = [cheemsCommand];
 
     async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
         return Promise.resolve(undefined);

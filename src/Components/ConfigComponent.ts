@@ -12,7 +12,7 @@ import {
     PermissionFlagsBits
 } from "discord.js";
 import { ComponentCommands } from "../Constants/ComponentCommands";
-import { isInteractionAdmin, isMessageAdmin, JSONStringifyReplacer } from "../HelperFunctions";
+import { isInteractionAdmin, JSONStringifyReplacer } from "../HelperFunctions";
 import { ComponentNames } from "../Constants/ComponentNames";
 import { DateTime } from "luxon";
 
@@ -30,6 +30,7 @@ interface ConfigComponentSave { }
 export class ConfigComponent extends Component<ConfigComponentSave>{
 
     name: ComponentNames = ComponentNames.CONFIG;
+    commands: SlashCommandBuilder[] = [exportConfigCommand, resetConfigCommand];
 
     async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
         return Promise.resolve(undefined);
