@@ -93,9 +93,6 @@ export class BruhComponent extends Component<BruhComponentSave> {
         if (!interaction.isChatInputCommand()) {
             return;
         }
-        if (!interaction.channel) {
-            return;
-        }
         if (interaction.commandName === ComponentCommands.BRUH) {
             await this.bruhCmd(interaction);
         } else if (interaction.commandName === ComponentCommands.SET_BRUH) {
