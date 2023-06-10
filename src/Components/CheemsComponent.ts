@@ -1,18 +1,20 @@
-import {Component} from "../Component";
-import {ComponentCommands} from "../Constants/ComponentCommands";
-import {GuildMember, Interaction, Message, MessageReaction, User, VoiceState} from "discord.js";
-import {ComponentNames} from "../Constants/ComponentNames";
+import { Component } from "../Component";
+import { ComponentCommands } from "../Constants/ComponentCommands";
+import { ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, SlashCommandBuilder, User, VoiceState } from "discord.js";
+import { ComponentNames } from "../Constants/ComponentNames";
 
-interface CheemsComponentSave {}
+const cheemsCommand = new SlashCommandBuilder();
+cheemsCommand.setName(ComponentCommands.CHEEMS);
+cheemsCommand.setDescription("Converts the user's message to cheems speak");
+cheemsCommand.addStringOption(input => input.setName("message").setDescription("The message to convert to cheems speak").setRequired(true));
+
+interface CheemsComponentSave { }
 export class CheemsComponent extends Component<CheemsComponentSave> {
 
     name: ComponentNames = ComponentNames.CHEEMS;
 
     async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
-        const command = args?.shift()?.toLowerCase() || '';
-        if (command === ComponentCommands.CHEEMS) {
-            await this.cheemsCmd(args, message);
-        }
+        return Promise.resolve(undefined);
     }
 
     async getSaveData(): Promise<CheemsComponentSave> {
@@ -52,7 +54,12 @@ export class CheemsComponent extends Component<CheemsComponentSave> {
     }
 
     async onInteractionCreate(interaction: Interaction): Promise<void> {
-        return Promise.resolve(undefined);
+        if (!interaction.isChatInputCommand()) {
+            return;
+        }
+        if (interaction.commandName === ComponentCommands.CHEEMS) {
+            await this.cheemsCmd(interaction.options.getString("message", true), interaction);
+        }
     }
 
     insert(str: string, index: number, insert: string) {
@@ -63,7 +70,7 @@ export class CheemsComponent extends Component<CheemsComponentSave> {
         }
     }
 
-    async cheemsCmd(args: string[], message: Message) {
+    async cheemsCmd(message: string, interaction: ChatInputCommandInteraction) {
         const cheemsChars = ['a', 'e', 'i', 'o', 'u', 'r'];
         const CHEEMS_M = 'm';
         const ADDTIONAL_CHANCE = .15;
@@ -71,9 +78,9 @@ export class CheemsComponent extends Component<CheemsComponentSave> {
         let result = "";
         let indices: number[] = [];
         let index = 0;
-
+        const words = message.split(" ");
         // Find all indices where a vowel exists
-        args.forEach((word) => {
+        for (const word of words) {
             for (let i = 0; i < word.length; i++) {
                 const character = word.charAt(i);
                 let characterLower = character.toLowerCase(); // output text will be lowercase
@@ -117,6 +124,6 @@ export class CheemsComponent extends Component<CheemsComponentSave> {
             }
         });
         // And we get the bot to say the thing:
-        await message.channel.send(result.length > 0 ? result : "Given message was empty, try typing something this time.");
+        await interaction.reply({ content: result.length > 0 ? result : "Given message was empty, try typing something this time." });
     }
 }
