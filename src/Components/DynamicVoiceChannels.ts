@@ -1,18 +1,33 @@
 import { Component } from "../Component";
 import {
+    ChatInputCommandInteraction,
     Channel,
     ChannelType,
     GuildMember,
     Interaction,
     Message,
     MessageReaction,
+    SlashCommandBuilder,
     User,
     VoiceChannel,
-    VoiceState
+    VoiceState,
+    PermissionFlagsBits
 } from "discord.js";
 import { ComponentNames } from "../Constants/ComponentNames";
 import { ComponentCommands } from "../Constants/ComponentCommands";
-import { isMessageAdmin } from "../HelperFunctions";
+
+const printDVCCommand = new SlashCommandBuilder();
+printDVCCommand.setName(ComponentCommands.PRINT_DYNAMIC_VC);
+printDVCCommand.setDescription("Prints bruh information");
+printDVCCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+const setDVCCommmand = new SlashCommandBuilder();
+setDVCCommmand.setName(ComponentCommands.SET_DYNAMIC_VC);
+setDVCCommmand.setDescription("Sets a dynamic vc channel");
+setDVCCommmand.addChannelOption(input => input.setName("voicechannel").setDescription("The channel to add or remove from the dynamic vc channels list").addChannelTypes(ChannelType.GuildVoice).setRequired(true));
+setDVCCommmand.addIntegerOption(input => input.setName("maxchildren").setDescription("The max number of child vcs allowed to be created").setRequired(true));
+setDVCCommmand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
 
 interface DynamicVoiceChannelsSave {
     markedRootVoiceChannelIds: RootDynamicVoiceChannelSave[]
@@ -50,6 +65,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
     private readonly GUILD_MAXIMUM_GENERATED_CHANNELS = 7;
     private readonly MINIMUM_NUMBER_OF_OCCUPANTS = 4;
     creatingChannel: Map<string, boolean> = new Map();
+    commands: SlashCommandBuilder[] = [printDVCCommand, setDVCCommmand];
 
     async getSaveData(): Promise<DynamicVoiceChannelsSave> {
         return {
@@ -149,11 +165,6 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
     }
 
     async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
-        const command = args?.shift()?.toLowerCase() || '';
-        // Any interactive commands should be defined in CompoentCommands.ts
-        if (command === ComponentCommands.SET_DYNAMIC_VC) {
-            await this.setRootDynamicVoiceChannel(args, message);
-        }
         return Promise.resolve(undefined);
     }
 
@@ -166,6 +177,17 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
     }
 
     async onInteractionCreate(interaction: Interaction): Promise<void> {
+        if (!interaction.isChatInputCommand()) {
+            return;
+        }
+        if (interaction.commandName === ComponentCommands.SET_DYNAMIC_VC) {
+            await this.setRootDynamicVoiceChannel(
+                interaction.options.getChannel<ChannelType.GuildVoice>("voicechannel", true),
+                interaction.options.getInteger("maxchildren", true),
+                interaction);
+        } else if (interaction.commandName === ComponentCommands.PRINT_DYNAMIC_VC) {
+            this.printDyanamicVoiceChannels(interaction);
+        }
         return Promise.resolve(undefined);
     }
 
@@ -213,53 +235,23 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
     /**
      * Command to add or remove a voice channel to be marked as a root dynamic voice channel
      * @param args
-     * @param message
+     * @param interaction
      */
-    async setRootDynamicVoiceChannel(args: string[], message: Message) {
-        // Admin only
-        if (!isMessageAdmin(message)) {
-            await message.channel.send(`This command requires administrator permissions.`);
-            return;
-        }
+    async setRootDynamicVoiceChannel(voiceChannel: VoiceChannel, maxChildren: number, interaction: ChatInputCommandInteraction) {
+        const res = await this.addOrRemoveRootDynamicVoiceChannel(voiceChannel, maxChildren);
+        await interaction.reply({ content: res, ephemeral: true });
+    }
 
-        if (args.length === 0) {
-            const rootChannels = this.markedVoiceChannels.filter(markedVC => markedVC.root);
-            if (rootChannels.length > 0) {
-                let channelString = "";
-                rootChannels.forEach((channel: DynamicVoiceChannel) => {
-                    channelString += `${channel.toString()} => Max Children: ${channel.rootsMaxChildren}\n`;
-                });
-                await message.channel.send(`Dynamic Voice Channels:\n${channelString}`);
-            } else {
-                await message.channel.send(`No Dynamic Voice Channels have been set!`);
-            }
-        } else if (args.length === 2) {
-            const voiceChannelId = args[0]; // Voice channel must be raw due to lack of mention
-            const maxChildrenStr = args[1];
-            let maxChildren: number;
-            try {
-                maxChildren = parseInt(maxChildrenStr);
-            } catch (e) {
-                console.error(e);
-                await message.channel.send(`The maximum number of children must be an integer number. Given ${maxChildrenStr}`);
-                return;
-            }
-            // Verify the channel exists
-            let channel = this.djmtGuild.getGuildChannel(voiceChannelId);
-            if (!channel) {
-                await message.channel.send("The given channel is invalid!");
-                return;
-            }
-            // Verify it is a voice channel
-            if (channel.type !== ChannelType.GuildVoice) {
-                await message.channel.send("The given channel is not a voice channel!");
-                return;
-            }
-            let voiceChannel = channel as VoiceChannel;
-            const res = await this.addOrRemoveRootDynamicVoiceChannel(voiceChannel, maxChildren);
-            await message.channel.send(res);
+    private async printDyanamicVoiceChannels(interaction: ChatInputCommandInteraction) {
+        const rootChannels = this.markedVoiceChannels.filter(markedVC => markedVC.root);
+        if (rootChannels.length > 0) {
+            let channelString = "";
+            rootChannels.forEach((channel: DynamicVoiceChannel) => {
+                channelString += `${channel.toString()} => Max Children: ${channel.rootsMaxChildren}\n`;
+            });
+            await interaction.reply({ content: `Dynamic Voice Channels:\n${channelString}`, ephemeral: true });
         } else {
-            await message.channel.send(`Requires exactly two arguments, a voice channel id, and a integer for the maximum amount of child channels. You gave ${args}`);
+            await interaction.reply({ content: `No Dynamic Voice Channels have been set!`, ephemeral: true });
         }
     }
 
@@ -275,7 +267,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
         } else {
             if (maxChildren) {
                 await this.addRootDynamicVoiceChannel(voiceChannel, maxChildren);
-                return `Added ${voiceChannel.toString()}${voiceChannel} to the VC Channels list!`;
+                return `Added ${voiceChannel.toString()} to the VC Channels list!`;
             } else {
                 return `Adding channel requires an integer for the maximum amount of child channels`;
             }

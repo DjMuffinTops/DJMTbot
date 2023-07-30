@@ -27,6 +27,7 @@ export enum ComponentCommands {
     SET_MEDIA_CHANNEL= "setmc",
     GET_MEDIA_CHANNEL= "getmc",
     SET_DYNAMIC_VC= "setdynamicvc",
+    PRINT_DYNAMIC_VC= "printdynamicvc",
     SET_AUTO_THREAD= "setautothread",
     PRINT_AUTO_THREAD= "printautothread"
 }
