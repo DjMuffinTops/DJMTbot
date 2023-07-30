@@ -28,6 +28,7 @@ setDotwCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 const printDotwCommand = new SlashCommandBuilder();
 printDotwCommand.setName(ComponentCommands.PRINT_DOTW);
 printDotwCommand.setDescription("Prints the day of the week channel");
+printDotwCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 // Declare data you want to save in JSON here
 interface DayOfTheWeekComponentSave {
