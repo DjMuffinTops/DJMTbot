@@ -4,6 +4,7 @@ export enum ComponentCommands {
     SET_AUTO_REACT = "setautoreact",
     SET_BRUH = "setbruh",
     SET_DOTW = "setdotw",
+    PRINT_DOTW = "printdotw",
     SET_STAR = "setstar",
     SET_VC_PAIRS = "setvcpairs",
     SET_REACT_PAIRS = "setreactpairs",
