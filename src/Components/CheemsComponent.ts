@@ -97,7 +97,7 @@ export class CheemsComponent extends Component<CheemsComponentSave> {
             }
             result += ' ';
             index++;
-        });
+        }
 
         // Add the minimum required m's to our result string
         for (let charAdditions = 0; charAdditions < minimumRequired; charAdditions++) {
