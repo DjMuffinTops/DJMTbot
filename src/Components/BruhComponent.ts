@@ -196,7 +196,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
                     // console.log(msgContent);
                     // console.log(matches);
                     // console.log(`size: ${messagesArray.length} | index: ${randomIndex}`);
-                    await message.channel.send({ content: `\ ${msgContent}`, files: attachmentList });
+                    await message.channel.send({ content: `${randomMsg.url}\n${msgContent}`, files: attachmentList });
                 } else {
                     console.error('NO RANDOM MSG');
                     console.log(`size: ${this.messageCache.length} | index: ${randomIndex}`);
