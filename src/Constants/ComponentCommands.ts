@@ -21,6 +21,7 @@ export enum ComponentCommands {
     PING  = "ping",
     SAY = "say",
     SET_PNGRC = "setpngrc",
+    PRINT_PNGRC = "printpngrc",
     SET_BANNER= "setbanner",
     ROTATE_BANNER= "rotatebanner",
     PRINT_BANNER= "printbanner",
