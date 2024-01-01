@@ -1,8 +1,12 @@
-import {Channel, GuildMember, Interaction, Message, MessageReaction, User, VoiceState} from "discord.js";
+import {Channel, ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, PermissionsBitField, SlashCommandBuilder, User, VoiceState} from "discord.js";
 import {Component} from "../Component";
 import {isMessageAdmin} from "../HelperFunctions";
 import {ComponentCommands} from "../Constants/ComponentCommands";
 import {ComponentNames} from "../Constants/ComponentNames";
+
+const helpCommand = new SlashCommandBuilder();
+helpCommand.setName(ComponentCommands.HELP);
+helpCommand.setDescription("Prints the help menu");
 
 interface HelpComponentSave {}
 export class HelpComponent extends Component<HelpComponentSave> {
@@ -10,10 +14,7 @@ export class HelpComponent extends Component<HelpComponentSave> {
     name: ComponentNames = ComponentNames.HELP;
 
     async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
-        const command = args?.shift()?.toLowerCase() || '';
-        if (command === ComponentCommands.HELP) {
-            await this.helpCmd(args, message);
-        }
+        return Promise.resolve(undefined);
     }
 
     async getSaveData(): Promise<HelpComponentSave> {
@@ -53,10 +54,16 @@ export class HelpComponent extends Component<HelpComponentSave> {
     }
 
     async onInteractionCreate(interaction: Interaction): Promise<void> {
+        if (!interaction.isChatInputCommand()) {
+            return;
+        }
+        if (interaction.commandName === ComponentCommands.HELP) {
+            await this.helpCmd(interaction);
+        }
         return Promise.resolve(undefined);
     }
 
-    async helpCmd(args: string[], message: Message) {
+    async helpCmd(interaction: ChatInputCommandInteraction) {
         let prefix = this.djmtGuild.prefix;
         let helpCommands =
             `#FUN
@@ -84,11 +91,11 @@ ${prefix}setbanner [ImageUrl] ->  Adds an image to the banner images queue. Must
 ${prefix}rotatebanner ->  Rotates the server banner to the next image in the queue \n
 ${prefix}setpngrc [TextChannel Mention] [width] [height] ->  Marks/unmarks the mentioned channel for PNG Resolution verification. Expects an integer width and integer height in pixels. Any images that arent pngs, or don't match the dimensions in the marked channel are deleted. \n
 ${prefix}sethours [VoiceChannelId] [TextChannelId] ->  Manually sets the hour count for a given vc text channel pair.\n\n`;
-
-        if (isMessageAdmin(message)) {
-            await message.channel.send(`\`\`\`css\n${helpAdminCommands}\`\`\``);
-            await message.channel.send(`\`\`\`css\n${helpAdminCommands2}\`\`\``);
+        // If the requester is an admin, print the admin commands
+        if ((interaction.member as GuildMember).permissions.has(PermissionsBitField.Flags.Administrator)) {
+            await interaction.reply(`\`\`\`css\n${helpAdminCommands}\`\`\``);
+            await interaction.reply(`\`\`\`css\n${helpAdminCommands2}\`\`\``);
         }
-        await message.channel.send(`\`\`\`css\n${helpCommands}\`\`\``);
+        await interaction.reply(`\`\`\`css\n${helpCommands}\`\`\``);
     }
 }
