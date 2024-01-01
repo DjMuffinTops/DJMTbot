@@ -22,7 +22,7 @@ import probe, { ProbeResult } from 'probe-image-size';
 const setPNGRCCommand = new SlashCommandBuilder();
 setPNGRCCommand.setName(ComponentCommands.SET_PNGRC);
 setPNGRCCommand.setDescription("Sets the PNG Resolution Checking Channel and dimensions to check for");
-setPNGRCCommand.addStringOption(input => input.setName("channel").setDescription("The channel to add or remove from the PNG Resolution Checking Channels list").setRequired(true));
+setPNGRCCommand.addChannelOption(input => input.setName("channel").setDescription("The channel to add or remove from the PNG Resolution Checking Channels list").addChannelTypes(ChannelType.GuildText).setRequired(true));
 setPNGRCCommand.addIntegerOption(input => input.setName("width").setDescription("The width to check for").setRequired(true));
 setPNGRCCommand.addIntegerOption(input => input.setName("height").setDescription("The height to check for").setRequired(true));
 setPNGRCCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
