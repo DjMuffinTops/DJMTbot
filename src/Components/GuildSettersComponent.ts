@@ -1,11 +1,27 @@
-import {Component} from "../Component";
-import {GuildMember, Interaction, Message, MessageReaction, User, VoiceState} from "discord.js";
-import {ComponentNames} from "../Constants/ComponentNames";
-import {isMessageAdmin} from "../HelperFunctions";
-import {ComponentCommands} from "../Constants/ComponentCommands";
+import { Component } from "../Component";
+import { ChannelType, ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, PermissionFlagsBits, SlashCommandBuilder, TextBasedChannel, User, VoiceState } from "discord.js";
+import { ComponentNames } from "../Constants/ComponentNames";
+import { isMessageAdmin } from "../HelperFunctions";
+import { ComponentCommands } from "../Constants/ComponentCommands";
 
+const setDebugCommand = new SlashCommandBuilder();
+setDebugCommand.setName(ComponentCommands.SET_DEBUG_CHANNEL);
+setDebugCommand.setDescription("Sets the debug channel");
+setDebugCommand.addChannelOption(input => input.setName("channel").setDescription("The channel to add or remove from the debug channels list").addChannelTypes(ChannelType.GuildText).setRequired(true));
+setDebugCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+const debugModeCommand = new SlashCommandBuilder();
+debugModeCommand.setName(ComponentCommands.DEBUG_MODE);
+debugModeCommand.setDescription("Toggles debug mode");
+debugModeCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+const setPrefixCommand = new SlashCommandBuilder();
+setPrefixCommand.setName(ComponentCommands.SET_PREFIX);
+setPrefixCommand.setDescription("Sets the bot prefix");
+setPrefixCommand.addStringOption(input => input.setName("prefix").setDescription("The prefix to set").setRequired(true));
+setPrefixCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 // Declare data you want to save in JSON here
-interface DebugComponentSave {}
+interface DebugComponentSave { }
 
 export class GuildSettersComponent extends Component<DebugComponentSave> {
 
@@ -44,18 +60,22 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
     }
 
     async onInteractionCreate(interaction: Interaction): Promise<void> {
+        if (!interaction.isChatInputCommand()) {
+            return;
+        }
+        if (interaction.commandName === ComponentCommands.SET_DEBUG_CHANNEL) {
+            await this.setDebugChannel(interaction.options.getChannel<ChannelType.GuildText>("channel", true), interaction);
+        } else if (interaction.commandName === ComponentCommands.DEBUG_MODE) {
+            await this.debugModeCmd(interaction);
+        } else if (interaction.commandName === ComponentCommands.SET_PREFIX) {
+            await this.setPrefixCmd(interaction.options.getString("prefix", true), interaction);
+        }
         return Promise.resolve(undefined);
     }
 
     async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
-        if (command === ComponentCommands.SET_DEBUG_CHANNEL) {
-            await this.setDebugChannel(args, message);
-        } else if (command === ComponentCommands.DEBUG_MODE) {
-            await this.debugModeCmd(args, message);
-        } else if (command === ComponentCommands.SET_PREFIX) {
-            await this.setPrefixCmd(args, message);
-        }
+
         return Promise.resolve(undefined);
     }
 
@@ -64,48 +84,26 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
         return Promise.resolve(undefined);
     }
 
-    async debugModeCmd(args: string[], message: Message) {
-        // Admin only
-        if (!isMessageAdmin(message)) {
-            await message.channel.send(`This command requires administrator permissions.`);
-            return;
-        }
+    async debugModeCmd(interaction: ChatInputCommandInteraction) {
         this.djmtGuild.debugMode = !this.djmtGuild.debugMode;
         // await updateConfig(gConfig, message);
-        await message.channel.send(`Dev Mode ${this.djmtGuild.debugMode ? "enabled" : "disabled" }.`);
+        await interaction.reply(`Dev Mode ${this.djmtGuild.debugMode ? "enabled" : "disabled"}.`);
     }
 
-    async setDebugChannel(args: string[], message: Message) {
-        // Admin only
-        if (!isMessageAdmin(message)) {
-            await message.channel.send(`This command requires administrator permissions.`);
-            return;
-        }
-        if (this.djmtGuild.debugChannelId === message.channel.id) {
+    async setDebugChannel(debugChannel: TextBasedChannel, interaction: ChatInputCommandInteraction) {
+        if (this.djmtGuild.debugChannelId === debugChannel.id) {
             this.djmtGuild.debugChannelId = "";
-            await message.channel.send(`${message.channel.toString()} is no longer set as the debugChannel`);
+            await interaction.reply(`${debugChannel.toString()} is no longer set as the debugChannel`);
         } else {
-            this.djmtGuild.debugChannelId = message.channel.id;
-            await message.channel.send(`${message.channel.toString()} is now set as the debugChannel channel`);
+            this.djmtGuild.debugChannelId = debugChannel.id;
+            await interaction.reply(`${debugChannel.toString()} is now set as the debugChannel channel`);
         }
     }
 
-    async setPrefixCmd(args: string[], message: Message) {
-        // Admin only
-        if (!isMessageAdmin(message)) {
-            await message.channel.send(`This command requires administrator permissions.`);
-            return;
-        }
+    async setPrefixCmd(newPrefix: string, interaction: ChatInputCommandInteraction) {
         const defaultPrefix = "djmt!";
-        if (args.length === 0) {
-            this.djmtGuild.prefix = defaultPrefix as string;
-            await message.channel.send(`Set my prefix to \`\`${defaultPrefix}\`\``);
-        } else if (args.length === 1) {
-            this.djmtGuild.prefix = args[0] ? args[0] : defaultPrefix;
-            await message.channel.send(`Set my prefix to \`\`${this.djmtGuild.prefix}\`\``);
-        } else {
-            await message.channel.send(`Please enter a single prefix.`);
-        }
+        this.djmtGuild.prefix = newPrefix ?? defaultPrefix;
+        await interaction.reply(`Set my prefix to \`\`${this.djmtGuild.prefix}\`\``);
     }
 
 }
