@@ -1,7 +1,9 @@
-import {GuildMember, Interaction, Message, MessageReaction, User, VoiceState} from "discord.js";
+import {ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, User, VoiceState} from "discord.js";
 import {ComponentCommands} from "../Constants/ComponentCommands";
 import {Component} from "../Component";
 import {ComponentNames} from "../Constants/ComponentNames";
+
+const pingCommand = ComponentCommands.PING;
 
 interface PingComponentSave {}
 export class PingComponent extends Component<PingComponentSave>{
@@ -9,10 +11,7 @@ export class PingComponent extends Component<PingComponentSave>{
     name: ComponentNames = ComponentNames.PING;
 
     async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
-        const command = args?.shift()?.toLowerCase() || '';
-        if (command === ComponentCommands.PING) {
-            await this.pingCmd(args, message);
-        }
+        return Promise.resolve(undefined);
     }
 
     async getSaveData(): Promise<PingComponentSave> {
@@ -52,14 +51,20 @@ export class PingComponent extends Component<PingComponentSave>{
     }
 
     async onInteractionCreate(interaction: Interaction): Promise<void> {
+        if (!interaction.isChatInputCommand()) {
+            return;
+        }
+        if (interaction.commandName === pingCommand) {
+            await this.pingCmd(interaction);
+        }
         return Promise.resolve(undefined);
     }
 
-    async pingCmd(args: string[], message: Message) {
+    async pingCmd(interaction: ChatInputCommandInteraction) {
         // Calculates ping between sending a message and editing it, giving a nice round-trip latency.
         // The second ping is an average latency between the bot and the websocket server (one-way, not round-trip)
-        const m = await message.channel.send("Ping?");
-        await m.edit(`Pong! Latency is ${m.createdTimestamp - message.createdTimestamp}ms. API Latency is ${Math.round(this.djmtGuild.guild?.client.ws.ping ?? -1)}ms`);
+        const m = await interaction.reply("Ping?");
+        await m.edit(`Pong! Latency is ${m.createdTimestamp - interaction.createdTimestamp}ms. API Latency is ${Math.round(this.djmtGuild.guild?.client.ws.ping ?? -1)}ms`);
     }
 
 }
