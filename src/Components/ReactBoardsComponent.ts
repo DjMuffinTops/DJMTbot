@@ -124,14 +124,6 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
     }
 
     async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
-        const command = args?.shift()?.toLowerCase() || '';
-        if (command === ComponentCommands.SET_AUTO_REACT) {
-            await this.setAutoReactCmd(args, message);
-        } else if (command === ComponentCommands.SET_REACT_PAIRS) {
-            await this.setReactPairsCmd(args, message);
-        } else if (command === ComponentCommands.SET_STAR) {
-            await this.setStarCmd(args, message);
-        }
         return Promise.resolve(undefined);
     }
 

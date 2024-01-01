@@ -1,8 +1,13 @@
 import {Component} from "../Component";
-import {GuildMember, Interaction, Message, MessageReaction, User, VoiceState} from "discord.js";
+import {ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, SlashCommandBuilder, User, VoiceState} from "discord.js";
 import {ComponentCommands} from "../Constants/ComponentCommands";
-import {isMessageAdmin} from "../HelperFunctions";
+import {isInteractionAdmin, isMessageAdmin} from "../HelperFunctions";
 import {ComponentNames} from "../Constants/ComponentNames";
+
+const sayCommand = new SlashCommandBuilder();
+sayCommand.setName(ComponentCommands.SAY);
+sayCommand.setDescription("Makes the bot say something");
+sayCommand.addStringOption(input => input.setName("message").setDescription("The message to say").setRequired(true));
 
 interface SayComponentSave {}
 export class SayComponent extends Component<SayComponentSave> {
@@ -10,15 +15,13 @@ export class SayComponent extends Component<SayComponentSave> {
     name: ComponentNames = ComponentNames.SAY;
 
     async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
-        const command = args?.shift()?.toLowerCase() || '';
-        if (command === ComponentCommands.SAY) {
-            await this.sayCmd(args, message);
-        }
+        return Promise.resolve(undefined);
     }
 
-    async sayCmd(args: string[], message: Message) {
-        const sayMessage:string  = args.join(" ");
-        const userId = `<@${message.author.id}>`;
+    async sayCmd(sayMessage: string, interaction: ChatInputCommandInteraction) {
+        // Split the message by spaces
+        const args = sayMessage.split(" ");
+        const userId = `<@${interaction.member?.user.id}>`;
         const deniedMsgs = [
             `Sorry ${userId}, there\'s a 5% chance i\'ll actually say that.`,
             'Reh',
@@ -30,16 +33,15 @@ export class SayComponent extends Component<SayComponentSave> {
             `${sayMessage}???????`,
             `${args.reverse().join(" ")}`,
             `${sayMessage.toUpperCase().substring(0, Math.round(sayMessage.length / 2))}-`];
-        if (!isMessageAdmin(message) && Math.random() < .95) {
-            await message.channel.send(deniedMsgs[Math.round(Math.random() * deniedMsgs.length)]);
+        if (!isInteractionAdmin(interaction) && Math.random() < .95) {
+            await interaction.reply(deniedMsgs[Math.round(Math.random() * deniedMsgs.length)]);
             return;
         }
         // makes the bot say something and delete the message. As an example, it's open to anyone to use.
         // To get the "message" itself we join the `args` back into a string with spaces:
 
         // And we get the bot to say the thing:
-        await message.channel.send(sayMessage.length ? sayMessage : `You didn't say anything! >:(`);
-        await message.delete();
+        await interaction.reply(sayMessage.length ? sayMessage : `You didn't say anything! >:(`);
     }
 
     async getSaveData(): Promise<SayComponentSave> {
@@ -79,6 +81,11 @@ export class SayComponent extends Component<SayComponentSave> {
     }
     
     async onInteractionCreate(interaction: Interaction): Promise<void> {
-        return Promise.resolve(undefined);
+        if (!interaction.isChatInputCommand()) {
+            return;
+        }
+        if (interaction.commandName === ComponentCommands.SAY) {
+            await this.sayCmd(interaction.options.getString("message", true), interaction);
+        }
     }
 }

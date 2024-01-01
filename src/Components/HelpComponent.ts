@@ -1,6 +1,6 @@
 import {Channel, ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, PermissionsBitField, SlashCommandBuilder, User, VoiceState} from "discord.js";
 import {Component} from "../Component";
-import {isMessageAdmin} from "../HelperFunctions";
+import {isInteractionAdmin, isMessageAdmin} from "../HelperFunctions";
 import {ComponentCommands} from "../Constants/ComponentCommands";
 import {ComponentNames} from "../Constants/ComponentNames";
 
@@ -93,10 +93,11 @@ ${prefix}rotatebanner ->  Rotates the server banner to the next image in the que
 ${prefix}setpngrc [TextChannel Mention] [width] [height] ->  Marks/unmarks the mentioned channel for PNG Resolution verification. Expects an integer width and integer height in pixels. Any images that arent pngs, or don't match the dimensions in the marked channel are deleted. \n
 ${prefix}sethours [VoiceChannelId] [TextChannelId] ->  Manually sets the hour count for a given vc text channel pair.\n\n`;
         // If the requester is an admin, print the admin commands
-        if ((interaction.member as GuildMember).permissions.has(PermissionsBitField.Flags.Administrator)) {
+        if (isInteractionAdmin(interaction)) {
             await interaction.reply(`\`\`\`css\n${helpAdminCommands}\`\`\``);
             await interaction.reply(`\`\`\`css\n${helpAdminCommands2}\`\`\``);
         }
         await interaction.reply(`\`\`\`css\n${helpCommands}\`\`\``);
     }
 }
+
