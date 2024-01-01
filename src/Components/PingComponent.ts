@@ -1,14 +1,17 @@
-import {ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, User, VoiceState} from "discord.js";
+import {ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, SlashCommandBuilder, User, VoiceState} from "discord.js";
 import {ComponentCommands} from "../Constants/ComponentCommands";
 import {Component} from "../Component";
 import {ComponentNames} from "../Constants/ComponentNames";
 
-const pingCommand = ComponentCommands.PING;
+const pingCommand = new SlashCommandBuilder();
+pingCommand.setName(ComponentCommands.PING);
+pingCommand.setDescription("Pings the bot")
 
 interface PingComponentSave {}
 export class PingComponent extends Component<PingComponentSave>{
 
     name: ComponentNames = ComponentNames.PING;
+    commands: SlashCommandBuilder[] = [pingCommand];
 
     async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
         return Promise.resolve(undefined);

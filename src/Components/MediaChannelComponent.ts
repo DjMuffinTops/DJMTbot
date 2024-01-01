@@ -32,6 +32,7 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
     name: ComponentNames = ComponentNames.MEDIA_CHANNEL;
     channelsArray: TextChannel[] = [];
     linkRegex: RegExp = /(https?:\/\/[^\s]+)/; // not great but should work for all but weird edge cases
+    commands: SlashCommandBuilder[] = [setMediaChannelCommand, getMediaChannelCommand];
     // may move to constants in future if needed?
 
     async getSaveData(): Promise<MediaComponentSave> {

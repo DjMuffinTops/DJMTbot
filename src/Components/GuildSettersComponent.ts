@@ -26,6 +26,7 @@ interface DebugComponentSave { }
 export class GuildSettersComponent extends Component<DebugComponentSave> {
 
     name: ComponentNames = ComponentNames.DEBUG;
+    commands: SlashCommandBuilder[] = [setDebugCommand, debugModeCommand, setPrefixCommand];
 
     async getSaveData(): Promise<DebugComponentSave> {
         return {};
