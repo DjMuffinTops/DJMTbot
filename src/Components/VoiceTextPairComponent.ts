@@ -1,10 +1,11 @@
 import { Component } from "../Component";
 import {
     ChannelType,
+    ChatInputCommandInteraction,
     GuildMember,
     Interaction,
     Message,
-    MessageReaction, TextChannel,
+    MessageReaction, PermissionFlagsBits, SlashCommandBuilder, TextChannel,
     User,
     VoiceChannel,
     VoiceState
@@ -12,6 +13,13 @@ import {
 import { ComponentNames } from "../Constants/ComponentNames";
 import { isMessageAdmin } from "../HelperFunctions";
 import { ComponentCommands } from "../Constants/ComponentCommands";
+
+const setVcPairCommand = new SlashCommandBuilder();
+setVcPairCommand.setName(ComponentCommands.SET_VC_PAIRS);
+setVcPairCommand.setDescription("Sets the voice and text channel pair");
+setVcPairCommand.addChannelOption(input => input.setName("voicechannel").setDescription("The voice channel").addChannelTypes(ChannelType.GuildVoice).setRequired(true));
+setVcPairCommand.addChannelOption(input => input.setName("textchannel").setDescription("The text channel").addChannelTypes(ChannelType.GuildText).setRequired(true));
+setVcPairCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 // Declare data you want to save in JSON here
 interface VoiceTextPairComponentSave {
@@ -27,6 +35,7 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
 
     name: ComponentNames = ComponentNames.VOICE_TEXT_PAIR;
     voiceTextPairs: VoiceTextPair[] = [];
+    commands: SlashCommandBuilder[] = [setVcPairCommand];
 
     async getSaveData(): Promise<VoiceTextPairComponentSave> {
         return {
@@ -66,10 +75,6 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
     }
 
     async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
-        const command = args?.shift()?.toLowerCase() || '';
-        if (command === ComponentCommands.SET_VC_PAIRS) {
-            await this.stringToVoiceTextPair(args, message);
-        }
         return Promise.resolve(undefined);
     }
 
@@ -78,7 +83,12 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
     }
 
     async onInteractionCreate(interaction: Interaction): Promise<void> {
-        return Promise.resolve(undefined);
+        if (!interaction.isChatInputCommand()) {
+            return;
+        }
+        if (interaction.commandName === ComponentCommands.SET_VC_PAIRS) {
+            await this.handleVoiceTextPair(interaction.options.getChannel<ChannelType.GuildVoice>("voicechannel", true), interaction.options.getChannel<ChannelType.GuildText>("textchannel", true), interaction);
+        }
     }
 
     async setVoiceTextPair(voiceChannel: VoiceChannel, textChannel: TextChannel): Promise<boolean> {
@@ -96,47 +106,25 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
         return true;
     }
 
-    async stringToVoiceTextPair(args: string[], message: Message) {
-        // Admin only
-        if (!isMessageAdmin(message)) {
-            await message.channel.send(`This command requires administrator permissions.`);
-            return;
-        }
-
-        if (args.length === 0) {
-            let channelString = "";
-            if (this.voiceTextPairs.length > 0) {
-                this.voiceTextPairs.forEach((pair: VoiceTextPair) => {
-                    channelString += ` <#${pair.voiceChannel.id}> <#${pair.textChannel.id}>\n`;
-                });
-                await message.channel.send(`VC Channels: ${channelString}`);
-            } else {
-                await message.channel.send(`No VC Channel Pairs have been set!`);
-            }
-        } else if (args.length === 2) {
-            const voiceChannelId = args[0]; // Voice channel must be raw due to lack of mention
-            const rawTextChannelId = args[1];
-            let textChannelId = rawTextChannelId.substring(2, rawTextChannelId.indexOf('>'));
-            let foundVoiceChannel = this.djmtGuild.getGuildChannel(voiceChannelId);
-            let foundTextChannel = this.djmtGuild.getGuildChannel(textChannelId);
-            if (!foundTextChannel || !foundVoiceChannel) {
-                await message.channel.send("The given channel is invalid! Make sure the given channels are the correct types (use help command for more info)");
-                return;
-            }
-            if (foundVoiceChannel.type !== ChannelType.GuildVoice && foundTextChannel.type !== ChannelType.GuildText) {
-                await message.channel.send(`The given channels are not the correct types`);
-                return;
-            }
-            const success = await this.setVoiceTextPair(foundVoiceChannel as VoiceChannel, foundTextChannel as TextChannel);
-            if (success) {
-                await message.channel.send(`Added ${[foundVoiceChannel.toString(), foundTextChannel.toString()]} to the VC Channels list!`);
-            } else {
-                await message.channel.send(`Removed ${[foundVoiceChannel.toString(), foundTextChannel.toString()]} from VC Channels list!`);
-            }
+    async printVoiceTextPairs(interaction: ChatInputCommandInteraction) {
+        let channelString = "";
+        if (this.voiceTextPairs.length > 0) {
+            this.voiceTextPairs.forEach((pair: VoiceTextPair) => {
+                channelString += ` <#${pair.voiceChannel.id}> <#${pair.textChannel.id}>\n`;
+            });
+            await interaction.reply(`VC Channels: ${channelString}`);
         } else {
-            await message.channel.send(`Requires exactly two arguments, a voice channel id, and a text channel mention. You gave ${args}`);
-
+            await interaction.reply(`No VC Channel Pairs have been set!`);
         }
+    }
+    async handleVoiceTextPair(voiceChannel: VoiceChannel, textChannel: TextChannel, interaction: ChatInputCommandInteraction) {
+            const success = await this.setVoiceTextPair(voiceChannel, textChannel);
+            if (success) {
+                await interaction.reply(`Added ${[voiceChannel.toString(), textChannel.toString()]} to the VC Channels list!`);
+            } else {
+                await interaction.reply(`Removed ${[voiceChannel.toString(), textChannel.toString()]} from VC Channels list!`);
+            }
+
     }
 
 }
