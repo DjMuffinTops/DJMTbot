@@ -160,9 +160,9 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
                     msg += `${rawEmojiId} => <#${channelId}>\n`;
                 });
             });
-            await interaction.reply(`Auto React Channels:\n${msg}`);
+            await interaction.reply({content: `Auto React Channels:\n${msg}`, ephemeral: true});
         } else {
-            await interaction.reply(`No Auto React Channels have been set!`);
+            await interaction.reply({content: `No Auto React Channels have been set!`, ephemeral: true});
         }
     }
 
@@ -171,13 +171,13 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
         let foundEmote = undefined;
         foundEmote = DJMTbot.getInstance().client.emojis.cache.get(emoteId);
         if (!foundEmote) {
-            await interaction.reply(`The given emote could not be found, make sure this bot in is the server the emote is from!`);
+            await interaction.reply({content: `The given emote could not be found, make sure this bot in is the server the emote is from!`, ephemeral: true});
             return;
         }
         let channelId = channel.id
         const foundChannel = this.djmtGuild.getGuildChannel(channelId);
         if (!foundChannel) {
-            await interaction.reply("The given channel is invalid!");
+            await interaction.reply({content: "The given channel is invalid!", ephemeral: true});
             return;
         }
         if (this.autoReactMap.has(rawEmote)) {
@@ -190,16 +190,16 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
                     this.autoReactMap.delete(rawEmote)
                 }
                 await this.djmtGuild.saveJSON();
-                await interaction.reply(`Removed ${channel} from the auto react list for ${rawEmote}`);
+                await interaction.reply({content: `Removed ${channel} from the auto react list for ${rawEmote}`, ephemeral: true});
             } else {
                 this.autoReactMap.get(rawEmote)?.push(channelId);
                 await this.djmtGuild.saveJSON();
-                await interaction.reply(`Added ${channel} to the auto react list for ${rawEmote}!`);
+                await interaction.reply({content: `Added ${channel} to the auto react list for ${rawEmote}!`, ephemeral: true});
             }
         } else {
             this.autoReactMap.set(rawEmote, [channelId]);
             await this.djmtGuild.saveJSON();
-            await interaction.reply(`Added ${channel} to the auto react list for ${rawEmote}!`);
+            await interaction.reply({content: `Added ${channel} to the auto react list for ${rawEmote}!`, ephemeral: true});
         }
     }
 
@@ -211,9 +211,9 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
                 const emoji = DJMTbot.getInstance().client.emojis.cache.get(emoteId);
                 msg += `${emoji?.toString()} => <#${value.channelId}> (threshold: ${value.threshold})\n`;
             });
-            await interaction.reply(`React Channels:\n${msg}`);
+            await interaction.reply({content: `React Channels:\n${msg}`, ephemeral: true});
         } else {
-            await interaction.reply(`No React Channel Pairs have been set!`);
+            await interaction.reply({content: `No React Channel Pairs have been set!`, ephemeral: true});
         }
     }
 
@@ -223,11 +223,11 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
         let foundEmote = DJMTbot.getInstance().client.emojis.cache.get(emoteId);
         let foundTextChannel = this.djmtGuild.getGuildChannel(channelId);
         if (!foundEmote || !foundTextChannel) {
-            await interaction.reply("The given channel or emote is invalid!");
+            await interaction.reply({content: "The given channel or emote is invalid!", ephemeral: true});
             return;
         }
         if (foundTextChannel.type !== ChannelType.GuildText) {
-            await interaction.reply(`The given channel is not a Text Channel`);
+            await interaction.reply({content: `The given channel is not a Text Channel`, ephemeral: true});
             return;
         }
         if (this.emoteReactBoardMap.has(rawEmote) &&
@@ -238,11 +238,11 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
             this.emoteReactBoardMap.delete(rawEmote);
 
             await this.djmtGuild.saveJSON();
-            await interaction.reply(`Removed [${rawEmote}, ${val.channelId}, ${val.threshold}] from React Channels list!`);
+            await interaction.reply({content: `Removed [${rawEmote}, ${val.channelId}, ${val.threshold}] from React Channels list!`, ephemeral: true});
             return;
 
         } else if (this.emoteReactBoardMap.has(rawEmote)) {
-            await interaction.reply(`A pair for this emote already exists! Remove that pair first.`);
+            await interaction.reply({content: `A pair for this emote already exists! Remove that pair first.`, ephemeral: true});
         } else {
             const reactBoardMapValue: ReactBoardMapValue = { // For our map, add in an empty array for recent msgs
                 threshold: threshold,
@@ -251,7 +251,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
             }
             this.emoteReactBoardMap.set(rawEmote, reactBoardMapValue);
             await this.djmtGuild.saveJSON();
-            await interaction.reply(`Added ${rawEmote} => <#${channelId}> to the React Channels list (threshold ${threshold})!`);
+            await interaction.reply({content: `Added ${rawEmote} => <#${channelId}> to the React Channels list (threshold ${threshold})!`, ephemeral: true});
         }
     }
 
@@ -294,7 +294,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
                         { name: 'Message', value: message.content || '\u200b', inline: true },
                         { name: 'Media URL', value: message.attachments.first()?.url || '\u200b', inline: false })
                     .setThumbnail(message.author.displayAvatarURL({ size: 128 }))
-                    .setImage(msgAttachments.length > 0 ? msgAttachments[0].url : '')
+                    .setImage(msgAttachments.length > 0 ? msgAttachments[0].url : null)
                     .setAuthor({ name: `${message.author.username}#${message.author.discriminator} (${message.author.id})`, iconURL: message.author.displayAvatarURL({ size: 128 }) })
                     .setFooter({ text: `${reaction.count} ⭐ | ${message.id}` });
                 try {
@@ -316,9 +316,9 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
             this.starChannels.forEach((channelId: string) => {
                 channelString += `<#${channelId}> `;
             });
-            await interaction.reply(`Star Channels: ${channelString}`);
+            await interaction.reply({content: `Star Channels: ${channelString}`, ephemeral: true});
         } else {
-            await interaction.reply(`No Star Channels have been set!`);
+            await interaction.reply({content: `No Star Channels have been set!`, ephemeral: true});
         }
     }
 
@@ -326,20 +326,20 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
         let channelId = channel.id;
         const foundChannel = await this.djmtGuild.getGuildChannel(channelId);
         if (!foundChannel) {
-            await interaction.reply("The given channel is invalid!");
+            await interaction.reply({content: "The given channel is invalid!", ephemeral: true});
             return;
         }
         if (this.starChannels?.includes(channelId)) {
             this.starChannels.splice(this.starChannels.indexOf(channelId), 1);
             await this.djmtGuild.saveJSON();
-            await interaction.reply(`Removed ${channel} from the star channels list!`);
+            await interaction.reply({content: `Removed ${channel} from the star channels list!`, ephemeral: true});
         } else {
             if (!this.starChannels) {
                 this.starChannels = [];
             }
             this.starChannels.push(channelId);
             await this.djmtGuild.saveJSON();
-            await interaction.reply(`Added ${channel} to the star channels list!`);
+            await interaction.reply({content: `Added ${channel} to the star channels list!`, ephemeral: true});
         }
 
     }

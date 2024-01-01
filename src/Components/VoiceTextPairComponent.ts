@@ -21,6 +21,11 @@ setVcPairCommand.addChannelOption(input => input.setName("voicechannel").setDesc
 setVcPairCommand.addChannelOption(input => input.setName("textchannel").setDescription("The text channel").addChannelTypes(ChannelType.GuildText).setRequired(true));
 setVcPairCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
+const printVcPairCommand = new SlashCommandBuilder();
+printVcPairCommand.setName(ComponentCommands.PRINT_VC_PAIRS);
+printVcPairCommand.setDescription("Prints the voice and text channel pair");
+printVcPairCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
 // Declare data you want to save in JSON here
 interface VoiceTextPairComponentSave {
     voiceTextPairs: VoiceTextPair[];
@@ -35,7 +40,7 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
 
     name: ComponentNames = ComponentNames.VOICE_TEXT_PAIR;
     voiceTextPairs: VoiceTextPair[] = [];
-    commands: SlashCommandBuilder[] = [setVcPairCommand];
+    commands: SlashCommandBuilder[] = [setVcPairCommand, printVcPairCommand];
 
     async getSaveData(): Promise<VoiceTextPairComponentSave> {
         return {
@@ -44,7 +49,6 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
     }
 
     async afterLoadJSON(loadedObject: VoiceTextPairComponentSave | undefined): Promise<void> {
-        // console.log(loadedObject);
         if (loadedObject) {
             this.voiceTextPairs = loadedObject.voiceTextPairs;
         }
@@ -88,11 +92,12 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
         }
         if (interaction.commandName === ComponentCommands.SET_VC_PAIRS) {
             await this.handleVoiceTextPair(interaction.options.getChannel<ChannelType.GuildVoice>("voicechannel", true), interaction.options.getChannel<ChannelType.GuildText>("textchannel", true), interaction);
+        } else if (interaction.commandName === ComponentCommands.PRINT_VC_PAIRS) {
+            await this.printVoiceTextPairs(interaction);
         }
     }
 
     async setVoiceTextPair(voiceChannel: VoiceChannel, textChannel: TextChannel): Promise<boolean> {
-        console.log(this.voiceTextPairs);
         const pair: VoiceTextPair = { voiceChannel, textChannel };
         for (const pair of this.voiceTextPairs) {
             if (pair.voiceChannel.id === voiceChannel.id && pair.textChannel.id === textChannel.id) {
@@ -112,17 +117,17 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
             this.voiceTextPairs.forEach((pair: VoiceTextPair) => {
                 channelString += ` <#${pair.voiceChannel.id}> <#${pair.textChannel.id}>\n`;
             });
-            await interaction.reply(`VC Channels: ${channelString}`);
+            await interaction.reply({content: `VC Channels: ${channelString}`, ephemeral: true});
         } else {
-            await interaction.reply(`No VC Channel Pairs have been set!`);
+            await interaction.reply({content: `No VC Channel Pairs have been set!`, ephemeral: true});
         }
     }
     async handleVoiceTextPair(voiceChannel: VoiceChannel, textChannel: TextChannel, interaction: ChatInputCommandInteraction) {
             const success = await this.setVoiceTextPair(voiceChannel, textChannel);
             if (success) {
-                await interaction.reply(`Added ${[voiceChannel.toString(), textChannel.toString()]} to the VC Channels list!`);
+                await interaction.reply({content: `Added ${[voiceChannel.toString(), textChannel.toString()]} to the VC Channels list!`, ephemeral: true});
             } else {
-                await interaction.reply(`Removed ${[voiceChannel.toString(), textChannel.toString()]} from VC Channels list!`);
+                await interaction.reply({content: `Removed ${[voiceChannel.toString(), textChannel.toString()]} from VC Channels list!`, ephemeral: true});
             }
 
     }

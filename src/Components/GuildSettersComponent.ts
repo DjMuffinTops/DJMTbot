@@ -88,23 +88,23 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
     async debugModeCmd(interaction: ChatInputCommandInteraction) {
         this.djmtGuild.debugMode = !this.djmtGuild.debugMode;
         // await updateConfig(gConfig, message);
-        await interaction.reply(`Dev Mode ${this.djmtGuild.debugMode ? "enabled" : "disabled"}.`);
+        await interaction.reply({content: `Dev Mode ${this.djmtGuild.debugMode ? "enabled" : "disabled"}.`, ephemeral: true});
     }
 
     async setDebugChannel(debugChannel: TextBasedChannel, interaction: ChatInputCommandInteraction) {
         if (this.djmtGuild.debugChannelId === debugChannel.id) {
             this.djmtGuild.debugChannelId = "";
-            await interaction.reply(`${debugChannel.toString()} is no longer set as the debugChannel`);
+            await interaction.reply({content:`${debugChannel.toString()} is no longer set as the debugChannel`, ephemeral: true});
         } else {
             this.djmtGuild.debugChannelId = debugChannel.id;
-            await interaction.reply(`${debugChannel.toString()} is now set as the debugChannel channel`);
+            await interaction.reply({content:`${debugChannel.toString()} is now set as the debugChannel channel`, ephemeral: true});
         }
     }
 
     async setPrefixCmd(newPrefix: string, interaction: ChatInputCommandInteraction) {
         const defaultPrefix = "djmt!";
         this.djmtGuild.prefix = newPrefix ?? defaultPrefix;
-        await interaction.reply(`Set my prefix to \`\`${this.djmtGuild.prefix}\`\``);
+        await interaction.reply({content:`Set my prefix to \`\`${this.djmtGuild.prefix}\`\``, ephemeral: true});
     }
 
 }

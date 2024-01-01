@@ -186,13 +186,13 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
 
     private async printPNGRC(interaction: ChatInputCommandInteraction) {
         if (this.channelsMap.size <= 0) {
-            await interaction.reply(`No PNG Resolution Checking Channels have been set!`);
+            await interaction.reply({content: `No PNG Resolution Checking Channels have been set!`, ephemeral: true});
         } else {
             let msg = '';
             this.channelsMap.forEach((PNGResolutionEntry) => {
-                msg += `<#${PNGResolutionEntry.channel}> : width: ${PNGResolutionEntry.width} height: ${PNGResolutionEntry.height}\n`;
+                msg += `${PNGResolutionEntry.channel} : width: ${PNGResolutionEntry.width} height: ${PNGResolutionEntry.height}\n`;
             });
-            await interaction.reply(`PNG Resolution Checking Channels:\n${msg}`);
+            await interaction.reply({content: `PNG Resolution Checking Channels:\n${msg}`, ephemeral: true});
         }
     }
 
@@ -204,7 +204,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
         } else {
             res = await this.addPNGRCChannel({ channel: channel, width, height });
         }
-        await interaction.reply(res);
+        await interaction.reply({content: res, ephemeral: true});
 
     }
 

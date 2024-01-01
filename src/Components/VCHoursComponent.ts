@@ -100,11 +100,11 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
         for (const pair of vcChannelPairs) {
             if (pair.voiceChannel.id === voiceId && pair.textChannel.id === textId) {
                 this.consecutiveHours.set(pair, hours);
-                await interaction.reply(`${pair.toString()} set to ${this.consecutiveHours.get(pair)}`);
+                await interaction.reply({content: `${pair.textChannel.name} <=> ${pair.voiceChannel.name} set to ${this.consecutiveHours.get(pair)}`, ephemeral: true});
                 return;
             }
         }
-        await interaction.reply(`Could not find the desired vc text pair. Please make sure its set.`);
+        await interaction.reply({content: `Could not find the desired vc text pair. Please make sure its set.`, ephemeral: true});
     }
 
     async vcRemindersJob() {

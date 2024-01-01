@@ -94,10 +94,10 @@ ${prefix}setpngrc [TextChannel Mention] [width] [height] ->  Marks/unmarks the m
 ${prefix}sethours [VoiceChannelId] [TextChannelId] ->  Manually sets the hour count for a given vc text channel pair.\n\n`;
         // If the requester is an admin, print the admin commands
         if (isInteractionAdmin(interaction)) {
-            await interaction.reply(`\`\`\`css\n${helpAdminCommands}\`\`\``);
-            await interaction.reply(`\`\`\`css\n${helpAdminCommands2}\`\`\``);
+            await interaction.reply({content:`\`\`\`css\n${helpAdminCommands}\`\`\``, ephemeral: true});
+            await interaction.reply({content:`\`\`\`css\n${helpAdminCommands2}\`\`\``, ephemeral: true});
         }
-        await interaction.reply(`\`\`\`css\n${helpCommands}\`\`\``);
+        await interaction.reply({content:`\`\`\`css\n${helpCommands}\`\`\``, ephemeral: true});
     }
 }
 

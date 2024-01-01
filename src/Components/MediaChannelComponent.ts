@@ -11,7 +11,7 @@ setMediaChannelCommand.addChannelOption(input => input.setName("channel").setDes
 setMediaChannelCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 const getMediaChannelCommand = new SlashCommandBuilder();
-getMediaChannelCommand.setName(ComponentCommands.GET_MEDIA_CHANNEL);
+getMediaChannelCommand.setName(ComponentCommands.PRINT_MEDIA_CHANNEL);
 getMediaChannelCommand.setDescription("Gets the media channel");
 getMediaChannelCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
@@ -84,7 +84,7 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
         }
         if (interaction.commandName === ComponentCommands.SET_MEDIA_CHANNEL) {
             await this.setMediaChannel(interaction.options.getChannel<ChannelType.GuildText>("channel", true), interaction);
-        } else if (interaction.commandName === ComponentCommands.GET_MEDIA_CHANNEL) {
+        } else if (interaction.commandName === ComponentCommands.PRINT_MEDIA_CHANNEL) {
             await this.getMediaChannel(interaction);
         }
     }
@@ -105,7 +105,7 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
      */
     private async setMediaChannel(channel: TextChannel, interaction: ChatInputCommandInteraction): Promise<void> {
             if (!channel) {
-                await interaction.reply(`${channel} is not a valid channel`);
+                await interaction.reply({content: `${channel} is not a valid channel`, ephemeral: true});
             }
             const chid = channel.id;
             // find channel in the list of media channels, if it exists
@@ -117,11 +117,11 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
                 }
             });
             if (exists) {
-                await interaction.reply(`Removed ${channel} as a media channel.`);
+                await interaction.reply({content: `Removed ${channel} as a media channel.`, ephemeral: true});
             }
             else {
                 this.channelsArray.push(channel);
-                await interaction.reply(`Successfully added ${channel} as a media channel.`);
+                await interaction.reply({content: `Successfully added ${channel} as a media channel.`, ephemeral: true});
             }
         await this.djmtGuild.saveJSON();
     }
@@ -133,14 +133,14 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
      */
     private async getMediaChannel(interaction: ChatInputCommandInteraction): Promise<void> {
         if (this.channelsArray.length === 0) {
-            await interaction.reply(`There are no set media channels.`);
+            await interaction.reply({content: `There are no set media channels.`, ephemeral: true});
             return;
         }
         let m = 'The current set media channels are:\n';
         for (const c of this.channelsArray) {
             m += `<#${c.id}>\n`;
         }
-        await interaction.reply(m);
+        await interaction.reply({content: m, ephemeral: true});
     }
 
     /**
