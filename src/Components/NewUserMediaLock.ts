@@ -5,26 +5,49 @@ import { DateTime } from "luxon";
 import { MEDIA_LINK_REGEX } from "../HelperFunctions";
 import { ComponentCommands } from "../Constants/ComponentCommands";
 
-const NEW_USER_THRESHOLD_IN_DAYS = 60; // Accounts must be older than this in days to not be considered new
+const NEW_USER_THRESHOLD_IN_DAYS_DEFAULT = 60;
+
+const toggleNewUserMediaLockCommand = new SlashCommandBuilder();
+toggleNewUserMediaLockCommand.setName(ComponentCommands.TOGGLE_NEW_USER_MEDIA_LOCK);
+toggleNewUserMediaLockCommand.setDescription("Toggles the new user media lock feature.");
+toggleNewUserMediaLockCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+const setNewUserThresholdInDaysCommand = new SlashCommandBuilder();
+setNewUserThresholdInDaysCommand.setName(ComponentCommands.SET_NEW_USER_THRESHOLD_IN_DAYS);
+setNewUserThresholdInDaysCommand.setDescription("Sets the number of days a user must have been registered to not be considered new.");
+setNewUserThresholdInDaysCommand.addIntegerOption(option => option.setName("days").setDescription("The number of days a user must have been registered to not be considered new.").setRequired(true));
+setNewUserThresholdInDaysCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
 const permitNewUserMediaCommand = new SlashCommandBuilder();
 permitNewUserMediaCommand.setName(ComponentCommands.PERMIT_NEW_USER_MEDIA);
 permitNewUserMediaCommand.setDescription("Permits a user to post media despite being a new user. Will be reapplied if the bot is restarted.");
 permitNewUserMediaCommand.addUserOption(option => option.setName("user").setDescription("The user to bypass new user media lock for").setRequired(true));
 permitNewUserMediaCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-interface NewUserMediaLockSave { }
+interface NewUserMediaLockSave {
+    enabled: boolean;
+    newUserThresholdInDays: number; // Accounts must be older than this in days to not be considered new
+}
 export class NewUserMediaLock extends Component<NewUserMediaLockSave> {
 
     name: ComponentNames = ComponentNames.NEW_USER_MEDIA_LOCK;
     permittedUsers: Set<string> = new Set<string>();
-    commands: SlashCommandBuilder[] = [permitNewUserMediaCommand];
+    commands: SlashCommandBuilder[] = [permitNewUserMediaCommand, toggleNewUserMediaLockCommand, setNewUserThresholdInDaysCommand];
+    newUserThresholdInDays: number = NEW_USER_THRESHOLD_IN_DAYS_DEFAULT;
+    enabled: boolean = false;
 
     async getSaveData(): Promise<NewUserMediaLockSave> {
-        return {};
+        return {
+            enabled: this.enabled,
+            newUserThresholdInDays: this.newUserThresholdInDays
+        };
     }
 
     async afterLoadJSON(loadedObject: NewUserMediaLockSave | undefined): Promise<void> {
-        return Promise.resolve(undefined);
+        if (loadedObject) {
+            this.enabled = loadedObject.enabled;
+            this.newUserThresholdInDays = loadedObject.newUserThresholdInDays;
+        }
     }
 
     async onReady(): Promise<void> {
@@ -36,11 +59,57 @@ export class NewUserMediaLock extends Component<NewUserMediaLockSave> {
     }
 
     async onMessageCreate(args: string[], message: Message): Promise<void> {
+        this.handleNewUserMediaLock(message);
+    }
+
+    async onMessageReactionAdd(messageReaction: MessageReaction, user: User): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
+    async onMessageReactionRemove(messageReaction: MessageReaction, user: User): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
+    async onMessageUpdate(oldMessage: Message, newMessage: Message): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
+    async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
+
+    async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
+        if (!interaction.isChatInputCommand()) {
+            return;
+        }
+        if (interaction.commandName === ComponentCommands.PERMIT_NEW_USER_MEDIA) {
+            await this.permitNewUserMedia(interaction.options.getUser("user", true), interaction);
+        } else if (interaction.commandName === ComponentCommands.TOGGLE_NEW_USER_MEDIA_LOCK) {
+            this.enabled = !this.enabled;
+            await this.djmtGuild.saveJSON();
+            await interaction.reply({ content: `New user media lock feature is now ${this.enabled ? 'active' : 'disabled'}.` });
+        } else if (interaction.commandName === ComponentCommands.SET_NEW_USER_THRESHOLD_IN_DAYS) {
+            this.newUserThresholdInDays = interaction.options.getInteger("days", true);
+            await this.djmtGuild.saveJSON();
+            await interaction.reply({ content: `Set new user threshold in days to ${this.newUserThresholdInDays}.` });
+        }
+    }
+
+    async handleNewUserMediaLock(message: Message) {
+        // Don't do anything if the feature is disabled
+        if (!this.enabled) {
+            return;
+        }
         const user = message.author;
         // Use luxon to compare the user's account creation date to the current date
         const creationDateDT = DateTime.fromJSDate(user.createdAt);
         const accountAgeInDays = Math.floor(creationDateDT.diffNow("days").negate().days);
-        if (!this.permittedUsers.has(user.id) && accountAgeInDays < NEW_USER_THRESHOLD_IN_DAYS) {
+        if (!this.permittedUsers.has(user.id) && accountAgeInDays <= this.newUserThresholdInDays) {
             let attemptedMediaPost = false;
             // This is a new user so prevent them from sending any media attachments
             if (message.attachments.size > 0) {
@@ -73,36 +142,6 @@ export class NewUserMediaLock extends Component<NewUserMediaLockSave> {
                 await message.channel.send(`Hello, <@${user.id}>! Your account is not permitted to post media due to being a new discord account.\nPlease request to post media by messaging staff through ModMail!`);
             }
             return;
-        }
-    }
-
-    async onMessageReactionAdd(messageReaction: MessageReaction, user: User): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
-    async onMessageReactionRemove(messageReaction: MessageReaction, user: User): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
-    async onMessageUpdate(oldMessage: Message, newMessage: Message): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
-    async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
-
-    async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
-    async onInteractionCreate(interaction: Interaction): Promise<void> {
-        if (!interaction.isChatInputCommand()) {
-            return;
-        }
-        if (interaction.commandName === ComponentCommands.PERMIT_NEW_USER_MEDIA) {
-            await this.permitNewUserMedia(interaction.options.getUser("user", true), interaction);
         }
     }
 
