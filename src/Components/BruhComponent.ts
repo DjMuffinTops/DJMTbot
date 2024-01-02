@@ -215,6 +215,13 @@ export class BruhComponent extends Component<BruhComponentSave> {
                                 });
                             }
                         }
+                        // In the chance there is just an image and its not a floof bot embed (like a link or something) relay the images
+                        for (const embed of randomMsg.embeds) {
+                            if (embed.data.url) {
+                                const attachment = await new AttachmentBuilder(embed.data.url);
+                                attachmentList.push(attachment);
+                            }
+                        }
                     } else {
                         // Its probably a standard message, get the attachments and relay the content
                         [...randomMsg.attachments.values()].forEach((attachment) => {
@@ -229,8 +236,9 @@ export class BruhComponent extends Component<BruhComponentSave> {
                     // console.log(msgContent);
                     // console.log(matches);
                     // console.log(`size: ${messagesArray.length} | index: ${randomIndex}`);
-                    await interaction.reply({ content: `${randomMsg.url}\n${msgContent}`, files: attachmentList });
-                    console.log(`[${this.djmtGuild.guildId}] Bruh returned ${randomMsg.url}`);
+                    const reply = `${randomMsg.url}\n${msgContent}`;
+                    await interaction.reply({ content: reply, files: attachmentList });
+                    console.log(`[${this.djmtGuild.guildId}] Bruh returned ${reply}`);
                 } else {
                     await interaction.reply({ content: 'Could not find random message.', ephemeral: true });
                 }
