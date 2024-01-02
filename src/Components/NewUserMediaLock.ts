@@ -120,7 +120,7 @@ export class NewUserMediaLock extends Component<NewUserMediaLockSave> {
         // Use luxon to compare the user's account creation date to the current date
         const creationDateDT = DateTime.fromJSDate(user.createdAt);
         const accountAgeInDays = Math.floor(creationDateDT.diffNow("days").negate().days);
-        if (!this.permittedUsers.has(user.id) && accountAgeInDays <= this.newUserThresholdInDays) {
+        if (!this.permittedUsers.has(user.id) && accountAgeInDays > this.newUserThresholdInDays) {
             let attemptedMediaPost = false;
             // This is a new user so prevent them from sending any media attachments
             if (message.attachments.size > 0) {
