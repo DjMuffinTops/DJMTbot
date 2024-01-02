@@ -23,7 +23,7 @@ printDVCCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 const setDVCCommmand = new SlashCommandBuilder();
 setDVCCommmand.setName(ComponentCommands.SET_DYNAMIC_VC);
-setDVCCommmand.setDescription("Sets a dynamic vc channel");
+setDVCCommmand.setDescription("Sets a dynamic vc channel. Will create a child vc when occupied.");
 setDVCCommmand.addChannelOption(input => input.setName("voicechannel").setDescription("The channel to add or remove from the dynamic vc channels list").addChannelTypes(ChannelType.GuildVoice).setRequired(true));
 setDVCCommmand.addIntegerOption(input => input.setName("maxchildren").setDescription("The max number of child vcs allowed to be created").setRequired(true));
 setDVCCommmand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
