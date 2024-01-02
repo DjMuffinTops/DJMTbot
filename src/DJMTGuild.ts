@@ -332,6 +332,15 @@ export class DJMTGuild {
         return this.guild?.channels.cache.find(channel => channel.id === channelId);
     }
 
+    getModAlertsChannel(): TextChannel | undefined {
+        return this.getGuildChannel(this.modAlertsChannelId) as TextChannel;
+    }
+
+    getModLoggingChannel(): TextChannel | undefined {
+        return this.getGuildChannel(this.modLoggingChannelId) as TextChannel;
+    }
+
+
     // Getters / Setters
     get debugMode(): boolean {
         return this._debugMode;
