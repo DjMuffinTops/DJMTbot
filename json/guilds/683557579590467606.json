@@ -2,6 +2,8 @@
 	"683557579590467606": {
 		"prefix": "djmt!",
 		"debugChannelId": "685355983727362061",
+		"modAlertsChannelId": "780242837476212736",
+		"modLoggingChannelId": "754952184256266283",
 		"componentData": {
 			"CONFIG": {},
 			"SAY": {},
