@@ -229,8 +229,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
                     // console.log(msgContent);
                     // console.log(matches);
                     // console.log(`size: ${messagesArray.length} | index: ${randomIndex}`);
-                    await interaction.reply({ content: `\ ${msgContent}`, files: attachmentList });
-                    await interaction.followUp({ content: `Source: ${randomMsg.url}`, ephemeral: true });
+                    await interaction.reply({ content: `${randomMsg.url}\n${msgContent}`, files: attachmentList });
                     console.log(`[${this.djmtGuild.guildId}] Bruh returned ${randomMsg.url}`);
                 } else {
                     await interaction.reply({ content: 'Could not find random message.', ephemeral: true });
