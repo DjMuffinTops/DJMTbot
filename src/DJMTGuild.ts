@@ -28,6 +28,8 @@ export interface GuildConfig {
     debugMode: boolean,
     prefix: string,
     debugChannelId: string,
+    modAlertsChannelId: string,
+    modLoggingChannelId: string,
     componentData: any,
 }
 
@@ -44,6 +46,8 @@ export class DJMTGuild {
     private _debugMode: boolean = defaultConfig.debugMode;
     private _prefix: string = "djmt!";
     private _debugChannelId: string = defaultConfig.debugChannelId;
+    private _modAlertsChannelId: string = defaultConfig.modAlertsChannelId;
+    private _modLoggingChannelId: string = defaultConfig.modLoggingChannelId;
     private componentData = defaultConfig.componentData;
     private components: Map<ComponentNames, Component<any>>;
 
@@ -115,6 +119,8 @@ export class DJMTGuild {
             debugMode: this._debugMode,
             prefix: this._prefix,
             debugChannelId: this._debugChannelId,
+            modAlertsChannelId: this._modAlertsChannelId,
+            modLoggingChannelId: this._modLoggingChannelId,
             componentData: this.componentData,
         }
     }
@@ -139,6 +145,8 @@ export class DJMTGuild {
             this._debugMode = gConfig.debugMode;
             this._prefix = gConfig.prefix;
             this._debugChannelId = gConfig.debugChannelId;
+            this._modAlertsChannelId = gConfig.modAlertsChannelId;
+            this._modLoggingChannelId = gConfig.modLoggingChannelId;
             this.componentData = gConfig.componentData;
             for (const component of Array.from(this.components.values())) {
                 // Send component data to their respective components.
@@ -349,6 +357,24 @@ export class DJMTGuild {
 
     set debugChannelId(value: string) {
         this._debugChannelId = value;
+        this.saveJSON();
+    }
+
+    get modAlertsChannelId(): string {
+        return this._modAlertsChannelId;
+    }
+    
+    set modAlertsChannelId(value: string) {
+        this._modAlertsChannelId = value;
+        this.saveJSON();
+    }
+
+    get modLoggingChannelId(): string {
+        return this._modLoggingChannelId;
+    }
+
+    set modLoggingChannelId(value: string) {
+        this._modLoggingChannelId = value;
         this.saveJSON();
     }
 }

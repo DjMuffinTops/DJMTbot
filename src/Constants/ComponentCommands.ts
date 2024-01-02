@@ -34,5 +34,7 @@ export enum ComponentCommands {
     SET_DYNAMIC_VC= "setdynamicvc",
     PRINT_DYNAMIC_VC= "printdynamicvc",
     SET_AUTO_THREAD= "setautothread",
-    PRINT_AUTO_THREAD= "printautothread"
+    PRINT_AUTO_THREAD= "printautothread",
+    SET_MOD_ALERTS_CHANNEL= "setmodalertschannel",
+    SET_MOD_LOGGING_CHANNEL= "setmodloggingchannel",
 }
