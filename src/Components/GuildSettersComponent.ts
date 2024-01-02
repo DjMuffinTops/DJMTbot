@@ -1,15 +1,44 @@
 import {Component} from "../Component";
-import {GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
+import {ChannelType, ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, PermissionFlagsBits, SlashCommandBuilder, TextBasedChannel, User, VoiceState} from "discord.js";
 import {ComponentNames} from "../Constants/ComponentNames";
-import {isAdmin} from "../HelperFunctions";
 import {ComponentCommands} from "../Constants/ComponentCommands";
 
+const setDebugCommand = new SlashCommandBuilder();
+setDebugCommand.setName(ComponentCommands.SET_DEBUG_CHANNEL);
+setDebugCommand.setDescription("Sets the debug channel");
+setDebugCommand.addChannelOption(input => input.setName("channel").setDescription("The channel to add or remove from the debug channels list").addChannelTypes(ChannelType.GuildText).setRequired(true));
+setDebugCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+const debugModeCommand = new SlashCommandBuilder();
+debugModeCommand.setName(ComponentCommands.DEBUG_MODE);
+debugModeCommand.setDescription("Toggles debug mode");
+debugModeCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+const setPrefixCommand = new SlashCommandBuilder();
+setPrefixCommand.setName(ComponentCommands.SET_PREFIX);
+setPrefixCommand.setDescription("Sets the bot prefix");
+setPrefixCommand.addStringOption(input => input.setName("prefix").setDescription("The prefix to set").setRequired(true));
+setPrefixCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+const setModAlertsChannelCommand = new SlashCommandBuilder();
+setModAlertsChannelCommand.setName(ComponentCommands.SET_MOD_ALERTS_CHANNEL);
+setModAlertsChannelCommand.setDescription("Sets the mod alerts channel");
+setModAlertsChannelCommand.addChannelOption(input => input.setName("channel").setDescription("The channel to add or remove from the mod alerts channels list").addChannelTypes(ChannelType.GuildText).setRequired(true));
+setModAlertsChannelCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+const setModLoggingChannelCommand = new SlashCommandBuilder();
+setModLoggingChannelCommand.setName(ComponentCommands.SET_MOD_LOGGING_CHANNEL);
+setModLoggingChannelCommand.setDescription("Sets the mod logging channel");
+setModLoggingChannelCommand.addChannelOption(input => input.setName("channel").setDescription("The channel to add or remove from the mod logging channels list").addChannelTypes(ChannelType.GuildText).setRequired(true));
+setModLoggingChannelCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
 // Declare data you want to save in JSON here
-interface DebugComponentSave {}
+interface DebugComponentSave { }
 
 export class GuildSettersComponent extends Component<DebugComponentSave> {
 
     name: ComponentNames = ComponentNames.DEBUG;
+    commands: SlashCommandBuilder[] = [setDebugCommand, debugModeCommand, setPrefixCommand, setModAlertsChannelCommand, setModLoggingChannelCommand];
 
     async getSaveData(): Promise<DebugComponentSave> {
         return {};
@@ -43,15 +72,27 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
         return Promise.resolve(undefined);
     }
 
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
+        if (!interaction.isChatInputCommand()) {
+            return;
+        }
+        if (interaction.commandName === ComponentCommands.SET_DEBUG_CHANNEL) {
+            await this.setDebugChannel(interaction.options.getChannel<ChannelType.GuildText>("channel", true), interaction);
+        } else if (interaction.commandName === ComponentCommands.DEBUG_MODE) {
+            await this.debugModeCmd(interaction);
+        } else if (interaction.commandName === ComponentCommands.SET_PREFIX) {
+            await this.setPrefixCmd(interaction.options.getString("prefix", true), interaction);
+        } else if (interaction.commandName === ComponentCommands.SET_MOD_ALERTS_CHANNEL) {
+            await this.setModAlertsChannel(interaction.options.getChannel<ChannelType.GuildText>("channel", true), interaction);
+        } else if (interaction.commandName === ComponentCommands.SET_MOD_LOGGING_CHANNEL) {
+            await this.setModLoggingChannel(interaction.options.getChannel<ChannelType.GuildText>("channel", true), interaction);
+        }
+        return Promise.resolve(undefined);
+    }
+
     async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
         const command = args?.shift()?.toLowerCase() || '';
-        if (command === ComponentCommands.SET_DEBUG_CHANNEL) {
-            await this.setDebugChannel(args, message);
-        } else if (command === ComponentCommands.DEBUG_MODE) {
-            await this.debugModeCmd(args, message);
-        } else if (command === ComponentCommands.SET_PREFIX) {
-            await this.setPrefixCmd(args, message);
-        }
+
         return Promise.resolve(undefined);
     }
 
@@ -60,46 +101,45 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
         return Promise.resolve(undefined);
     }
 
-    async debugModeCmd(args: string[], message: Message) {
-        // Admin only
-        if (!isAdmin(message)) {
-            await message.channel.send(`This command requires administrator permissions.`);
-            return;
-        }
+    async debugModeCmd(interaction: ChatInputCommandInteraction) {
         this.djmtGuild.debugMode = !this.djmtGuild.debugMode;
         // await updateConfig(gConfig, message);
-        await message.channel.send(`Dev Mode ${this.djmtGuild.debugMode ? "enabled" : "disabled" }.`);
+        await interaction.reply({ content: `Dev Mode ${this.djmtGuild.debugMode ? "enabled" : "disabled"}.`, ephemeral: true });
     }
 
-    async setDebugChannel(args: string[], message: Message) {
-        // Admin only
-        if (!isAdmin(message)) {
-            await message.channel.send(`This command requires administrator permissions.`);
-            return;
-        }
-        if (this.djmtGuild.debugChannelId === message.channel.id) {
+    async setDebugChannel(debugChannel: TextBasedChannel, interaction: ChatInputCommandInteraction) {
+        if (this.djmtGuild.debugChannelId === debugChannel.id) {
             this.djmtGuild.debugChannelId = "";
-            await message.channel.send(`${message.channel.toString()} is no longer set as the debugChannel`);
+            await interaction.reply({ content: `${debugChannel.toString()} is no longer set as the debugChannel`, ephemeral: true });
         } else {
-            this.djmtGuild.debugChannelId = message.channel.id;
-            await message.channel.send(`${message.channel.toString()} is now set as the debugChannel channel`);
+            this.djmtGuild.debugChannelId = debugChannel.id;
+            await interaction.reply({ content: `${debugChannel.toString()} is now set as the debugChannel channel`, ephemeral: true });
         }
     }
 
-    async setPrefixCmd(args: string[], message: Message) {
-        // Admin only
-        if (!isAdmin(message)) {
-            await message.channel.send(`This command requires administrator permissions.`);
-            return;
-        }
-        if (args.length === 0) {
-            this.djmtGuild.prefix = process.env.DEFAULT_PREFIX as string;
-            await message.channel.send(`Set my prefix to \`\`${process.env.DEFAULT_PREFIX}\`\``);
-        } else if (args.length === 1) {
-            this.djmtGuild.prefix = args[0] ? args[0] : process.env.DEFAULT_PREFIX as string;
-            await message.channel.send(`Set my prefix to \`\`${this.djmtGuild.prefix}\`\``);
+    async setPrefixCmd(newPrefix: string, interaction: ChatInputCommandInteraction) {
+        const defaultPrefix = "djmt!";
+        this.djmtGuild.prefix = newPrefix ?? defaultPrefix;
+        await interaction.reply({ content: `Set my prefix to \`\`${this.djmtGuild.prefix}\`\``, ephemeral: true });
+    }
+
+    async setModAlertsChannel(modAlertsChannel: TextBasedChannel, interaction: ChatInputCommandInteraction) {
+        if (this.djmtGuild.modAlertsChannelId === modAlertsChannel.id) {
+            this.djmtGuild.modAlertsChannelId = "";
+            await interaction.reply({ content: `${modAlertsChannel.toString()} is no longer set as the mod alerts channel`, ephemeral: true });
         } else {
-            await message.channel.send(`Please enter a single prefix.`);
+            this.djmtGuild.modAlertsChannelId = modAlertsChannel.id;
+            await interaction.reply({ content: `${modAlertsChannel.toString()} is now set as the mod alerts channel`, ephemeral: true });
+        }
+    }
+
+    async setModLoggingChannel(modLoggingChannel: TextBasedChannel, interaction: ChatInputCommandInteraction) {
+        if (this.djmtGuild.modLoggingChannelId === modLoggingChannel.id) {
+            this.djmtGuild.modLoggingChannelId = "";
+            await interaction.reply({ content: `${modLoggingChannel.toString()} is no longer set as the mod logging channel`, ephemeral: true });
+        } else {
+            this.djmtGuild.modLoggingChannelId = modLoggingChannel.id;
+            await interaction.reply({ content: `${modLoggingChannel.toString()} is now set as the mod logging channel`, ephemeral: true });
         }
     }
 

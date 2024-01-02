@@ -1,18 +1,22 @@
-import {Component} from "../Component";
-import {GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
-import {ComponentCommands} from "../Constants/ComponentCommands";
-import {ComponentNames} from "../Constants/ComponentNames";
+import { Component } from "../Component";
+import { ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, SlashCommandBuilder, User, VoiceState } from "discord.js";
+import { ComponentCommands } from "../Constants/ComponentCommands";
+import { ComponentNames } from "../Constants/ComponentNames";
 
-interface BSpeakComponentSave {}
+const bSpeakCommand = new SlashCommandBuilder();
+bSpeakCommand.setName(ComponentCommands.B_SPEAK);
+bSpeakCommand.setDescription("Converts the user's message to bspeak");
+bSpeakCommand.addStringOption(input => input.setName("message").setDescription("The message to convert to bspeak").setRequired(true));
+
+
+interface BSpeakComponentSave { }
 export class BSpeakComponent extends Component<BSpeakComponentSave> {
 
     name: ComponentNames = ComponentNames.BSPEAK;
+    commands: SlashCommandBuilder[] = [bSpeakCommand];
 
     async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
-        const command = args?.shift()?.toLowerCase() || '';
-        if (command === ComponentCommands.B_SPEAK) {
-            await this.bCmd(args, message);
-        }
+        return Promise.resolve(undefined);
     }
 
     async getSaveData(): Promise<BSpeakComponentSave> {
@@ -51,13 +55,22 @@ export class BSpeakComponent extends Component<BSpeakComponentSave> {
         return Promise.resolve(undefined);
     }
 
-    async bCmd(args: string[], message: Message) {
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
+        if (!interaction.isChatInputCommand()) {
+            return;
+        }
+        if (interaction.commandName === ComponentCommands.B_SPEAK) {
+            await this.bCmd(interaction.options.getString("message", true), interaction);
+        }
+    }
+
+    async bCmd(message: string, interaction: ChatInputCommandInteraction) {
         const bChars = ['a', 'e', 'i', 'o', 'u', 'r'];
         let result = "";
         let B_OPTIONS = ['b', '🅱️'];
         let B_EMOJI_CHANCE = .05;
-        for (let i = 0; i < args.length; i++) {
-            let word = args[i];
+        const words = message.split(" ");
+        for (const word of words) {
             let previous = "";
             for (let j = 0; j < word.length; j++) {
                 if (word.charAt(j).match(/^[a-zA-Z]+$/)) {
@@ -73,7 +86,7 @@ export class BSpeakComponent extends Component<BSpeakComponentSave> {
                 }
             }
         }
-        await message.channel.send(result.length > 0 ? result : "Given message was empty, try typing something this time.");
+        await interaction.reply({ content: result.length > 0 ? result : "Given message was empty, try typing something this time." });
     }
 
 }

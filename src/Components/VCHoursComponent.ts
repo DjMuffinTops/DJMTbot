@@ -1,26 +1,39 @@
-import {Component} from "../Component";
+import { Component } from "../Component";
 import {
+    ChannelType,
+    ChatInputCommandInteraction,
     GuildMember,
+    Interaction,
     Message,
     MessageReaction,
+    PermissionFlagsBits,
+    SlashCommandBuilder,
     TextChannel,
     User,
     VoiceChannel,
     VoiceState
 } from "discord.js";
-import {ComponentNames} from "../Constants/ComponentNames";
-import {VoiceTextPairComponent, VoiceTextPair} from "./VoiceTextPairComponent";
-import {isAdmin} from "../HelperFunctions";
-import {Cron} from "../Cron";
-import {ComponentCommands} from "../Constants/ComponentCommands";
+import { ComponentNames } from "../Constants/ComponentNames";
+import { VoiceTextPairComponent, VoiceTextPair } from "./VoiceTextPairComponent";
+import { Cron } from "../Cron";
+import { ComponentCommands } from "../Constants/ComponentCommands";
+
+const setHoursCommand = new SlashCommandBuilder();
+setHoursCommand.setName(ComponentCommands.SET_HOURS);
+setHoursCommand.setDescription("Sets the hours for a vc text pair");
+setHoursCommand.addChannelOption(input => input.setName("voicechannel").setDescription("The voice channel").addChannelTypes(ChannelType.GuildVoice).setRequired(true));
+setHoursCommand.addChannelOption(input => input.setName("textchannel").setDescription("The text channel").addChannelTypes(ChannelType.GuildText).setRequired(true));
+setHoursCommand.addIntegerOption(input => input.setName("hours").setDescription("The hours to set").setRequired(true));
+setHoursCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 // Declare data you want to save in JSON here
-interface VCHoursComponentSave {}
+interface VCHoursComponentSave { }
 
 export class VCHoursComponent extends Component<VCHoursComponentSave> {
 
     name: ComponentNames = ComponentNames.VC_HOURS;
     consecutiveHours: Map<VoiceTextPair, number> = new Map();
+    commands: SlashCommandBuilder[] = [setHoursCommand];
 
     async getSaveData(): Promise<VCHoursComponentSave> {
         return {};
@@ -63,10 +76,6 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
     }
 
     async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
-        const command = args?.shift()?.toLowerCase() || '';
-        if (command === ComponentCommands.SET_HOURS) {
-            await this.setHoursCmd(args, message);
-        }
         return Promise.resolve(undefined);
     }
 
@@ -74,28 +83,28 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
         return Promise.resolve(undefined);
     }
 
-    async setHoursCmd(args: string[], message: Message) {
-        // Admin only
-        if (!isAdmin(message)) {
-            await message.channel.send(`This command requires administrator permissions.`);
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
+        if (!interaction.isChatInputCommand()) {
             return;
         }
-        if (args.length == 3) {
-            let voiceId = args[0];
-            let textId = args[1];
-            let hours = Number(args[2]);
-            const vcChannelPairs: VoiceTextPair[] = (this.djmtGuild.getComponent(ComponentNames.VOICE_TEXT_PAIR) as VoiceTextPairComponent).voiceTextPairs;
-            for (const pair of vcChannelPairs) {
-                if (pair.voiceChannel.id === voiceId && pair.textChannel.id === textId) {
-                    this.consecutiveHours.set(pair, hours);
-                    await message.channel.send(`${pair.toString()} set to ${this.consecutiveHours.get(pair)}`);
-                    return;
-                }
-            }
-            await message.channel.send(`Could not find the desired vc text pair. Please make sure its set.`);
-        } else {
-            await message.channel.send(`Can't set hours, needs two ids, voice and then text channel id`);
+        if (interaction.commandName === ComponentCommands.SET_HOURS) {
+            await this.setHoursCmd(interaction.options.getChannel("voicechannel", true) as VoiceChannel, interaction.options.getChannel("textchannel", true) as TextChannel, interaction.options.getInteger("hours", true), interaction);
         }
+        return Promise.resolve(undefined);
+    }
+
+    async setHoursCmd(voiceChannel: VoiceChannel, textChannel: TextChannel, hours: number, interaction: ChatInputCommandInteraction) {
+        let voiceId = voiceChannel.id;
+        let textId = textChannel.id;
+        const vcChannelPairs: VoiceTextPair[] = (this.djmtGuild.getComponent(ComponentNames.VOICE_TEXT_PAIR) as VoiceTextPairComponent).voiceTextPairs;
+        for (const pair of vcChannelPairs) {
+            if (pair.voiceChannel.id === voiceId && pair.textChannel.id === textId) {
+                this.consecutiveHours.set(pair, hours);
+                await interaction.reply({content: `${pair.textChannel.name} <=> ${pair.voiceChannel.name} set to ${this.consecutiveHours.get(pair)}`, ephemeral: true});
+                return;
+            }
+        }
+        await interaction.reply({content: `Could not find the desired vc text pair. Please make sure its set.`, ephemeral: true});
     }
 
     async vcRemindersJob() {

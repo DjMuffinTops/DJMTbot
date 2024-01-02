@@ -1,18 +1,34 @@
-import {Component} from "../Component";
-import {Cron} from "../Cron";
+import { Component } from "../Component";
+import { Cron } from "../Cron";
 import {
+    ChannelType,
+    ChatInputCommandInteraction,
     GuildMember,
+    Interaction,
     Message,
     MessageReaction,
+    PermissionFlagsBits,
+    SlashCommandBuilder,
+    TextBasedChannel,
     TextChannel,
     User,
     VoiceState
 } from "discord.js";
-import {ComponentNames} from "../Constants/ComponentNames";
-import {dayOfTheWeekConstants} from "../Constants/DayOfTheWeekConstants";
-import {isAdmin} from "../HelperFunctions";
-import {ComponentCommands} from "../Constants/ComponentCommands";
+import { ComponentNames } from "../Constants/ComponentNames";
+import { dayOfTheWeekConstants } from "../Constants/DayOfTheWeekConstants";
+import { isInteractionAdmin, isMessageAdmin } from "../HelperFunctions";
+import { ComponentCommands } from "../Constants/ComponentCommands";
 
+const setDotwCommand = new SlashCommandBuilder();
+setDotwCommand.setName(ComponentCommands.SET_DOTW);
+setDotwCommand.setDescription("Sets the day of the week channel");
+setDotwCommand.addChannelOption(input => input.setName("channel").setDescription("The channel to add or remove from the day of the week channels list").addChannelTypes(ChannelType.GuildText).setRequired(true));
+setDotwCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+const printDotwCommand = new SlashCommandBuilder();
+printDotwCommand.setName(ComponentCommands.PRINT_DOTW);
+printDotwCommand.setDescription("Prints the day of the week channel");
+printDotwCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 // Declare data you want to save in JSON here
 interface DayOfTheWeekComponentSave {
@@ -27,6 +43,7 @@ interface DayOfTheWeek {
 export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> {
 
     name: ComponentNames = ComponentNames.DAY_OF_THE_WEEK;
+    commands: SlashCommandBuilder[] = [setDotwCommand, printDotwCommand];
     dotwChannels: string[] = [];
 
 
@@ -76,16 +93,33 @@ export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> 
     }
 
     async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
-        const command = args?.shift()?.toLowerCase() || '';
-        if (command === ComponentCommands.SET_DOTW) {
-            await this.setDotwCmd(args, message);
-        }
         return Promise.resolve(undefined);
     }
 
 
     async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
         return Promise.resolve(undefined);
+    }
+
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
+        if (!interaction.isChatInputCommand()) {
+            return;
+        }
+        if (interaction.commandName === ComponentCommands.SET_DOTW) {
+            // Admin only
+            if (!isInteractionAdmin(interaction)) {
+                await interaction.reply({ content: `This command requires administrator permissions.` });
+                return;
+            }
+            await this.setDotwCmd(interaction.options.getChannel<ChannelType.GuildText>("channel", true), interaction);
+        } else if (interaction.commandName === ComponentCommands.PRINT_DOTW) {
+            // Admin only
+            if (!isInteractionAdmin(interaction)) {
+                await interaction.reply({ content: `This command requires administrator permissions.` });
+                return;
+            }
+            await this.printDotwChannels(interaction);
+        }
     }
 
     async dotwJob() {
@@ -120,41 +154,27 @@ export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> 
         }
     }
 
-    async setDotwCmd(args: string[], message: Message) {
-        // Admin only
-        if (!isAdmin(message)) {
-            await message.channel.send(`This command requires administrator permissions.`);
-            return;
-        }
-
-        if (args.length === 0) {
-            let channelString = "";
-            if (this.dotwChannels?.length > 0) {
-                this.dotwChannels.forEach((channelId: string) => {
-                    channelString += `<#${channelId}> `;
-                });
-                await message.channel.send(`Day of the Week Channel: ${channelString}`);
-            } else {
-                await message.channel.send(`No Day of the Week Channel has been set!`);
-            }
+    async setDotwCmd(channel: TextBasedChannel, interaction: ChatInputCommandInteraction) {
+        if (this.dotwChannels.includes(channel.id)) {
+            this.dotwChannels = [];
+            await this.djmtGuild.saveJSON();
+            await interaction.reply({ content: `Removed <#${channel.id}> as the Day of the Week Channel!`, ephemeral: true });
         } else {
-            for (const rawChannelId of args) {
-                let channelId = rawChannelId.substring(2, rawChannelId.indexOf('>'));
-                const foundChannel = await this.djmtGuild.getGuildChannel(channelId);
-                if (!foundChannel) {
-                    await message.channel.send("The given channel is invalid!");
-                    continue;
-                }
-                if (this.dotwChannels.includes(channelId)) {
-                    this.dotwChannels = [];
-                    await this.djmtGuild.saveJSON();
-                    await message.channel.send(`Removed ${rawChannelId} as the Day of the Week Channel!`);
-                } else {
-                    this.dotwChannels = [channelId];
-                    await this.djmtGuild.saveJSON();
-                    await message.channel.send(`Set ${rawChannelId} as the Day of the Week Channel!`);
-                }
-            }
+            this.dotwChannels = [channel.id];
+            await this.djmtGuild.saveJSON();
+            await interaction.reply({ content: `Set <#${channel.id}> as the Day of the Week Channel!`, ephemeral: true });
+        }
+    }
+
+    async printDotwChannels(interaction: ChatInputCommandInteraction) {
+        let channelString = "";
+        if (this.dotwChannels?.length > 0) {
+            this.dotwChannels.forEach((channelId: string) => {
+                channelString += `<#${channelId}> `;
+            });
+            await interaction.reply({ content: `Day of the Week Channel: ${channelString}`, ephemeral: true });
+        } else {
+            await interaction.reply({ content: `No Day of the Week Channel has been set!`, ephemeral: true });
         }
     }
 }

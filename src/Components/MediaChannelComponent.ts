@@ -1,9 +1,19 @@
 import {Component} from "../Component";
-import {GuildMember, Message, MessageReaction, TextChannel, User, VoiceState} from "discord.js";
+import {ChannelType, ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, PermissionFlagsBits, SlashCommandBuilder, TextChannel, User, VoiceState} from "discord.js";
 import {ComponentNames} from "../Constants/ComponentNames";
-import {isAdmin} from "../HelperFunctions";
-import {DJMTGuild} from "../DJMTGuild";
+import {isMessageAdmin, MEDIA_LINK_REGEX} from "../HelperFunctions";
 import {ComponentCommands} from "../Constants/ComponentCommands";
+
+const setMediaChannelCommand = new SlashCommandBuilder();
+setMediaChannelCommand.setName(ComponentCommands.SET_MEDIA_CHANNEL);
+setMediaChannelCommand.setDescription("Sets the media channel");
+setMediaChannelCommand.addChannelOption(input => input.setName("channel").setDescription("The channel to add or remove from the media channels list").addChannelTypes(ChannelType.GuildText).setRequired(true));
+setMediaChannelCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+const getMediaChannelCommand = new SlashCommandBuilder();
+getMediaChannelCommand.setName(ComponentCommands.PRINT_MEDIA_CHANNEL);
+getMediaChannelCommand.setDescription("Gets the media channel");
+getMediaChannelCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 /**
  * Declare data you want to save in JSON here. This interface is used for getSaveData and
@@ -21,7 +31,7 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
     // MANDATORY: Define a name in ComponentNames.ts and place it here.
     name: ComponentNames = ComponentNames.MEDIA_CHANNEL;
     channelsArray: TextChannel[] = [];
-    linkRegex: RegExp = /(https?:\/\/[^\s]+)/; // not great but should work for all but weird edge cases
+    commands: SlashCommandBuilder[] = [setMediaChannelCommand, getMediaChannelCommand];
     // may move to constants in future if needed?
 
     async getSaveData(): Promise<MediaComponentSave> {
@@ -67,14 +77,19 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
         return Promise.resolve(undefined);
     }
 
-    async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
-        const command = args?.shift()?.toLowerCase() || '';
-        // Any interactive commands should be defined in ComponentCommands.ts
-        if (command === ComponentCommands.SET_MEDIA_CHANNEL) {
-            await this.setMediaChannel(args, message);
-        } else if (command === ComponentCommands.GET_MEDIA_CHANNEL) {
-            await this.getMediaChannel(message);
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
+        if (!interaction.isChatInputCommand()) {
+            return;
         }
+        if (interaction.commandName === ComponentCommands.SET_MEDIA_CHANNEL) {
+            await this.setMediaChannel(interaction.options.getChannel<ChannelType.GuildText>("channel", true), interaction);
+        } else if (interaction.commandName === ComponentCommands.PRINT_MEDIA_CHANNEL) {
+            await this.getMediaChannel(interaction);
+        }
+    }
+
+    async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
+        return Promise.resolve(undefined);
     }
 
     async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
@@ -84,67 +99,47 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
     /**
      * Toggles certain channels as "media channels", where any non-media messages will be deleted.
      * @param args A list of channels to toggle.
-     * @param message The message object of the command message.
+     * @param interaction The message object of the command message.
      * @private
      */
-    private async setMediaChannel(args: string[], message: Message): Promise<void> {
-        if (!isAdmin(message)) {
-            await message.channel.send(`This command requires administrator permissions.`);
-            return;
-        }
-        if (args.length === 0) {
-            await message.channel.send('Toggles a channel as a media channel, or multiple channels at the same time.');
-            await message.channel.send('Command syntax: \`setmc #channel1 #channel2 #channel3 ...\`');
-            await message.channel.send('You can also use \`getmc\` to see a list of set channels.');
-            return;
-        }
-        // TODO: also accept channels by name - make getGuildChannels accept channel names as well?
-        for (const arg of args) {
-            let chid = arg.replace(/(\<|\>|\#)/gi, "");
-            const channel = this.djmtGuild.getGuildChannel(chid) as TextChannel;
+    private async setMediaChannel(channel: TextChannel, interaction: ChatInputCommandInteraction): Promise<void> {
             if (!channel) {
-                await message.channel.send(`${arg} is not a valid channel`);
-                continue;
+                await interaction.reply({content: `${channel} is not a valid channel`, ephemeral: true});
             }
+            const chid = channel.id;
             // find channel in the list of media channels, if it exists
             let exists = false;
             this.channelsArray.forEach( (item, index) => {
-                if(item.id === chid) {
+                if (item.id === chid) {
                     exists = true;
-                    // really, js? why is this a thing
-                    this.channelsArray.splice(index,1);
+                    this.channelsArray.splice(index, 1);
                 }
             });
             if (exists) {
-                await message.channel.send(`Removed ${arg} as a media channel.`);
+                await interaction.reply({content: `Removed ${channel} as a media channel.`, ephemeral: true});
             }
             else {
                 this.channelsArray.push(channel);
-                await message.channel.send(`Successfully added ${arg} as a media channel.`);
+                await interaction.reply({content: `Successfully added ${channel} as a media channel.`, ephemeral: true});
             }
-        }
         await this.djmtGuild.saveJSON();
     }
 
     /**
      * Returns a list of media channels.
-     * @param message The message object of the command message.
+     * @param interaction The message object of the command message.
      * @private
      */
-    private async getMediaChannel(message: Message): Promise<void> {
-        if (!isAdmin(message)) {
-            await message.channel.send(`This command requires administrator permissions.`);
-            return;
-        }
+    private async getMediaChannel(interaction: ChatInputCommandInteraction): Promise<void> {
         if (this.channelsArray.length === 0) {
-            await message.channel.send(`There are no set media channels.`);
+            await interaction.reply({content: `There are no set media channels.`, ephemeral: true});
             return;
         }
         let m = 'The current set media channels are:\n';
         for (const c of this.channelsArray) {
             m += `<#${c.id}>\n`;
         }
-        await message.channel.send(m);
+        await interaction.reply({content: m, ephemeral: true});
     }
 
     /**
@@ -155,7 +150,7 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
     private async checkMedia(message: Message): Promise<void> {
         if (this.channelsArray.indexOf(<TextChannel>message.channel) > -1) {
             // delete all messages without attachments or links
-            if (message.attachments.size === 0 && !(this.linkRegex.test(message.content))) {
+            if (message.attachments.size === 0 && !(MEDIA_LINK_REGEX.test(message.content))) {
                 let msg = `${message.author.toString()}, your message has been deleted because it does not have media.`;
                 try {
                     await message.delete();

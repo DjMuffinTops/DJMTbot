@@ -1,10 +1,14 @@
 import {
-    Guild, GuildBasedChannel, GuildChannel,
+    Guild, GuildBasedChannel,
     GuildMember,
     Message, AttachmentBuilder,
     MessageReaction, TextChannel,
     User,
-    VoiceState
+    VoiceState,
+    Interaction,
+    SlashCommandBuilder,
+    REST,
+    Routes
 } from "discord.js";
 
 import {
@@ -24,6 +28,8 @@ export interface GuildConfig {
     debugMode: boolean,
     prefix: string,
     debugChannelId: string,
+    modAlertsChannelId: string,
+    modLoggingChannelId: string,
     componentData: any,
 }
 
@@ -38,8 +44,10 @@ export class DJMTGuild {
     readonly guildId: string;
     // Config
     private _debugMode: boolean = defaultConfig.debugMode;
-    private _prefix: string = process.env.DEFAULT_PREFIX as string;
+    private _prefix: string = "djmt!";
     private _debugChannelId: string = defaultConfig.debugChannelId;
+    private _modAlertsChannelId: string = defaultConfig.modAlertsChannelId;
+    private _modLoggingChannelId: string = defaultConfig.modLoggingChannelId;
     private componentData = defaultConfig.componentData;
     private components: Map<ComponentNames, Component<any>>;
 
@@ -69,9 +77,28 @@ export class DJMTGuild {
         function createInstance(className: string, ...args: any[]) {
             return new (<any>components)[className](...args);
         }
+        const guildCommands: SlashCommandBuilder[] = [];
         for (const className of Object.keys(components)) {
             const instance: Component<any> = createInstance(className, this) as Component<any>;
+            guildCommands.push(...instance.commands);
             this.components.set(instance.name, instance);
+        }
+
+        // Construct and prepare an instance of the REST module
+        const rest = new REST().setToken(process.env.TOKEN as string);
+        // Deploy your commands!
+        try {
+            console.log(`[${this.guildId}]Started refreshing ${guildCommands.length} application (/) commands.`);
+
+            // The put method is used to fully refresh all commands in the guild with the current set
+            const data: any = await rest.put(
+                Routes.applicationGuildCommands(process.env.APPLICATION_ID as string, this.guildId),
+                { body: guildCommands.map(command => command.toJSON()) },
+            );
+            console.log(`[${this.guildId}]Successfully reloaded ${data.length} application (/) commands.`);
+        } catch (error) {
+            // And of course, make sure you catch and log any errors!
+            console.error(error);
         }
     }
 
@@ -92,6 +119,8 @@ export class DJMTGuild {
             debugMode: this._debugMode,
             prefix: this._prefix,
             debugChannelId: this._debugChannelId,
+            modAlertsChannelId: this._modAlertsChannelId,
+            modLoggingChannelId: this._modLoggingChannelId,
             componentData: this.componentData,
         }
     }
@@ -116,6 +145,8 @@ export class DJMTGuild {
             this._debugMode = gConfig.debugMode;
             this._prefix = gConfig.prefix;
             this._debugChannelId = gConfig.debugChannelId;
+            this._modAlertsChannelId = gConfig.modAlertsChannelId;
+            this._modLoggingChannelId = gConfig.modLoggingChannelId;
             this.componentData = gConfig.componentData;
             for (const component of Array.from(this.components.values())) {
                 // Send component data to their respective components.
@@ -159,7 +190,7 @@ export class DJMTGuild {
      */
     async resetJSON() {
         this._debugMode = defaultConfig.devMode;
-        this._prefix = process.env.DEFAULT_PREFIX as string;
+        this._prefix = "djmt!" as string;
         this._debugChannelId = defaultConfig.debugChannel;
         this.componentData = defaultConfig.componentData;
         console.log(`Reset ${this.guildId} config to default settings.`);
@@ -285,9 +316,30 @@ export class DJMTGuild {
         }
     }
 
+    /**
+     * Relay's the discord client's 'interactionCreate' event to all components
+     * @param interaction the interaction
+     */
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
+        if (this.isReady) {
+            for (const component of Array.from(this.components.values())) {
+                await component.onInteractionCreate(interaction);
+            }
+        }
+    }
+
     getGuildChannel(channelId: string): GuildBasedChannel | undefined {
         return this.guild?.channels.cache.find(channel => channel.id === channelId);
     }
+
+    getModAlertsChannel(): TextChannel | undefined {
+        return this.getGuildChannel(this.modAlertsChannelId) as TextChannel;
+    }
+
+    getModLoggingChannel(): TextChannel | undefined {
+        return this.getGuildChannel(this.modLoggingChannelId) as TextChannel;
+    }
+
 
     // Getters / Setters
     get debugMode(): boolean {
@@ -314,6 +366,24 @@ export class DJMTGuild {
 
     set debugChannelId(value: string) {
         this._debugChannelId = value;
+        this.saveJSON();
+    }
+
+    get modAlertsChannelId(): string {
+        return this._modAlertsChannelId;
+    }
+    
+    set modAlertsChannelId(value: string) {
+        this._modAlertsChannelId = value;
+        this.saveJSON();
+    }
+
+    get modLoggingChannelId(): string {
+        return this._modLoggingChannelId;
+    }
+
+    set modLoggingChannelId(value: string) {
+        this._modLoggingChannelId = value;
         this.saveJSON();
     }
 }

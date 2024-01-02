@@ -7,12 +7,51 @@ import {
     MessageReaction, TextChannel,
     User,
     VoiceState,
-    ChannelType
+    ChannelType,
+    Interaction,
+    SlashCommandBuilder,
+    PermissionFlagsBits,
+    ChatInputCommandInteraction
 } from "discord.js";
 import { ComponentNames } from "../Constants/ComponentNames";
-import { isAdmin } from "../HelperFunctions";
+import { isMessageAdmin } from "../HelperFunctions";
 import { ComponentCommands } from "../Constants/ComponentCommands";
 import { DJMTbot } from "../DJMTbot";
+
+const setAutoReactCommand = new SlashCommandBuilder();
+setAutoReactCommand.setName(ComponentCommands.SET_AUTO_REACT);
+setAutoReactCommand.setDescription("Sets the auto react channel for a given emote");
+setAutoReactCommand.addStringOption(input => input.setName("emote").setDescription("The emote to add or remove from the auto react list").setRequired(true));
+setAutoReactCommand.addChannelOption(input => input.setName("channel").setDescription("The channel to add or remove from the auto react list").addChannelTypes(ChannelType.GuildText).setRequired(true));
+setAutoReactCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+const printAutoReactCommand = new SlashCommandBuilder();
+printAutoReactCommand.setName(ComponentCommands.PRINT_AUTO_REACT);
+printAutoReactCommand.setDescription("Prints the auto react channels");
+printAutoReactCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+const setReactPairsCommand = new SlashCommandBuilder();
+setReactPairsCommand.setName(ComponentCommands.SET_REACT_PAIRS);
+setReactPairsCommand.setDescription("Sets the react pair for a given emote, setting the threshold for the react to be sent to the channel");
+setReactPairsCommand.addStringOption(input => input.setName("emote").setDescription("The emote to add or remove from the react channels list").setRequired(true));
+setReactPairsCommand.addChannelOption(input => input.setName("channel").setDescription("The destination channel to add or remove from the react channels list").addChannelTypes(ChannelType.GuildText).setRequired(true));
+setReactPairsCommand.addIntegerOption(input => input.setName("threshold").setDescription("The number of reacts required to send the message to the channel").setRequired(true));
+
+const printReactPairsCommand = new SlashCommandBuilder();
+printReactPairsCommand.setName(ComponentCommands.PRINT_REACT_PAIRS);
+printReactPairsCommand.setDescription("Prints the react channels");
+printReactPairsCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+const setStarCommand = new SlashCommandBuilder();
+setStarCommand.setName(ComponentCommands.SET_STAR);
+setStarCommand.setDescription("Sets auto star reacts for a given channel");
+setStarCommand.addChannelOption(input => input.setName("channel").setDescription("The channel to add or remove from the star channels list").addChannelTypes(ChannelType.GuildText).setRequired(true));
+setStarCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+const printStarCommand = new SlashCommandBuilder();
+printStarCommand.setName(ComponentCommands.PRINT_STAR);
+printStarCommand.setDescription("Prints the star channels");
+printStarCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 // Declare data you want to save in JSON here
 interface ReactBoardSave {
@@ -33,6 +72,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
     emoteReactBoardMap: Map<string, ReactBoardMapValue> = new Map();
     autoReactMap: Map<string, string[]> = new Map();
     starChannels: string[] = [];
+    commands: SlashCommandBuilder[] = [setAutoReactCommand, printAutoReactCommand, setReactPairsCommand, printReactPairsCommand, setStarCommand, printStarCommand];
 
     async getSaveData(): Promise<ReactBoardSave> {
         const clearedERMap = new Map(this.emoteReactBoardMap);
@@ -84,155 +124,134 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
     }
 
     async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
-        const command = args?.shift()?.toLowerCase() || '';
-        if (command === ComponentCommands.SET_AUTO_REACT) {
-            await this.setAutoReactCmd(args, message);
-        } else if (command === ComponentCommands.SET_REACT_PAIRS) {
-            await this.setReactPairsCmd(args, message);
-        } else if (command === ComponentCommands.SET_STAR) {
-            await this.setStarCmd(args, message);
-        }
         return Promise.resolve(undefined);
     }
-
 
     async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
         return Promise.resolve(undefined);
     }
 
-    async setAutoReactCmd(args: string[], message: Message) {
-        // Admin only
-        if (!isAdmin(message)) {
-            await message.channel.send(`This command requires administrator permissions.`);
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
+        if (!interaction.isChatInputCommand()) {
             return;
         }
+        if (interaction.commandName === ComponentCommands.SET_AUTO_REACT) {
+            await this.setAutoReactCmd(interaction.options.getString("emote", true), interaction.options.getChannel<ChannelType.GuildText>("channel", true) as TextChannel, interaction);
+        } else if (interaction.commandName === ComponentCommands.PRINT_AUTO_REACT) {
+            await this.printAutoReactCmd(interaction);
+        } else if (interaction.commandName === ComponentCommands.SET_REACT_PAIRS) {
+            await this.setReactPairsCmd(interaction.options.getString("emote", true), interaction.options.getChannel<ChannelType.GuildText>("channel", true) as TextChannel, interaction.options.getInteger("threshold", true), interaction);
+        } else if (interaction.commandName === ComponentCommands.PRINT_REACT_PAIRS) {
+            await this.printReactPairsCmd(interaction);
+        } else if (interaction.commandName === ComponentCommands.SET_STAR) {
+            await this.setStarCmd(interaction.options.getChannel<ChannelType.GuildText>("channel", true) as TextChannel, interaction);
+        } else if (interaction.commandName === ComponentCommands.PRINT_STAR) {
+            await this.printStartCmd(interaction);
+        }
+        return Promise.resolve(undefined);
+    }
 
-        if (args.length === 0) {
-            let msg = "";
-            if (this.autoReactMap.size > 0) {
-                let msg = '';
-                this.autoReactMap.forEach((channelIds, rawEmojiId) => {
-                    channelIds.forEach(channelId => {
-                        msg += `${rawEmojiId} => <#${channelId}>\n`;
-                    });
+    async printAutoReactCmd(interaction: ChatInputCommandInteraction) {
+        let msg = "";
+        if (this.autoReactMap.size > 0) {
+            let msg = '';
+            this.autoReactMap.forEach((channelIds, rawEmojiId) => {
+                channelIds.forEach(channelId => {
+                    msg += `${rawEmojiId} => <#${channelId}>\n`;
                 });
-                await message.channel.send(`Auto React Channels:\n${msg}`);
-            } else {
-                await message.channel.send(`No Auto React Channels have been set!`);
-            }
-        } else if (args.length === 2) {
-            const rawEmote = args[0];
-            const rawChannelId = args[1];
-            let emoteId = rawEmote.substring(rawEmote.lastIndexOf(':') + 1, rawEmote.indexOf('>'));
-            let foundEmote = undefined;
-            // let foundTextChannel = undefined;
-            foundEmote = DJMTbot.getInstance().client.emojis.cache.get(emoteId);
-            if (!foundEmote) {
-                await message.channel.send(`The given emote could not be found, make sure this bot in is the server the emote is from!`);
-                return;
-            }
-            let channelId = rawChannelId.substring(2, rawChannelId.indexOf('>'));
-            const foundChannel = this.djmtGuild.getGuildChannel(channelId);
-            if (!foundChannel) {
-                await message.channel.send("The given channel is invalid!");
-                return;
-            }
-            if (this.autoReactMap.has(rawEmote)) {
-                if (this.autoReactMap.get(rawEmote)?.includes(channelId)) {
-                    // If we have a match delete it from the map
-                    // @ts-ignore
-                    this.autoReactMap.get(rawEmote).splice(this.autoReactMap.get(rawEmote).indexOf(channelId), 1);
-                    // @ts-ignore
-                    if (this.autoReactMap.get(rawEmote).length < 1) {
-                        this.autoReactMap.delete(rawEmote)
-                    }
-                    await this.djmtGuild.saveJSON();
-                    await message.channel.send(`Removed ${rawChannelId} from the auto react list for ${rawEmote}`);
-                } else {
-                    this.autoReactMap.get(rawEmote)?.push(channelId);
-                    await this.djmtGuild.saveJSON();
-                    await message.channel.send(`Added ${rawChannelId} to the auto react list for ${rawEmote}!`);
-                }
-            } else {
-                this.autoReactMap.set(rawEmote, [channelId]);
-                await this.djmtGuild.saveJSON();
-                await message.channel.send(`Added ${rawChannelId} to the auto react list for ${rawEmote}!`);
-            }
+            });
+            await interaction.reply({content: `Auto React Channels:\n${msg}`, ephemeral: true});
         } else {
-            await message.channel.send(`Requires exactly two arguments, the raw emote and a channel mention. You gave ${args}`);
-
+            await interaction.reply({content: `No Auto React Channels have been set!`, ephemeral: true});
         }
     }
 
-    async setReactPairsCmd(args: string[], message: Message) {
-        // Admin only
-        if (!isAdmin(message)) {
-            await message.channel.send(`This command requires administrator permissions.`);
+    async setAutoReactCmd(rawEmote: string, channel: TextChannel, interaction: ChatInputCommandInteraction) {
+        let emoteId = rawEmote.substring(rawEmote.lastIndexOf(':') + 1, rawEmote.indexOf('>'));
+        let foundEmote = undefined;
+        foundEmote = DJMTbot.getInstance().client.emojis.cache.get(emoteId);
+        if (!foundEmote) {
+            await interaction.reply({content: `The given emote could not be found, make sure this bot in is the server the emote is from!`, ephemeral: true});
             return;
         }
-
-        if (args.length === 0) {
-            if (this.emoteReactBoardMap.size > 0) {
-                let msg = '';
-                this.emoteReactBoardMap.forEach((value, key) => {
-                    const emoteId = key.substring(key.lastIndexOf(':') + 1, key.indexOf('>'));
-                    const emoji = DJMTbot.getInstance().client.emojis.cache.get(emoteId);
-                    msg += `${emoji?.toString()} => <#${value.channelId}> (threshold: ${value.threshold})\n`;
-                });
-                await message.channel.send(`React Channels:\n${msg}`);
-            } else {
-                await message.channel.send(`No React Channel Pairs have been set!`);
-            }
-        } else if (args.length === 3) {
-            const rawEmote = args[0]; // The emote
-            const rawChannelId = args[1];
-            let threshold: number;
-            try {
-                threshold = parseInt(args[2]);
-            } catch (e) {
-                console.error(e);
-                await message.channel.send(`The threshold must be an integer number. Given ${args[2]}`);
-                return;
-            }
-            let emoteId = rawEmote.substring(rawEmote.lastIndexOf(':') + 1, rawEmote.indexOf('>'));
-            let channelId = rawChannelId.substring(2, rawChannelId.indexOf('>'));
-            let foundEmote = DJMTbot.getInstance().client.emojis.cache.get(emoteId);
-            let foundTextChannel = this.djmtGuild.getGuildChannel(channelId);
-            if (!foundEmote || !foundTextChannel) {
-                await message.channel.send("The given channel or emote is invalid!");
-                return;
-            }
-            if (foundTextChannel.type !== ChannelType.GuildText) {
-                await message.channel.send(`The given channel is not a Text Channel`);
-                return;
-            }
-            if (this.emoteReactBoardMap.has(rawEmote) &&
-                this.emoteReactBoardMap.get(rawEmote)?.channelId === channelId) {
+        let channelId = channel.id
+        const foundChannel = this.djmtGuild.getGuildChannel(channelId);
+        if (!foundChannel) {
+            await interaction.reply({content: "The given channel is invalid!", ephemeral: true});
+            return;
+        }
+        if (this.autoReactMap.has(rawEmote)) {
+            if (this.autoReactMap.get(rawEmote)?.includes(channelId)) {
+                // If we have a match delete it from the map
                 // @ts-ignore
-                const val: ReactBoardMapValue = this.emoteReactBoardMap.get(rawEmote);
-                // If we have a match delete it from the map and the config
-                this.emoteReactBoardMap.delete(rawEmote);
-
-                await this.djmtGuild.saveJSON();
-                await message.channel.send(`Removed [${rawEmote}, ${val.channelId}, ${val.threshold}] from React Channels list!`);
-                return;
-
-            } else if (this.emoteReactBoardMap.has(rawEmote)) {
-                await message.channel.send(`A pair for this emote already exists! Remove that pair first.`);
-            } else {
-                const reactBoardMapValue: ReactBoardMapValue = { // For our map, add in an empty array for recent msgs
-                    threshold: threshold,
-                    channelId: channelId,
-                    recentMsgIds: [],
+                this.autoReactMap.get(rawEmote).splice(this.autoReactMap.get(rawEmote).indexOf(channelId), 1);
+                // @ts-ignore
+                if (this.autoReactMap.get(rawEmote).length < 1) {
+                    this.autoReactMap.delete(rawEmote)
                 }
-                this.emoteReactBoardMap.set(rawEmote, reactBoardMapValue);
                 await this.djmtGuild.saveJSON();
-                await message.channel.send(`Added ${rawEmote} => <#${channelId}> to the React Channels list (threshold ${threshold})!`);
+                await interaction.reply({content: `Removed ${channel} from the auto react list for ${rawEmote}`, ephemeral: true});
+            } else {
+                this.autoReactMap.get(rawEmote)?.push(channelId);
+                await this.djmtGuild.saveJSON();
+                await interaction.reply({content: `Added ${channel} to the auto react list for ${rawEmote}!`, ephemeral: true});
             }
-
         } else {
-            await message.channel.send(`Requires exactly three arguments, an emote, and a text channel mention, and an integer threshold for the react. You gave ${args}`);
+            this.autoReactMap.set(rawEmote, [channelId]);
+            await this.djmtGuild.saveJSON();
+            await interaction.reply({content: `Added ${channel} to the auto react list for ${rawEmote}!`, ephemeral: true});
+        }
+    }
 
+    async printReactPairsCmd(interaction: ChatInputCommandInteraction) {
+        if (this.emoteReactBoardMap.size > 0) {
+            let msg = '';
+            this.emoteReactBoardMap.forEach((value, key) => {
+                const emoteId = key.substring(key.lastIndexOf(':') + 1, key.indexOf('>'));
+                const emoji = DJMTbot.getInstance().client.emojis.cache.get(emoteId);
+                msg += `${emoji?.toString()} => <#${value.channelId}> (threshold: ${value.threshold})\n`;
+            });
+            await interaction.reply({content: `React Channels:\n${msg}`, ephemeral: true});
+        } else {
+            await interaction.reply({content: `No React Channel Pairs have been set!`, ephemeral: true});
+        }
+    }
+
+    async setReactPairsCmd(rawEmote: string, channel: TextChannel, threshold: number, interaction: ChatInputCommandInteraction) {
+        let emoteId = rawEmote.substring(rawEmote.lastIndexOf(':') + 1, rawEmote.indexOf('>'));
+        let channelId = channel.id;
+        let foundEmote = DJMTbot.getInstance().client.emojis.cache.get(emoteId);
+        let foundTextChannel = this.djmtGuild.getGuildChannel(channelId);
+        if (!foundEmote || !foundTextChannel) {
+            await interaction.reply({content: "The given channel or emote is invalid!", ephemeral: true});
+            return;
+        }
+        if (foundTextChannel.type !== ChannelType.GuildText) {
+            await interaction.reply({content: `The given channel is not a Text Channel`, ephemeral: true});
+            return;
+        }
+        if (this.emoteReactBoardMap.has(rawEmote) &&
+            this.emoteReactBoardMap.get(rawEmote)?.channelId === channelId) {
+            // @ts-ignore
+            const val: ReactBoardMapValue = this.emoteReactBoardMap.get(rawEmote);
+            // If we have a match delete it from the map and the config
+            this.emoteReactBoardMap.delete(rawEmote);
+
+            await this.djmtGuild.saveJSON();
+            await interaction.reply({content: `Removed [${rawEmote}, ${val.channelId}, ${val.threshold}] from React Channels list!`, ephemeral: true});
+            return;
+
+        } else if (this.emoteReactBoardMap.has(rawEmote)) {
+            await interaction.reply({content: `A pair for this emote already exists! Remove that pair first.`, ephemeral: true});
+        } else {
+            const reactBoardMapValue: ReactBoardMapValue = { // For our map, add in an empty array for recent msgs
+                threshold: threshold,
+                channelId: channelId,
+                recentMsgIds: [],
+            }
+            this.emoteReactBoardMap.set(rawEmote, reactBoardMapValue);
+            await this.djmtGuild.saveJSON();
+            await interaction.reply({content: `Added ${rawEmote} => <#${channelId}> to the React Channels list (threshold ${threshold})!`, ephemeral: true});
         }
     }
 
@@ -275,7 +294,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
                         { name: 'Message', value: message.content || '\u200b', inline: true },
                         { name: 'Media URL', value: message.attachments.first()?.url || '\u200b', inline: false })
                     .setThumbnail(message.author.displayAvatarURL({ size: 128 }))
-                    .setImage(msgAttachments.length > 0 ? msgAttachments[0].url : '')
+                    .setImage(msgAttachments.length > 0 ? msgAttachments[0].url : null)
                     .setAuthor({ name: `${message.author.username}#${message.author.discriminator} (${message.author.id})`, iconURL: message.author.displayAvatarURL({ size: 128 }) })
                     .setFooter({ text: `${reaction.count} ⭐ | ${message.id}` });
                 try {
@@ -290,45 +309,39 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
             }
         }
     }
-    async setStarCmd(args: string[], message: Message) {
-        // Admin only
-        if (!isAdmin(message)) {
-            await message.channel.send(`This command requires administrator permissions.`);
+
+    async printStartCmd(interaction: ChatInputCommandInteraction) {
+        let channelString = "";
+        if (this.starChannels?.length > 0) {
+            this.starChannels.forEach((channelId: string) => {
+                channelString += `<#${channelId}> `;
+            });
+            await interaction.reply({content: `Star Channels: ${channelString}`, ephemeral: true});
+        } else {
+            await interaction.reply({content: `No Star Channels have been set!`, ephemeral: true});
+        }
+    }
+
+    async setStarCmd(channel: TextChannel, interaction: ChatInputCommandInteraction) {
+        let channelId = channel.id;
+        const foundChannel = await this.djmtGuild.getGuildChannel(channelId);
+        if (!foundChannel) {
+            await interaction.reply({content: "The given channel is invalid!", ephemeral: true});
             return;
         }
-
-        if (args.length === 0) {
-            let channelString = "";
-            if (this.starChannels?.length > 0) {
-                this.starChannels.forEach((channelId: string) => {
-                    channelString += `<#${channelId}> `;
-                });
-                await message.channel.send(`Star Channels: ${channelString}`);
-            } else {
-                await message.channel.send(`No Star Channels have been set!`);
-            }
+        if (this.starChannels?.includes(channelId)) {
+            this.starChannels.splice(this.starChannels.indexOf(channelId), 1);
+            await this.djmtGuild.saveJSON();
+            await interaction.reply({content: `Removed ${channel} from the star channels list!`, ephemeral: true});
         } else {
-            for (const rawChannelId of args) {
-                let channelId = rawChannelId.substring(2, rawChannelId.indexOf('>'));
-                const foundChannel = await this.djmtGuild.getGuildChannel(channelId);
-                if (!foundChannel) {
-                    await message.channel.send("The given channel is invalid!");
-                    continue;
-                }
-                if (this.starChannels?.includes(channelId)) {
-                    this.starChannels.splice(this.starChannels.indexOf(channelId), 1);
-                    await this.djmtGuild.saveJSON();
-                    await message.channel.send(`Removed ${rawChannelId} from the star channels list!`);
-                } else {
-                    if (!this.starChannels) {
-                        this.starChannels = [];
-                    }
-                    this.starChannels.push(channelId);
-                    await this.djmtGuild.saveJSON();
-                    await message.channel.send(`Added ${rawChannelId} to the star channels list!`);
-                }
+            if (!this.starChannels) {
+                this.starChannels = [];
             }
+            this.starChannels.push(channelId);
+            await this.djmtGuild.saveJSON();
+            await interaction.reply({content: `Added ${channel} to the star channels list!`, ephemeral: true});
         }
+
     }
 
     async autoStar(args: string[], message: Message) {

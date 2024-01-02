@@ -2,20 +2,35 @@ import { Component } from "../Component";
 import {
     Channel,
     ChannelType,
+    ChatInputCommandInteraction,
     GuildMember,
+    Interaction,
     Message,
-    MessageReaction, TextChannel,
+    MessageReaction, PermissionFlagsBits, SlashCommandBuilder, TextChannel,
     User,
     VoiceState
 } from "discord.js";
 import { ComponentNames } from "../Constants/ComponentNames";
 import {
     channelIdToChannel, channelMentionToChannelId,
-    isAdmin,
+    isMessageAdmin,
     mapKeys,
 } from "../HelperFunctions";
 import { ComponentCommands } from "../Constants/ComponentCommands";
 import probe, { ProbeResult } from 'probe-image-size';
+
+const setPNGRCCommand = new SlashCommandBuilder();
+setPNGRCCommand.setName(ComponentCommands.SET_PNGRC);
+setPNGRCCommand.setDescription("Sets the PNG Resolution Checking Channel and dimensions to check for");
+setPNGRCCommand.addChannelOption(input => input.setName("channel").setDescription("The channel to add or remove from the PNG Resolution Checking Channels list").addChannelTypes(ChannelType.GuildText).setRequired(true));
+setPNGRCCommand.addIntegerOption(input => input.setName("width").setDescription("The width to check for").setRequired(true));
+setPNGRCCommand.addIntegerOption(input => input.setName("height").setDescription("The height to check for").setRequired(true));
+setPNGRCCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+const printPNGRCCommand = new SlashCommandBuilder();
+printPNGRCCommand.setName(ComponentCommands.PRINT_PNGRC);
+printPNGRCCommand.setDescription("Prints the PNG Resolution Checking Channels");
+printPNGRCCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 /**
  * Declare data you want to save in JSON here. This interface is used for getSaveData and
@@ -45,6 +60,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
 
     name: ComponentNames = ComponentNames.PNG_RESOLUTION_CHECK;
     channelsMap: Map<string, PNGResolutionEntry> = new Map();
+    commands: SlashCommandBuilder[] = [setPNGRCCommand, printPNGRCCommand];
 
     async getSaveData(): Promise<PNGResolutionCheckSave> {
         return {
@@ -108,16 +124,22 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
     }
 
     async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
-        const command = args?.shift()?.toLowerCase() || '';
-        // Any interactive commands should be defined in CompoentCommands.ts
-        if (command === ComponentCommands.SET_PNGRC) {
-            await this.parseAndSetChannel(args, message);
-        }
         return Promise.resolve(undefined);
     }
 
     async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
         return Promise.resolve(undefined);
+    }
+
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
+        if (!interaction.isChatInputCommand()) {
+            return;
+        }
+        if (interaction.commandName === ComponentCommands.SET_PNGRC) {
+            await this.parseAndSetChannel(interaction.options.getChannel<ChannelType.GuildText>("channel", true), interaction.options.getInteger("width", true), interaction.options.getInteger("height", true), interaction);
+        } else if (interaction.commandName === ComponentCommands.PRINT_PNGRC) {
+            await this.printPNGRC(interaction);
+        }
     }
 
     private async checkPNGAndResolution(message: Message) {
@@ -162,84 +184,28 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
         }
     }
 
-    private async parseAndSetChannel(args: string[], message: Message) {
-        // Admin only
-        if (!isAdmin(message)) {
-            await message.channel.send(`This command requires administrator permissions.`);
-            return;
-        }
-        // No args: Print out all the marked channels and verification variables
-        if (args.length === 0) {
-            if (this.channelsMap.size <= 0) {
-                await message.channel.send(`No PNG Resolution Checking Channels have been set!`);
-            } else {
-                let msg = '';
-                this.channelsMap.forEach((PNGResolutionEntry) => {
-                    msg += `<#${PNGResolutionEntry.channel}> : width: ${PNGResolutionEntry.width} height: ${PNGResolutionEntry.height}\n`;
-                });
-                await message.channel.send(`PNG Resolution Checking Channels:\n${msg}`);
-            }
-            // Shortcut for removing marked channels: Expects a single channel mention
-        } else if (args.length === 1) {
-            const channelMention = args[0];
-            try {
-                const textChannel = await channelIdToChannel(channelMention);
-                if (textChannel) {
-                    const res = await this.removePNGRCChannel(textChannel as TextChannel);
-                    await message.channel.send(res);
-                } else {
-                    await message.channel.send(`Invalid text channel: ${channelMention}`);
-                }
-            } catch (e) {
-                console.error(e);
-                await message.channel.send("The given channel is invalid!");
-                return;
-            }
-            // Warn that this needs exactly 3 args to set
-        } else if (args.length !== 3) {
-            await message.channel.send(`Requires exactly three arguments, the text channel mention, an integer width, and integer height. You gave ${args}`);
+    private async printPNGRC(interaction: ChatInputCommandInteraction) {
+        if (this.channelsMap.size <= 0) {
+            await interaction.reply({content: `No PNG Resolution Checking Channels have been set!`, ephemeral: true});
         } else {
-            // Parse and verify the message input
-            const channelMention = args[0];
-            const widthStr = args[1];
-            const heightStr = args[2];
-
-            // Verify the width and height are integers
-            let width: number;
-            let height: number;
-            try {
-                width = parseInt(widthStr);
-                height = parseInt(heightStr);
-            } catch (e) {
-                console.error(e);
-                await message.channel.send(`The width and height must be an integer number. Given ${widthStr} and ${heightStr}`);
-                return;
-            }
-
-            // Verify the channel exists by fetching it
-            let channel: Channel | null;
-            try {
-                channel = await channelIdToChannel(channelMention);
-            } catch (e) {
-                console.error(e);
-                await message.channel.send("The given channel is invalid!");
-                return;
-            }
-
-            // Verify it is a text channel
-            if (channel?.type !== ChannelType.GuildText) {
-                await message.channel.send("The given channel is not a text channel!");
-                return;
-            }
-            // Add or remove the PNGRChannel
-            let res: string;
-            if (this.channelsMap.get(channel.id)) {
-                res = await this.removePNGRCChannel(channel as TextChannel);
-            } else {
-                res = await this.addPNGRCChannel({ channel: channel as TextChannel, width, height });
-            }
-            await message.channel.send(res);
+            let msg = '';
+            this.channelsMap.forEach((PNGResolutionEntry) => {
+                msg += `${PNGResolutionEntry.channel} : width: ${PNGResolutionEntry.width} height: ${PNGResolutionEntry.height}\n`;
+            });
+            await interaction.reply({content: `PNG Resolution Checking Channels:\n${msg}`, ephemeral: true});
         }
+    }
+
+    private async parseAndSetChannel(channel: TextChannel, width: number, height: number, interaction: ChatInputCommandInteraction) {
+        // Add or remove the PNGRChannel
+        let res: string;
+        if (this.channelsMap.get(channel.id)) {
+            res = await this.removePNGRCChannel(channel);
+        } else {
+            res = await this.addPNGRCChannel({ channel: channel, width, height });
+        }
+        await interaction.reply({content: res, ephemeral: true});
+
     }
 
     /**
