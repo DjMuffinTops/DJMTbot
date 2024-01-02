@@ -27,6 +27,7 @@ permitNewUserMediaCommand.setDefaultMemberPermissions(PermissionFlagsBits.Admini
 interface NewUserMediaLockSave {
     enabled: boolean;
     newUserThresholdInDays: number; // Accounts must be older than this in days to not be considered new
+    permittedUsers: string[];
 }
 export class NewUserMediaLock extends Component<NewUserMediaLockSave> {
 
@@ -39,7 +40,8 @@ export class NewUserMediaLock extends Component<NewUserMediaLockSave> {
     async getSaveData(): Promise<NewUserMediaLockSave> {
         return {
             enabled: this.enabled,
-            newUserThresholdInDays: this.newUserThresholdInDays
+            newUserThresholdInDays: this.newUserThresholdInDays,
+            permittedUsers: Array.from(this.permittedUsers)
         };
     }
 
@@ -47,6 +49,7 @@ export class NewUserMediaLock extends Component<NewUserMediaLockSave> {
         if (loadedObject) {
             this.enabled = loadedObject.enabled;
             this.newUserThresholdInDays = loadedObject.newUserThresholdInDays;
+            this.permittedUsers = new Set<string>(loadedObject.permittedUsers);
         }
     }
 
@@ -149,9 +152,11 @@ export class NewUserMediaLock extends Component<NewUserMediaLockSave> {
         // Toggle the user's ID in the set
         if (this.permittedUsers.has(user.id)) {
             this.permittedUsers.delete(user.id);
+            await this.djmtGuild.saveJSON();
             await interaction.reply({ content: `Removed ${user.toString()} from the list of permitted users.` });
         } else {
             this.permittedUsers.add(user.id);
+            await this.djmtGuild.saveJSON();
             await interaction.reply({ content: `Added ${user.toString()} to the list of permitted users.` });
         }
     }
