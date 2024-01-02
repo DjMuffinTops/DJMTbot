@@ -1,23 +1,22 @@
 import {Component} from "../Component";
-import {GuildMember, Interaction, Message, MessageReaction, SlashCommandBuilder, User, VoiceState} from "discord.js";
+import {ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, PermissionFlagsBits, SlashCommandBuilder, User, VoiceState} from "discord.js";
 import {ComponentNames} from "../Constants/ComponentNames";
-import { ComponentCommands } from "../Constants/ComponentCommands";
+import { DateTime } from "luxon";
+import { MEDIA_LINK_REGEX } from "../HelperFunctions";
 
-/**
- * Declare data you want to save in JSON here. This interface is used for getSaveData and
- * afterLoadJSON, as it tells Typescript what data you're expecting to write and load.
- */
+const NEW_USER_THRESHOLD_IN_DAYS = 60; // Accounts must be older than this in days to not be considered new
+const permitNewUserMediaCommand = new SlashCommandBuilder();
+permitNewUserMediaCommand.setName("permit-new-user-media");
+permitNewUserMediaCommand.setDescription("Permits a user to post media despite being a new user. Will be reapplied if the bot is restarted.");
+permitNewUserMediaCommand.addUserOption(option => option.setName("user").setDescription("The user to bypass new user media lock for").setRequired(true));
+permitNewUserMediaCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
 interface NewUserMediaLockSave {}
+export class NewUserMediaLock extends Component<NewUserMediaLockSave> {
 
-/**
- * Describe your component here! Be sure to mention what its for and if it has any command strings
- * that users can use to interact.
- * NOTE: This component class file must be exported in the index.ts within the Components folder to be run by the bot!
- */
-export class NewUserMediaLockTemplate extends Component<NewUserMediaLockSave> {
-
-    // MANDATORY: Define a name in ComponentNames.ts and place it here.
-    name: ComponentNames = ComponentNames.EXAMPLE_COMPONENT;
+    name: ComponentNames = ComponentNames.NEW_USER_MEDIA_LOCK;
+    permittedUsers: Set<string> = new Set<string>();
+    commands: SlashCommandBuilder[] = [permitNewUserMediaCommand];
 
     async getSaveData(): Promise<NewUserMediaLockSave> {
         return {};
@@ -36,7 +35,31 @@ export class NewUserMediaLockTemplate extends Component<NewUserMediaLockSave> {
     }
 
     async onMessageCreate(args: string[], message: Message): Promise<void> {
-        return Promise.resolve(undefined);
+        const user = message.author;
+        // Use luxon to compare the user's account creation date to the current date
+        const creationDateDT = DateTime.fromJSDate(user.createdAt);
+        const accountAgeInDays = creationDateDT.diffNow("days").negate().days;
+        if (!this.permittedUsers.has(user.id) && accountAgeInDays < NEW_USER_THRESHOLD_IN_DAYS) {
+            let attemptedMediaPost = false;
+            // This is a new user so prevent them from sending any media attachments
+            if (message.attachments.size > 0) {
+                attemptedMediaPost = true;
+            }
+            // Check if the message contains any embeds
+            if (message.embeds.length > 0) {
+                attemptedMediaPost = true;
+            }
+            // Check if the message content has any links
+            if (MEDIA_LINK_REGEX.test(message.content)) {
+                attemptedMediaPost = true;
+            }
+            if (attemptedMediaPost) {
+                // Delete the message
+                await message.delete();
+                // Send a message to the user
+                await message.channel.send(`Hello, <@${user.id}>! Your account is not permitted to post media due to being a new discord account. If you'd like to request to post media, please message staff through ModMail!`);            }
+            return;
+        }
     }
 
     async onMessageReactionAdd(messageReaction: MessageReaction, user: User): Promise<void> {
@@ -52,11 +75,6 @@ export class NewUserMediaLockTemplate extends Component<NewUserMediaLockSave> {
     }
 
     async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
-        // const command = args?.shift()?.toLowerCase() || '';
-        // Any interactive commands should be defined in CompoentCommands.ts
-        // if (command === ComponentCommands.ADD_YOUR_COMMAND_TAG_HERE) {
-        //     await this.yourCommandHere(args, message);
-        // }
         return Promise.resolve(undefined);
     }
 
@@ -66,6 +84,23 @@ export class NewUserMediaLockTemplate extends Component<NewUserMediaLockSave> {
     }
 
     async onInteractionCreate(interaction: Interaction): Promise<void> {
-        return Promise.resolve(undefined);
+        if (!interaction.isChatInputCommand()) {
+            return;
+        }
+        if (interaction.commandName === "permit-new-user-media") {
+            await this.permitNewUserMedia(interaction.options.getUser("user", true), interaction);
+        }
     }
+    
+    async permitNewUserMedia(user: User, interaction: ChatInputCommandInteraction) {
+        // Toggle the user's ID in the set
+        if (this.permittedUsers.has(user.id)) {
+            this.permittedUsers.delete(user.id);
+            await interaction.reply({content: `Removed ${user.toString()} from the list of permitted users.`});
+        } else {
+            this.permittedUsers.add(user.id);
+            await interaction.reply({content: `Added ${user.toString()} to the list of permitted users.`});
+        }
+    }
+
 }
