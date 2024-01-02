@@ -58,7 +58,15 @@ export class NewUserMediaLock extends Component<NewUserMediaLockSave> {
     }
 
     async onGuildMemberAdd(member: GuildMember): Promise<void> {
-        return Promise.resolve(undefined);
+        // Send an alert when if a new account under the threshold joins the server
+        const modAlertsChannel = this.djmtGuild.getModAlertsChannel();
+        if (modAlertsChannel) {
+            const creationDateDT = DateTime.fromJSDate(member.user.createdAt);
+            const accountAgeInDays = Math.floor(creationDateDT.diffNow("days").negate().days);
+            if (accountAgeInDays <= this.newUserThresholdInDays) {
+                await modAlertsChannel.send(`⚠️ New discord account <@${member.user.id}> (${accountAgeInDays} days old) joined the server.`);
+            }
+        }
     }
 
     async onMessageCreate(args: string[], message: Message): Promise<void> {
