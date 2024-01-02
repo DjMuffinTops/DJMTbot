@@ -1,8 +1,12 @@
-import {Channel, Message} from "discord.js";
-import {DJMTbot} from "./DJMTbot";
+import { Channel, Interaction, Message, PermissionFlagsBits, PermissionsBitField } from "discord.js";
+import { DJMTbot } from "./DJMTbot";
 
-export function isAdmin(message: Message) {
-    return message?.member?.permissions.has("Administrator");
+export function isMessageAdmin(message: Message) {
+    return message?.member?.permissions.has(PermissionsBitField.Flags.Administrator);
+}
+
+export function isInteractionAdmin(interaction: Interaction) {
+    return interaction.memberPermissions?.has(PermissionsBitField.Flags.Administrator);
 }
 
 /**
@@ -42,8 +46,8 @@ export function mapKeys<T, V, U>(m: Map<T, V>, fn: (this: void, v: V) => U): Map
     return new Map(Array.from(m.entries(), transformPair));
 }
 
-export function JSONStringifyReplacer(key: any, value:any) {
-    if(value instanceof Map) {
+export function JSONStringifyReplacer(key: any, value: any) {
+    if (value instanceof Map) {
         return {
             dataType: 'Map',
             value: Array.from(value.entries()), // or with spread: value: [...value]
@@ -53,8 +57,8 @@ export function JSONStringifyReplacer(key: any, value:any) {
     }
 }
 
-export function JSONStringifyReviver(key: any, value:any) {
-    if(typeof value === 'object' && value !== null) {
+export function JSONStringifyReviver(key: any, value: any) {
+    if (typeof value === 'object' && value !== null) {
         if (value.dataType === 'Map') {
             return new Map(value.value);
         }

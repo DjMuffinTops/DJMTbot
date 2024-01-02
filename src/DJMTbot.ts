@@ -3,7 +3,8 @@ import Discord, {
     GuildMember, GatewayIntentBits, Partials,
     Message,
     User,
-    VoiceState
+    VoiceState,
+    Events,
 } from "discord.js";
 import { promises as FileSystem } from "fs";
 import { DJMTGuild } from "./DJMTGuild";
@@ -49,7 +50,7 @@ export class DJMTbot {
     }
 
     async run() {
-        this.client.on("ready", async () => {
+        this.client.on(Events.ClientReady, async () => {
             // Make guild instances for guilds we didnt have a file for
             for (let cachedGuild of [...this.client.guilds.cache.values()]) {
                 const guildId = cachedGuild.id;
@@ -65,7 +66,7 @@ export class DJMTbot {
             console.log(`DJMTbot is ready!`);
         });
 
-        this.client.on('guildMemberAdd', async (member) => {
+        this.client.on(Events.GuildMemberAdd, async (member) => {
             const guild = this.guilds.get(member.guild?.id || '');
             if (guild) {
                 await guild.onGuildMemberAdd(member as GuildMember);
@@ -74,7 +75,7 @@ export class DJMTbot {
             }
         });
 
-        this.client.on("messageCreate", async (message: Message) => {
+        this.client.on(Events.MessageCreate, async (message: Message) => {
             if (message.author.bot) return; // Ignore bot messages
             let args: string[] = message.content.trim().split(/ +/g);
             const guild = this.guilds.get(message.guild?.id || '');
@@ -85,7 +86,7 @@ export class DJMTbot {
             }
         });
 
-        this.client.on("messageUpdate", async (oldMessage, newMessage) => {
+        this.client.on(Events.MessageUpdate, async (oldMessage, newMessage) => {
             const guild = this.guilds.get(newMessage.guild?.id || '');
             if (guild) {
                 await guild.onMessageUpdate(oldMessage as Message, newMessage as Message);
@@ -94,7 +95,7 @@ export class DJMTbot {
             }
         })
 
-        this.client.on("voiceStateUpdate", async (oldState, newState) => {
+        this.client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
             const guild = this.guilds.get(newState.guild?.id || '');
             if (guild) {
                 await guild.onVoiceStateUpdate(oldState as VoiceState, newState as VoiceState);
@@ -103,7 +104,7 @@ export class DJMTbot {
             }
         })
 
-        this.client.on('messageReactionAdd', async (messageReaction, user) => {
+        this.client.on(Events.MessageReactionAdd, async (messageReaction, user) => {
             // When we receive a reaction we check if the reaction is partial or not
             if (messageReaction.partial) {
                 // If the message this reaction belongs to was removed the fetching might result in an API error, which we need to handle
@@ -122,7 +123,7 @@ export class DJMTbot {
             }
         });
 
-        this.client.on("messageReactionRemove", async (messageReaction, user) => {
+        this.client.on(Events.MessageReactionRemove, async (messageReaction, user) => {
             // When we receive a reaction we check if the reaction is partial or not
             if (messageReaction.partial) {
                 // If the message this reaction belongs to was removed the fetching might result in an API error, which we need to handle
@@ -141,11 +142,20 @@ export class DJMTbot {
             }
         });
 
-        this.client.on("guildCreate", guild => {
+        this.client.on(Events.InteractionCreate, async (interaction) => {
+            const guild = this.guilds.get(interaction.guild?.id || '');
+            if (guild) {
+                await guild.onInteractionCreate(interaction);
+            } else {
+                console.log(`Interaction does not have an associated guild instance: ${interaction}`)
+            }
+        });
+
+        this.client.on(Events.GuildCreate, guild => {
             console.log(`New guild joined: ${guild.name} (id: ${guild.id}). This guild has ${guild.memberCount} members!`);
         });
 
-        this.client.on("guildDelete", guild => {
+        this.client.on(Events.GuildDelete, guild => {
             console.log(`I have been removed from: ${guild.name} (id: ${guild.id})`);
         });
 

@@ -1,10 +1,26 @@
-import {Component} from "../Component";
-import {GuildMember, Message, MessageReaction, User, VoiceState} from "discord.js";
-import {ComponentNames} from "../Constants/ComponentNames";
-import probe, {ProbeResult} from "probe-image-size";
-import {ComponentCommands} from "../Constants/ComponentCommands";
-import {Cron} from "../Cron";
-import {isAdmin} from "../HelperFunctions";
+import { Component } from "../Component";
+import { ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, PermissionFlagsBits, SlashCommandBuilder, User, VoiceState } from "discord.js";
+import { ComponentNames } from "../Constants/ComponentNames";
+import probe, { ProbeResult } from "probe-image-size";
+import { ComponentCommands } from "../Constants/ComponentCommands";
+import { Cron } from "../Cron";
+import { isMessageAdmin } from "../HelperFunctions";
+
+const setBannerCommand = new SlashCommandBuilder();
+setBannerCommand.setName(ComponentCommands.SET_BANNER);
+setBannerCommand.setDescription("Adds a banner to the banner queue");
+setBannerCommand.addStringOption(input => input.setName("imageurl").setDescription("The image url of the banner").setRequired(true))
+setBannerCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+const rotateBannerCommand = new SlashCommandBuilder();
+rotateBannerCommand.setName(ComponentCommands.ROTATE_BANNER);
+rotateBannerCommand.setDescription("Rotate to the next banner in the queue");
+rotateBannerCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+const printBannerCommand = new SlashCommandBuilder();
+printBannerCommand.setName(ComponentCommands.PRINT_BANNER);
+printBannerCommand.setDescription("Prints the banner queue");
+printBannerCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 interface DynamicBannerSave {
     imageUrls: string[];
@@ -20,6 +36,7 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
     name: ComponentNames = ComponentNames.DYNAMIC_BANNER;
     imageUrls: string[] = [];
     hourInterval: number = 4; // Banner will change after this many hours
+    commands: SlashCommandBuilder[] = [setBannerCommand, rotateBannerCommand, printBannerCommand];
 
     async getSaveData(): Promise<DynamicBannerSave> {
         return {
@@ -62,35 +79,36 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
     }
 
     async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
-        const command = args?.shift()?.toLowerCase() || '';
-        if (command === ComponentCommands.SET_BANNER) {
-            await this.addOrRemoveImageUrl(args, message);
-        } else if (command === ComponentCommands.ROTATE_BANNER) {
-            await this.rotateServerBanner(message);
-        }
         return Promise.resolve(undefined);
     }
-
 
     async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
         return Promise.resolve(undefined);
     }
 
-    /**
-     * Changes the server banner to the next image in the image url list
-     * @param message The message object this command was called by
-     */
-    async rotateServerBanner(message?: Message) {
-        // Admin only
-        if (message && !isAdmin(message)) {
-            await message.channel.send(`This command requires administrator permissions.`);
+    async onInteractionCreate(interaction: Interaction): Promise<void> {
+        if (!interaction.isChatInputCommand()) {
             return;
         }
+        if (interaction.commandName === ComponentCommands.PRINT_BANNER) {
+            await this.printBannerQueue(interaction);
+        }
+        else if (interaction.commandName === ComponentCommands.SET_BANNER) {
+            await this.addOrRemoveImageUrl(interaction.options.getString("imageurl", true), interaction);
+        } else if (interaction.commandName === ComponentCommands.ROTATE_BANNER) {
+            await this.rotateServerBanner(interaction);
+        }
+    }
 
+    /**
+     * Changes the server banner to the next image in the image url list
+     * @param interaction The message object this command was called by
+     */
+    async rotateServerBanner(interaction?: ChatInputCommandInteraction) {
         if (this.imageUrls.length <= 0) {
             console.log(`[${this.djmtGuild.guildId}] No Dynamic Banner images in queue to change to.`)
-            if (message) {
-                await message.channel.send(`No Dynamic Banner images in queue to rotate to.`);
+            if (interaction) {
+                await interaction.reply({ content: `No Dynamic Banner images in queue to rotate to.`, ephemeral: true });
             }
         } else {
             const nextUrl = this.imageUrls.shift();
@@ -100,13 +118,13 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
                     this.imageUrls.push(nextUrl); // Push to the back of the array
                     await this.djmtGuild.saveJSON();
                     console.log(`[${this.djmtGuild.guildId}] Changed server banner to ${nextUrl} successfully`);
-                    if (message) {
-                        await message.channel.send(`Changed server banner to ${nextUrl} successfully!`);
+                    if (interaction) {
+                        await interaction.reply({ content: `Changed server banner to ${nextUrl} successfully!`, ephemeral: true });
                     }
-                } catch(e) {
+                } catch (e) {
                     console.log(`[${this.djmtGuild.guildId}] Failed to change server banner to ${nextUrl}: ${e}`);
-                    if (message) {
-                        await message.channel.send(`Failed to change server banner to ${nextUrl}: ${e}`);
+                    if (interaction) {
+                        await interaction.reply({ content: `Failed to change server banner to ${nextUrl}: ${e}`, ephemeral: true });
                     }
                 }
 
@@ -115,47 +133,42 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
         }
     }
 
+    private async printBannerQueue(interaction: ChatInputCommandInteraction) {
+        if (this.imageUrls.length > 0) {
+            let msg = 'Dynamic Banner Queue in order:';
+            this.imageUrls.forEach(url => {
+                msg += `\n${url}`;
+            })
+            await interaction.reply({ content: msg, ephemeral: true });
+        } else {
+            await interaction.reply({ content: `No Dynamic Banner Images in the queue`, ephemeral: true });
+        }
+    }
+
     /**
      * Adds or removes a imageUrl to the queue from a message. Expects one argument, the url.
      * When no arguments are given, it prints the current queue.
      * @param args array of strings containing the message content, separated by spaces
-     * @param message the Message object
+     * @param interaction the Message object
      * @private
      */
-    private async addOrRemoveImageUrl(args: string[], message: Message) {
-        // Admin only
-        if (!isAdmin(message)) {
-            await message.channel.send(`This command requires administrator permissions.`);
-            return;
-        }
-
-        if (args.length === 0) {
-            if (this.imageUrls.length > 0) {
-                let msg = 'Dynamic Banner Queue in order:';
-                this.imageUrls.forEach(url => {
-                    msg += `\n${url}`;
-                })
-                await message.channel.send(msg);
-            } else {
-                await message.channel.send(`No Dynamic Banner Images in the queue`);
-            }
-        } else if (args.length === 1) {
-            const imageUrl = args[0];
-            if (this.imageUrls.includes(imageUrl)) {
-                await this.removeImageUrl(imageUrl);
-                await message.channel.send(`Removed ${imageUrl} from Dynamic Banner queue`);
-            } else {
-                try {
-                    await this.addImageUrl(imageUrl);
-                    await message.channel.send(`Added ${imageUrl} to Dynamic Banner queue`);
-                } catch(e) {
-                    if (e instanceof Error) {
-                        await message.channel.send(e.message);
-                    }
-                    console.log(e);
+    private async addOrRemoveImageUrl(imageUrl: string, interaction: ChatInputCommandInteraction) {
+        if (this.imageUrls.includes(imageUrl)) {
+            await this.removeImageUrl(imageUrl);
+            await interaction.reply({ content: `Removed ${imageUrl} from Dynamic Banner queue`, ephemeral: true });
+        } else {
+            try {
+                await this.addImageUrl(imageUrl);
+                await interaction.reply({ content: `Added ${imageUrl} to Dynamic Banner queue`, ephemeral: true });
+            } catch (e) {
+                if (e instanceof Error) {
+                    await interaction.reply({ content: e.message, ephemeral: true });
+                } else {
+                    await interaction.reply({ content: JSON.stringify(e), ephemeral: true });
                 }
             }
         }
+
     }
 
     /**
