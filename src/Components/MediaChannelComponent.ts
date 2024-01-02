@@ -156,7 +156,7 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
                     await message.delete();
                 }
                 catch (e) {
-                    console.error(e);
+                    console.error("Error deleting message for media channel check: ", e);
                 }
                 const warningMsg: Message = await message.channel.send(msg);
                 // Delete the warning message after some time

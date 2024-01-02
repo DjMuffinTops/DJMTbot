@@ -172,7 +172,11 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
                             msg += `\n• Your png has incorrect dimensions.\n      Expected: ${entry.width}px x ${entry.height}px\n      Your image: ${image.width}${image.wUnits} x ${image.height}${image.hUnits}`;
                         }
                         // Delete the message and send a warning.
-                        await message.delete();
+                        try {
+                            await message.delete();    
+                        } catch (e) {
+                            console.error("Error deleting message for PNG resolution check: ", e);
+                        }
                         const warningMsg: Message = await message.channel.send(msg);
                         // Delete the warning message after some time
                         setTimeout(async () => {
