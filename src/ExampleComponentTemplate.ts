@@ -56,11 +56,6 @@ export class ExampleComponentTemplate extends Component<ExampleComponentSave> {
     }
 
     async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
-        // const command = args?.shift()?.toLowerCase() || '';
-        // Any interactive commands should be defined in CompoentCommands.ts
-        // if (command === ComponentCommands.ADD_YOUR_COMMAND_TAG_HERE) {
-        //     await this.yourCommandHere(args, message);
-        // }
         return Promise.resolve(undefined);
     }
 
@@ -70,6 +65,13 @@ export class ExampleComponentTemplate extends Component<ExampleComponentSave> {
     }
 
     async onInteractionCreate(interaction: Interaction): Promise<void> {
+        // if (!interaction.isChatInputCommand()) {
+        //     return;
+        // }
+        // // Any interactive commands should be defined in ComponentCommands.ts
+        // if (interaction.commandName === ComponentCommands.ADD_YOUR_COMMAND_TAG_HERE) {
+        //     await this.yourCommandHere(interaction);
+        // } 
         return Promise.resolve(undefined);
     }
 }
