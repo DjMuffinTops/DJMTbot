@@ -120,7 +120,7 @@ export class NewUserMediaLock extends Component<NewUserMediaLockSave> {
         // Use luxon to compare the user's account creation date to the current date
         const creationDateDT = DateTime.fromJSDate(user.createdAt);
         const accountAgeInDays = Math.floor(creationDateDT.diffNow("days").negate().days);
-        if (!this.permittedUsers.has(user.id) && accountAgeInDays <= this.newUserThresholdInDays) {
+        if (!this.permittedUsers.has(user.id) && accountAgeInDays > this.newUserThresholdInDays) {
             let attemptedMediaPost = false;
             // This is a new user so prevent them from sending any media attachments
             if (message.attachments.size > 0) {
@@ -137,15 +137,24 @@ export class NewUserMediaLock extends Component<NewUserMediaLockSave> {
             if (attemptedMediaPost) {
                 const copy = message;
                 // Delete the message
-                await message.delete();
+                try {
+                    await message.delete();
+                } catch (e) {
+                    console.error("Error deleting message for new user lock: ", e);
+                }
                 // Alert the mod alerts channel of a new user attempting to post media
                 const modAlertsChannel = this.djmtGuild.getModAlertsChannel();
                 if (modAlertsChannel) {
                     const msg1 = await modAlertsChannel.send(`⚠️ New discord account <@${user.id}> (${accountAgeInDays} days old) attempted to post the following media in <#${message.channel.id}>`);
                     // Relay the exact same message content to the mod alerts channel with all included attachments and embeds
                     await msg1.reply({
-                        content: message.content,
-                        files: message.attachments.map(attachment => attachment.url),
+                        content: message.content.length > 0 ? `||${message.content}||` : undefined,
+                        files: message.attachments.map(attachment => {
+                            return {
+                                attachment: attachment.url,
+                                name : `SPOILER_${attachment.name}`
+                            }
+                        }),
                         embeds: message.embeds
                     });
                 }
