@@ -37,4 +37,5 @@ export enum ComponentCommands {
     PRINT_AUTO_THREAD= "printautothread",
     SET_MOD_ALERTS_CHANNEL= "setmodalertschannel",
     SET_MOD_LOGGING_CHANNEL= "setmodloggingchannel",
+    PERMIT_NEW_USER_MEDIA = "permit-new-user-media",
 }

@@ -3,10 +3,11 @@ import { ChatInputCommandInteraction, GuildMember, Interaction, Message, Message
 import { ComponentNames } from "../Constants/ComponentNames";
 import { DateTime } from "luxon";
 import { MEDIA_LINK_REGEX } from "../HelperFunctions";
+import { ComponentCommands } from "../Constants/ComponentCommands";
 
 const NEW_USER_THRESHOLD_IN_DAYS = 60; // Accounts must be older than this in days to not be considered new
 const permitNewUserMediaCommand = new SlashCommandBuilder();
-permitNewUserMediaCommand.setName("permit-new-user-media");
+permitNewUserMediaCommand.setName(ComponentCommands.PERMIT_NEW_USER_MEDIA);
 permitNewUserMediaCommand.setDescription("Permits a user to post media despite being a new user. Will be reapplied if the bot is restarted.");
 permitNewUserMediaCommand.addUserOption(option => option.setName("user").setDescription("The user to bypass new user media lock for").setRequired(true));
 permitNewUserMediaCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
@@ -100,7 +101,7 @@ export class NewUserMediaLock extends Component<NewUserMediaLockSave> {
         if (!interaction.isChatInputCommand()) {
             return;
         }
-        if (interaction.commandName === "permit-new-user-media") {
+        if (interaction.commandName === ComponentCommands.PERMIT_NEW_USER_MEDIA) {
             await this.permitNewUserMedia(interaction.options.getUser("user", true), interaction);
         }
     }
