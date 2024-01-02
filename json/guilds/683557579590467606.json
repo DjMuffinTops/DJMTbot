@@ -441,6 +441,11 @@
 						]
 					]
 				}
+			},
+			"NEW_USER_MEDIA_LOCK": {
+				"enabled": true,
+				"newUserThresholdInDays": 60,
+				"permittedUsers": []
 			}
 		}
 	}
