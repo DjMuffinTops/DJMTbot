@@ -38,4 +38,6 @@ export enum ComponentCommands {
     SET_MOD_ALERTS_CHANNEL= "setmodalertschannel",
     SET_MOD_LOGGING_CHANNEL= "setmodloggingchannel",
     PERMIT_NEW_USER_MEDIA = "permit-new-user-media",
+    TOGGLE_NEW_USER_MEDIA_LOCK = "toggle-new-user-media-lock",
+    SET_NEW_USER_THRESHOLD_IN_DAYS = "set-new-user-threshold-in-days",
 }
