@@ -377,19 +377,19 @@
 				"markedRootVoiceChannelIds": [
 					{
 						"channelId": "712862825655042050",
-						"maxChildren": 5
+						"maxChildren": 6
 					},
 					{
 						"channelId": "693269995689345074",
-						"maxChildren": 5
+						"maxChildren": 6
 					},
 					{
 						"channelId": "755195307981144154",
-						"maxChildren": 5
+						"maxChildren": 6
 					},
 					{
 						"channelId": "817627583565791322",
-						"maxChildren": 5
+						"maxChildren": 6
 					}
 				]
 			},
