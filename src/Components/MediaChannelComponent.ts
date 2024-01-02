@@ -1,7 +1,7 @@
 import {Component} from "../Component";
 import {ChannelType, ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, PermissionFlagsBits, SlashCommandBuilder, TextChannel, User, VoiceState} from "discord.js";
 import {ComponentNames} from "../Constants/ComponentNames";
-import {isMessageAdmin} from "../HelperFunctions";
+import {isMessageAdmin, MEDIA_LINK_REGEX} from "../HelperFunctions";
 import {ComponentCommands} from "../Constants/ComponentCommands";
 
 const setMediaChannelCommand = new SlashCommandBuilder();
@@ -31,7 +31,6 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
     // MANDATORY: Define a name in ComponentNames.ts and place it here.
     name: ComponentNames = ComponentNames.MEDIA_CHANNEL;
     channelsArray: TextChannel[] = [];
-    linkRegex: RegExp = /(https?:\/\/[^\s]+)/; // not great but should work for all but weird edge cases
     commands: SlashCommandBuilder[] = [setMediaChannelCommand, getMediaChannelCommand];
     // may move to constants in future if needed?
 
@@ -151,7 +150,7 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
     private async checkMedia(message: Message): Promise<void> {
         if (this.channelsArray.indexOf(<TextChannel>message.channel) > -1) {
             // delete all messages without attachments or links
-            if (message.attachments.size === 0 && !(this.linkRegex.test(message.content))) {
+            if (message.attachments.size === 0 && !(MEDIA_LINK_REGEX.test(message.content))) {
                 let msg = `${message.author.toString()}, your message has been deleted because it does not have media.`;
                 try {
                     await message.delete();

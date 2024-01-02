@@ -1,6 +1,8 @@
 import { Channel, Interaction, Message, PermissionFlagsBits, PermissionsBitField } from "discord.js";
 import { DJMTbot } from "./DJMTbot";
 
+export const MEDIA_LINK_REGEX: RegExp = /(https?:\/\/[^\s]+)/; // not great but should work for all but weird edge cases
+
 export function isMessageAdmin(message: Message) {
     return message?.member?.permissions.has(PermissionsBitField.Flags.Administrator);
 }
