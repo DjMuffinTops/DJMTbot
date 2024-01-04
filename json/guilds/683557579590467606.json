@@ -447,7 +447,9 @@
 			"NEW_USER_MEDIA_LOCK": {
 				"enabled": true,
 				"newUserThresholdInDays": 60,
-				"permittedUsers": []
+				"permittedUsers": [
+					"1172646104702140491"
+				]
 			}
 		}
 	}
