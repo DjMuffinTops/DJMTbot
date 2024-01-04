@@ -1,5 +1,5 @@
 import { Component } from "../Component";
-import { ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, PermissionFlagsBits, SlashCommandBuilder, User, VoiceState } from "discord.js";
+import { ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, MessageType, PermissionFlagsBits, SlashCommandBuilder, User, VoiceState } from "discord.js";
 import { ComponentNames } from "../Constants/ComponentNames";
 import { DateTime } from "luxon";
 import { MEDIA_LINK_REGEX } from "../HelperFunctions";
@@ -70,6 +70,10 @@ export class NewUserMediaLock extends Component<NewUserMediaLockSave> {
     }
 
     async onMessageCreate(args: string[], message: Message): Promise<void> {
+        // Ignore auto moderation messages
+        if (message.type === MessageType.AutoModerationAction) {
+            return;
+        }
         this.handleNewUserMediaLock(message);
     }
 
