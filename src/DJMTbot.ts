@@ -21,6 +21,8 @@ export class DJMTbot {
         this.client = new Discord.Client({
             intents: [
                 GatewayIntentBits.Guilds,
+                GatewayIntentBits.GuildMembers,
+                GatewayIntentBits.GuildPresences,
                 GatewayIntentBits.GuildMessages,
                 GatewayIntentBits.MessageContent,
                 GatewayIntentBits.GuildMessageReactions,
