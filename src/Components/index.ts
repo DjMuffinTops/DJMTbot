@@ -16,4 +16,4 @@ export { VoiceTextPairComponent } from './VoiceTextPairComponent';
 export { DynamicBanner } from './DynamicBanner';
 export { DynamicVoiceChannels } from './DynamicVoiceChannels';
 export { AutoThreadComponent } from './AutoThreadComponent';
-export { NewUserMediaLock } from './NewUserMediaLock';
+export { NewUserProtection as NewUserMediaLock } from './NewUserProtection';
