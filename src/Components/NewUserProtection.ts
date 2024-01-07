@@ -19,10 +19,16 @@ toggleNewUserBanCommand.setDescription("Toggles the new user ban feature.");
 toggleNewUserBanCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 const setNewUserThresholdInDaysCommand = new SlashCommandBuilder();
-setNewUserThresholdInDaysCommand.setName(ComponentCommands.SET_NEW_USER_THRESHOLD_IN_DAYS);
-setNewUserThresholdInDaysCommand.setDescription("Sets the number of days a user must have been registered to not be considered new.");
-setNewUserThresholdInDaysCommand.addIntegerOption(option => option.setName("days").setDescription("The number of days a user must have been registered to not be considered new.").setRequired(true));
+setNewUserThresholdInDaysCommand.setName(ComponentCommands.SET_NEW_USER_MEDIA_LOCK_THRESHOLD_IN_DAYS);
+setNewUserThresholdInDaysCommand.setDescription("Sets the number of days a user must have been registered to not be considered for the media lock.");
+setNewUserThresholdInDaysCommand.addIntegerOption(option => option.setName("days").setDescription("The number of days a user must have been registered to not be considered for the media lock.").setRequired(true));
 setNewUserThresholdInDaysCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+const setNewUserBanThresholdInDaysCommand = new SlashCommandBuilder();
+setNewUserBanThresholdInDaysCommand.setName(ComponentCommands.SET_NEW_USER_BAN_THRESHOLD_IN_DAYS);
+setNewUserBanThresholdInDaysCommand.setDescription("Sets the number of days a user must have been registered to not be considered for the auto ban.");
+setNewUserBanThresholdInDaysCommand.addIntegerOption(option => option.setName("days").setDescription("The number of days a user must have been registered to not be considered for the auto ban.").setRequired(true));
+setNewUserBanThresholdInDaysCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 const permitNewUserRestrictionsCommand = new SlashCommandBuilder();
 permitNewUserRestrictionsCommand.setName(ComponentCommands.PERMIT_NEW_USER_RESTRICTIONS);
@@ -41,7 +47,7 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
 
     name: ComponentNames = ComponentNames.NEW_USER_PROTECTION;
     permittedUsers: Set<string> = new Set<string>();
-    commands: SlashCommandBuilder[] = [permitNewUserRestrictionsCommand, toggleNewUserMediaLockCommand, toggleNewUserBanCommand, setNewUserThresholdInDaysCommand];
+    commands: SlashCommandBuilder[] = [permitNewUserRestrictionsCommand, toggleNewUserMediaLockCommand, toggleNewUserBanCommand, setNewUserThresholdInDaysCommand, setNewUserBanThresholdInDaysCommand];
     newUserMediaThresholdInDays: number = NEW_USER_THRESHOLD_IN_DAYS_DEFAULT;
     newUserMediaLockEnabled: boolean = false;
     newUserBanThresholdInDays: number = NEW_USER_BAN_THRESHOLD_IN_DAYS_DEFAULT;
@@ -101,7 +107,7 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
         if (!member) {
             return;
         }
-        
+
         // Get the duration since the user's account was created
         const durationSinceCreation = this.getDurationSinceUserCreation(member);
         const accountAgeInDays = Math.floor(durationSinceCreation.days);
@@ -151,10 +157,14 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
             this.newUserBanEnabled = !this.newUserBanEnabled;
             await this.djmtGuild.saveJSON();
             await interaction.reply({ content: `New user ban feature is now ${this.newUserBanEnabled ? 'active' : 'disabled'}.` });
-        } else if (interaction.commandName === ComponentCommands.SET_NEW_USER_THRESHOLD_IN_DAYS) {
+        } else if (interaction.commandName === ComponentCommands.SET_NEW_USER_MEDIA_LOCK_THRESHOLD_IN_DAYS) {
             this.newUserMediaThresholdInDays = interaction.options.getInteger("days", true);
             await this.djmtGuild.saveJSON();
             await interaction.reply({ content: `Set new user threshold in days to ${this.newUserMediaThresholdInDays}.` });
+        } else if (interaction.commandName === ComponentCommands.SET_NEW_USER_BAN_THRESHOLD_IN_DAYS) {
+            this.newUserBanThresholdInDays = interaction.options.getInteger("days", true);
+            await this.djmtGuild.saveJSON();
+            await interaction.reply({ content: `Set new user ban threshold in days to ${this.newUserBanThresholdInDays}.` });
         }
     }
 
@@ -222,7 +232,7 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
             await this.banNewUser(member, accountAgeInDays, accountAgeInHours, accountAgeInMinutes, accountAgeInSeconds, modAlertsChannel);
         }
     }
-    
+
     private getDurationSinceUserCreation(member: GuildMember) {
         const creationDateDT = DateTime.fromJSDate(member.user.createdAt);
         const differenceDuration = creationDateDT.diffNow(["days", "hours", "minutes", "seconds"]).negate();
