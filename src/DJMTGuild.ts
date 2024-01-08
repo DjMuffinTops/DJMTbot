@@ -226,6 +226,11 @@ export class DJMTGuild {
         }
         console.log(`[${this.guild.id}] Guild Fetched and Ready! [${this.guild.name}]`);
         this.isReady = true;
+        // Send a message to the mod alerts channel if it exists
+        const modAlertsChannel = this.getModAlertsChannel();
+        if (modAlertsChannel) {
+            await modAlertsChannel.send(`DJMTbot is now online!`);
+        }
     }
 
     /**
@@ -247,9 +252,9 @@ export class DJMTGuild {
      */
     async onMessageCreate(args: string[], message: Message): Promise<void> {
         if (this.isReady) {
-            // Display the prefix when mentioned
-            if (this.guild?.client.user && message.mentions.has(this.guild?.client.user)) {
-                await message.channel.send(`Type \`\`${this._prefix}help\`\` to see my commands!`);
+            // Display the prefix when mentioned. Don't do this if the message is from an everyone ping
+            if (this.guild?.client.user && message.mentions.has(this.guild?.client.user) && !message.mentions.everyone) {
+                await message.channel.send(`Type / to see my slash commands!`);
             }
             for (const component of Array.from(this.components.values())) {
                 await component.onMessageCreate(args, message); // All messages go through here
