@@ -92,11 +92,10 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
         }
 
         // If the user is less than the new user ban threshold, ban them
-        await this.handleBanNewUser(member, accountAgeInDays, accountAgeInHours, accountAgeInMinutes, accountAgeInSeconds, modAlertsChannel);
+        await this.handleBanNewUser(member, accountAgeInDays, accountAgeInHours, accountAgeInMinutes, accountAgeInSeconds);
     }
 
     async onMessageCreate(args: string[], message: Message): Promise<void> {
-        const modAlertsChannel = this.djmtGuild.getModAlertsChannel();
         // Ignore auto moderation messages
         if (message.type === MessageType.AutoModerationAction) {
             return;
@@ -116,7 +115,7 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
         const accountAgeInSeconds = Math.floor(durationSinceCreation.seconds);
 
         // If the user is less than the new user ban threshold, ban them
-        await this.handleBanNewUser(member, accountAgeInDays, accountAgeInHours, accountAgeInMinutes, accountAgeInSeconds, modAlertsChannel);
+        await this.handleBanNewUser(member, accountAgeInDays, accountAgeInHours, accountAgeInMinutes, accountAgeInSeconds);
 
         // If the user is less than the new user threshold, check if they are attempting to post media
         await this.handleNewUserMediaLock(message);
@@ -222,14 +221,14 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
         }
     }
 
-    private async handleBanNewUser(member: GuildMember, accountAgeInDays: number, accountAgeInHours: number, accountAgeInMinutes: number, accountAgeInSeconds: number, modAlertsChannel: TextChannel | undefined) {
+    private async handleBanNewUser(member: GuildMember, accountAgeInDays: number, accountAgeInHours: number, accountAgeInMinutes: number, accountAgeInSeconds: number) {
         // Don't do anything if the feature is disabled
         if (!this.newUserBanEnabled) {
             return;
         }
         // If the user is less than the new user ban threshold, ban them
         if (accountAgeInDays <= this.newUserBanThresholdInDays) {
-            await this.banNewUser(member, accountAgeInDays, accountAgeInHours, accountAgeInMinutes, accountAgeInSeconds, modAlertsChannel);
+            await this.banNewUser(member, accountAgeInDays, accountAgeInHours, accountAgeInMinutes, accountAgeInSeconds);
         }
     }
 
@@ -239,20 +238,25 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
         return differenceDuration;
     }
 
-    private async banNewUser(member: GuildMember, accountAgeInDays: number, accountAgeInHours: number, accountAgeInMinutes: number, accountAgeInSeconds: number, modAlertsChannel?: TextChannel) {
+    private async banNewUser(member: GuildMember, accountAgeInDays: number, accountAgeInHours: number, accountAgeInMinutes: number, accountAgeInSeconds: number) {
+        const modAlertsChannel = this.djmtGuild.getModAlertsChannel();
+        try {
+            // Get all administators members in the server
+            const adminMembers = member.guild.members.cache.filter(member => member.permissions.has(PermissionFlagsBits.Administrator));
+            // DM the user to let them know they were banned for being a new user and to contact staff if this was a mistake
+            await member.user.send(`Hello, <@${member.user.id}>! Your account is not permitted to join this server due to being a brand new discord account.\nPlease contact admin staff if this was a mistake: ${adminMembers.map(member => `<@${member.toString()}`).join(", ")}`);
+        } catch (e) {
+            console.error("Error DMing new user: ", e);
+        }
         try {
             await member.ban({ reason: `New discord account created ${accountAgeInDays} days, ${accountAgeInHours} hours, ${accountAgeInMinutes} minutes, ${accountAgeInSeconds} seconds ago.` });
+            // Alert the mod alerts channel of a new user being banned
+            if (modAlertsChannel) {
+                await modAlertsChannel.send(`🚨 Banned new discord account <@${member.user.id}> (Created ${accountAgeInDays} days, ${accountAgeInHours} hours, ${accountAgeInMinutes} minutes, ${accountAgeInSeconds} seconds ago)`);
+            }
         } catch (e) {
             console.error("Error banning new user: ", e);
             modAlertsChannel?.send(`⚠️ Error banning new user <@${member.user.id}>: ${e}`);
-        }
-        // Get all administators members in the server
-        const adminMembers = member.guild.members.cache.filter(member => member.permissions.has(PermissionFlagsBits.Administrator));
-        // DM the user to let them know they were banned for being a new user and to contact staff if this was a mistake
-        await member.user.send(`Hello, <@${member.user.id}>! Your account is not permitted to join this server due to being a brand new discord account.\nPlease contact admin staff if this was a mistake: ${adminMembers.map(member => `<@${member.toString()}`).join(", ")}`);
-        // Alert the mod alerts channel of a new user being banned
-        if (modAlertsChannel) {
-            await modAlertsChannel.send(`🚨 Banned new discord account <@${member.user.id}> (Created ${accountAgeInDays} days, ${accountAgeInHours} hours, ${accountAgeInMinutes} minutes, ${accountAgeInSeconds} seconds ago)`);
         }
     }
 
