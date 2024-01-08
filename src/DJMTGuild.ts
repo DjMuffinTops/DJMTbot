@@ -226,6 +226,11 @@ export class DJMTGuild {
         }
         console.log(`[${this.guild.id}] Guild Fetched and Ready! [${this.guild.name}]`);
         this.isReady = true;
+        // Send a message to the mod alerts channel if it exists
+        const modAlertsChannel = this.getModAlertsChannel();
+        if (modAlertsChannel) {
+            await modAlertsChannel.send(`DJMTbot is now online!`);
+        }
     }
 
     /**
