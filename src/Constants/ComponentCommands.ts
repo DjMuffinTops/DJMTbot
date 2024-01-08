@@ -40,6 +40,6 @@ export enum ComponentCommands {
     PERMIT_NEW_USER_RESTRICTIONS = "permit-new-user-restrictions",
     TOGGLE_NEW_USER_MEDIA_LOCK = "toggle-new-user-media-lock",
     TOGGLE_NEW_USER_BAN = "toggle-new-user-ban",
-    SET_NEW_USER_MEDIA_LOCK_THRESHOLD_IN_DAYS = "set-new-user-media-lock-threshold-in-days",
-    SET_NEW_USER_BAN_THRESHOLD_IN_DAYS = "set-new-user-ban-threshold-in-days",
+    SET_NEW_USER_MEDIA_LOCK_THRESHOLD_IN_DAYS = "set-new-user-media-threshold",
+    SET_NEW_USER_BAN_THRESHOLD_IN_DAYS = "set-new-user-ban-threshold",
 }
