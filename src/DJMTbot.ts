@@ -28,7 +28,10 @@ export class DJMTbot {
                 GatewayIntentBits.GuildMessageReactions,
                 GatewayIntentBits.GuildMessageTyping,
                 GatewayIntentBits.GuildVoiceStates,
-                GatewayIntentBits.GuildScheduledEvents],
+                GatewayIntentBits.GuildScheduledEvents,
+                GatewayIntentBits.DirectMessages,
+                GatewayIntentBits.GuildModeration,
+            ],
             partials: [Partials.Message, Partials.Channel, Partials.Reaction]
         });
         this.guilds = new Map<string, DJMTGuild>();
