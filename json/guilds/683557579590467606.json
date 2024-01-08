@@ -450,6 +450,13 @@
 				"permittedUsers": [
 					"1172646104702140491"
 				]
+			},
+			"NEW_USER_PROTECTION": {
+				"newUserMediaLockEnabled": true,
+				"newUserMediaLockThresholdInDays": 60,
+				"newUserBanEnabled": true,
+				"newUserBanThresholdInDays": 7,
+				"permittedUsers": []
 			}
 		}
 	}
