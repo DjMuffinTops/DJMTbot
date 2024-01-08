@@ -5,7 +5,6 @@ export { CheemsComponent } from './CheemsComponent';
 export { ConfigComponent } from './ConfigComponent';
 export { DayOfTheWeekComponent } from './DayOfTheWeekComponent';
 export { GuildSettersComponent } from './GuildSettersComponent';
-export { HelpComponent } from './HelpComponent';
 export { MediaChannelComponent } from './MediaChannelComponent';
 export { PingComponent } from './PingComponent';
 export { PNGResolutionCheck } from './PNGResolutionCheck';
