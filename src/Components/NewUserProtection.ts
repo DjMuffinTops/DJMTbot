@@ -227,7 +227,7 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
             return;
         }
         // If the user is less than the new user ban threshold, ban them
-        if (accountAgeInDays <= this.newUserBanThresholdInDays) {
+        if (!this.permittedUsers.has(member.id) && accountAgeInDays <= this.newUserBanThresholdInDays) {
             await this.banNewUser(member, accountAgeInDays, accountAgeInHours, accountAgeInMinutes, accountAgeInSeconds);
         }
     }
