@@ -260,7 +260,12 @@ export class BruhComponent extends Component<BruhComponentSave> {
         setTimeout(async () => {
             this.onCooldown = false;
         }, 2500);
-        await this.sendBruh(interaction);
+        try {
+            await this.sendBruh(interaction);
+        } catch (e) {
+            console.error(`[${this.djmtGuild.guildId}] ${e}`);
+            await interaction.reply({ content: 'there was a bruh bug... bruhhhhhhh', ephemeral: true });
+        }
     }
 
     private async cacheAllBruhMessages(interaction?: ChatInputCommandInteraction) {
