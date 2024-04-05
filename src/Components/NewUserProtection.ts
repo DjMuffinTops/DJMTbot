@@ -227,7 +227,7 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
             return;
         }
         // If the user is less than the new user ban threshold, ban them
-        if (accountAgeInDays <= this.newUserBanThresholdInDays) {
+        if (!this.permittedUsers.has(member.id) && accountAgeInDays <= this.newUserBanThresholdInDays) {
             await this.banNewUser(member, accountAgeInDays, accountAgeInHours, accountAgeInMinutes, accountAgeInSeconds);
         }
     }
@@ -244,7 +244,7 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
             // Get all administators members in the server
             const adminMembers = member.guild.members.cache.filter(member => member.permissions.has(PermissionFlagsBits.Administrator) && !member.user.bot);
             // DM the user to let them know they were banned for being a new user and to contact staff if this was a mistake
-            await member.user.send(`Hello, <@${member.user.id}>! Your account is not permitted to join this server due to being a brand new discord account.\nPlease contact admin staff if you would like to request an appeal: ${adminMembers.map(member => member.toString()).join(", ")}`);
+            await member.user.send(`Hello, <@${member.user.id}>! Your account is not permitted to join this server due to being a brand new discord account.\nPlease contact admin staff if you would like to request an appeal: ${adminMembers.map(member => `${member.displayName}: ${member.toString()}`).join(", ")}`);
         } catch (e) {
             console.error("Error DMing new user: ", e);
         }
