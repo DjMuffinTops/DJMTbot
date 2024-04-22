@@ -27,7 +27,7 @@ const TIMEOUT_DURATION_MS = 28 * 24 * 60 * 60 * 1000; // The maximum timeout dur
 export class EveryoneSpamTimeout extends Component<EveryoneSpamTimeoutSave> {
 
     // MANDATORY: Define a name in ComponentNames.ts and place it here.
-    name: ComponentNames = ComponentNames.EXAMPLE_COMPONENT;
+    name: ComponentNames = ComponentNames.EVERYONE_SPAM_TIMEOUT;
     commands: SlashCommandBuilder[] = [toggleEveryoneSpamTimeoutCommand, setEveryoneSpamTimeoutRolesCommand]
     permittedRoleIds: string[] = [];
     enabled: boolean = false;
