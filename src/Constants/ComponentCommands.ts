@@ -42,4 +42,6 @@ export enum ComponentCommands {
     TOGGLE_NEW_USER_BAN = "toggle-new-user-ban",
     SET_NEW_USER_MEDIA_LOCK_THRESHOLD_IN_DAYS = "set-new-user-media-threshold",
     SET_NEW_USER_BAN_THRESHOLD_IN_DAYS = "set-new-user-ban-threshold",
+    TOGGLE_EVERYONE_SPAM_TIMEOUT = "toggle-everyone-spam-timeout",
+    SET_EVERYONE_SPAM_TIMEOUT_ROLES = "set-everyone-spam-timeout-roles",
 }

@@ -1,3 +1,4 @@
+
 // Component classes must be exported below to be run by the bot!
 export { BruhComponent } from './BruhComponent';
 export { BSpeakComponent } from './BSpeakComponent';
@@ -16,3 +17,4 @@ export { DynamicBanner } from './DynamicBanner';
 export { DynamicVoiceChannels } from './DynamicVoiceChannels';
 export { AutoThreadComponent } from './AutoThreadComponent';
 export { NewUserProtection as NewUserMediaLock } from './NewUserProtection';
+export { EveryoneSpamTimeout } from './EveryoneSpamTimeout';
