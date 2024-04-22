@@ -16,7 +16,6 @@ export function getGuildMembersRoles(member: GuildMember): Role[] {
 }
 
 export function getCensoredMessageReplyOptions(message: Message): MessageReplyOptions {
-    // Clean any mentions from the message
     return {
         content: message.content.length > 0 ? `||${message.content}||` : undefined,
         files: message.attachments.map(attachment => {
