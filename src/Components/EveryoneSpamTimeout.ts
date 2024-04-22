@@ -152,7 +152,7 @@ export class EveryoneSpamTimeout extends Component<EveryoneSpamTimeoutSave> {
         // Send a warning message to the mod alerts channel
         const modAlertsChannel = this.djmtGuild.getModAlertsChannel();
         if (modAlertsChannel) {
-            const msg1 = await modAlertsChannel.send(`⚠️ ${message.author} has been timed out for attempt to send the following everyone and/or here pings in <#${message.channel.id}>`);
+            const msg1 = await modAlertsChannel.send(`⚠️ ${message.author} has been timed out for attempting to send the following everyone and/or here pings in <#${message.channel.id}>`);
             // Relay the exact same message content to the mod alerts channel with all included attachments and embeds
             await msg1.reply(getCensoredMessageReplyOptions(message));
         }
