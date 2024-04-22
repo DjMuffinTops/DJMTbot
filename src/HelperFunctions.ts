@@ -1,4 +1,4 @@
-import { Channel, Interaction, Message, PermissionFlagsBits, PermissionsBitField } from "discord.js";
+import { Channel, GuildMember, Interaction, Message, MessageReplyOptions, PermissionFlagsBits, PermissionsBitField, Role } from "discord.js";
 import { DJMTbot } from "./DJMTbot";
 
 export const MEDIA_LINK_REGEX: RegExp = /(https?:\/\/[^\s]+)/; // not great but should work for all but weird edge cases
@@ -11,6 +11,24 @@ export function isInteractionAdmin(interaction: Interaction) {
     return interaction.memberPermissions?.has(PermissionsBitField.Flags.Administrator);
 }
 
+export function getGuildMembersRoles(member: GuildMember): Role[] {
+    return member.roles.cache.map((role) => role);
+}
+
+export function getCensoredMessageReplyOptions(message: Message): MessageReplyOptions {
+    // Clean any mentions from the message
+    return {
+        content: message.content.length > 0 ? `||${message.content}||` : undefined,
+        files: message.attachments.map(attachment => {
+            return {
+                attachment: attachment.url,
+                name: `SPOILER_${attachment.name}`
+            }
+        }),
+        allowedMentions: {},
+        embeds: message.embeds
+    };
+}
 /**
  * Converts a Text Channel mention string to only the channel id
  * ex: <$1234> -> 1234
