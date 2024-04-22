@@ -1,15 +1,15 @@
-import {Component} from "../Component";
-import {ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, SlashCommandBuilder, User, VoiceState} from "discord.js";
-import {ComponentCommands} from "../Constants/ComponentCommands";
-import {isInteractionAdmin, isMessageAdmin} from "../HelperFunctions";
-import {ComponentNames} from "../Constants/ComponentNames";
+import { Component } from "../Component";
+import { ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, SlashCommandBuilder, User, VoiceState } from "discord.js";
+import { ComponentCommands } from "../Constants/ComponentCommands";
+import { isInteractionAdmin, isMessageAdmin } from "../HelperFunctions";
+import { ComponentNames } from "../Constants/ComponentNames";
 
 const sayCommand = new SlashCommandBuilder();
 sayCommand.setName(ComponentCommands.SAY);
 sayCommand.setDescription("Makes the bot say something");
 sayCommand.addStringOption(input => input.setName("message").setDescription("The message to say").setRequired(true));
 
-interface SayComponentSave {}
+interface SayComponentSave { }
 export class SayComponent extends Component<SayComponentSave> {
 
     name: ComponentNames = ComponentNames.SAY;
@@ -34,14 +34,14 @@ export class SayComponent extends Component<SayComponentSave> {
             `${args.reverse().join(" ")}`,
             `${sayMessage.toUpperCase().substring(0, Math.round(sayMessage.length / 2))}-`];
         if (!isInteractionAdmin(interaction) && Math.random() < .95) {
-            await interaction.reply({content: deniedMsgs[Math.round(Math.random() * deniedMsgs.length)]});
+            await interaction.reply({ content: deniedMsgs[Math.round(Math.random() * deniedMsgs.length)], allowedMentions: {} });
             return;
         }
         // makes the bot say something and delete the message. As an example, it's open to anyone to use.
         // To get the "message" itself we join the `args` back into a string with spaces:
 
         // And we get the bot to say the thing:
-        await interaction.reply({content: sayMessage.length ? sayMessage : `You didn't say anything! >:(`});
+        await interaction.reply({ content: sayMessage.length ? sayMessage : `You didn't say anything! >:(`, allowedMentions: {} });
     }
 
     async getSaveData(): Promise<SayComponentSave> {
@@ -79,7 +79,7 @@ export class SayComponent extends Component<SayComponentSave> {
     async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
         return Promise.resolve(undefined);
     }
-    
+
     async onInteractionCreate(interaction: Interaction): Promise<void> {
         if (!interaction.isChatInputCommand()) {
             return;

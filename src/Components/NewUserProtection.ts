@@ -2,7 +2,7 @@ import { Component } from "../Component";
 import { ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, MessageType, PermissionFlagsBits, SlashCommandBuilder, TextChannel, User, VoiceState } from "discord.js";
 import { ComponentNames } from "../Constants/ComponentNames";
 import { DateTime } from "luxon";
-import { MEDIA_LINK_REGEX } from "../HelperFunctions";
+import { MEDIA_LINK_REGEX, getCensoredMessageReplyOptions } from "../HelperFunctions";
 import { ComponentCommands } from "../Constants/ComponentCommands";
 
 const NEW_USER_THRESHOLD_IN_DAYS_DEFAULT = 60;
@@ -203,16 +203,7 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
                 if (modAlertsChannel) {
                     const msg1 = await modAlertsChannel.send(`⚠️ New discord account <@${user.id}> (${accountAgeInDays} days old) attempted to post the following media in <#${message.channel.id}>`);
                     // Relay the exact same message content to the mod alerts channel with all included attachments and embeds
-                    await msg1.reply({
-                        content: message.content.length > 0 ? `||${message.content}||` : undefined,
-                        files: message.attachments.map(attachment => {
-                            return {
-                                attachment: attachment.url,
-                                name: `SPOILER_${attachment.name}`
-                            }
-                        }),
-                        embeds: message.embeds
-                    });
+                    await msg1.reply(getCensoredMessageReplyOptions(copy));
                 }
                 // Send a message to the user
                 await message.channel.send(`Hello, <@${user.id}>! Your account is not permitted to post media due to being a new discord account.\nPlease request to post media by messaging staff through ModMail!`);
@@ -244,7 +235,7 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
             // Get all administators members in the server
             const adminMembers = member.guild.members.cache.filter(member => member.permissions.has(PermissionFlagsBits.Administrator) && !member.user.bot);
             // DM the user to let them know they were banned for being a new user and to contact staff if this was a mistake
-            await member.user.send(`Hello, <@${member.user.id}>! Your account is not permitted to join this server due to being a brand new discord account.\nPlease contact admin staff if you would like to request an appeal: ${adminMembers.map(member => `${member.displayName}: ${member.toString()}`).join(", ")}`);
+            await member.user.send(`Hello, <@${member.user.id}>! Your account is not permitted to join this server due to being a brand new discord account.\nPlease contact admin staff if you would like to request an appeal: ${adminMembers.map(member => `${member.user.username}: ${member.toString()}`).join(", ")}`);
         } catch (e) {
             console.error("Error DMing new user: ", e);
         }
