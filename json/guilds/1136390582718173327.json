@@ -1,0 +1,70 @@
+{
+	"1136390582718173327": {
+		"prefix": "djmt!",
+		"modAlertsChannelId": "1136685002290118687",
+		"modLoggingChannelId": "1136685002290118687",
+		"componentData": {
+			"BRUH": {
+				"bruhChannels": []
+			},
+			"BSPEAK": {},
+			"CHEEMS": {},
+			"CONFIG": {},
+			"DAY_OF_THE_WEEK": {
+				"dotwChannels": []
+			},
+			"DEBUG": {},
+			"MEDIA_CHANNEL": {
+				"channels": []
+			},
+			"PING": {},
+			"PNG_RESOLUTION_CHECK": {
+				"channels": {
+					"dataType": "Map",
+					"value": []
+				}
+			},
+			"REACT_BOARDS": {
+				"emoteReactBoardMap": {
+					"dataType": "Map",
+					"value": []
+				},
+				"autoReactMap": {
+					"dataType": "Map",
+					"value": []
+				},
+				"starChannels": []
+			},
+			"SAY": {},
+			"VC_HOURS": {},
+			"VOICE_TEXT_PAIR": {
+				"voiceTextPairs": []
+			},
+			"DYNAMIC_BANNER": {
+				"imageUrls": []
+			},
+			"DYNAMIC_VOICE_CHANNELS": {
+				"markedRootVoiceChannelIds": []
+			},
+			"AUTO_THREAD": {
+				"channels": {
+					"dataType": "Map",
+					"value": []
+				}
+			},
+			"NEW_USER_PROTECTION": {
+				"newUserMediaLockEnabled": false,
+				"newUserMediaLockThresholdInDays": 60,
+				"newUserBanEnabled": false,
+				"newUserBanThresholdInDays": 7,
+				"permittedUsers": []
+			},
+			"EVERYONE_SPAM_TIMEOUT": {
+				"enabled": true,
+				"permittedRoleIds": [
+					"1136391117198344316"
+				]
+			}
+		}
+	}
+}
