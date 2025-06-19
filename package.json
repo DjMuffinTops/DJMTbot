@@ -8,7 +8,7 @@
     "start": "yarn build && node --trace-warnings dist/app.js"
   },
   "engines": {
-    "node": "16.x"
+    "node": "24.x"
   },
   "keywords": [],
   "author": "",
