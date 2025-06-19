@@ -1,5 +1,5 @@
 import {Component} from "../Component";
-import {ChannelType, ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, PermissionFlagsBits, SlashCommandBuilder, TextChannel, User, VoiceState} from "discord.js";
+import {ChannelType, ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, PartialGroupDMChannel, PermissionFlagsBits, SlashCommandBuilder, TextChannel, User, VoiceState} from "discord.js";
 import {ComponentNames} from "../Constants/ComponentNames";
 import {isMessageAdmin, MEDIA_LINK_REGEX} from "../HelperFunctions";
 import {ComponentCommands} from "../Constants/ComponentCommands";
@@ -158,7 +158,7 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
                 catch (e) {
                     console.error("Error deleting message for media channel check: ", e);
                 }
-                const warningMsg: Message = await message.channel.send(msg);
+                const warningMsg: Message = await (message.channel as Exclude<Message['channel'], PartialGroupDMChannel>).send(msg);
                 // Delete the warning message after some time
                 setTimeout(async () => {
                     await warningMsg.delete();

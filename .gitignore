@@ -11,3 +11,5 @@ json/guilds/
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+package-lock.json
+tsconfig.tsbuildinfo

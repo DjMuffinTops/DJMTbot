@@ -1,5 +1,5 @@
 import { Component } from "../Component";
-import { ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, MessageType, PermissionFlagsBits, SlashCommandBuilder, TextChannel, User, VoiceState } from "discord.js";
+import { ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, MessageType, PartialGroupDMChannel, PermissionFlagsBits, SlashCommandBuilder, TextChannel, User, VoiceState } from "discord.js";
 import { ComponentNames } from "../Constants/ComponentNames";
 import { DateTime } from "luxon";
 import { MEDIA_LINK_REGEX, getCensoredMessageReplyOptions } from "../HelperFunctions";
@@ -206,7 +206,7 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
                     await msg1.reply(getCensoredMessageReplyOptions(copy));
                 }
                 // Send a message to the user
-                await message.channel.send(`Hello, <@${user.id}>! Your account is not permitted to post media due to being a new discord account.\nPlease request to post media by creating a ticket in <#1325201482617716882>!`);
+                await (message.channel as Exclude<Message['channel'], PartialGroupDMChannel>).send(`Hello, <@${user.id}>! Your account is not permitted to post media due to being a new discord account.\nPlease request to post media by creating a ticket in <#1325201482617716882>!`);
             }
             return;
         }
