@@ -8,7 +8,8 @@ import {
     Interaction,
     SlashCommandBuilder,
     REST,
-    Routes
+    Routes,
+    PartialGroupDMChannel
 } from "discord.js";
 
 import {
@@ -254,7 +255,7 @@ export class DJMTGuild {
         if (this.isReady) {
             // Display the prefix when mentioned. Don't do this if the message is from an everyone ping
             if (this.guild?.client.user && message.mentions.has(this.guild?.client.user) && !message.mentions.everyone) {
-                await message.channel.send(`Type / to see my slash commands!`);
+                await (message.channel as Exclude<Message['channel'], PartialGroupDMChannel>).send(`Type / to see my slash commands!`);
             }
             for (const component of Array.from(this.components.values())) {
                 await component.onMessageCreate(args, message); // All messages go through here

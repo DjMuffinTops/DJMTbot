@@ -6,7 +6,7 @@ import {
     GuildMember,
     Interaction,
     Message,
-    MessageReaction, PermissionFlagsBits, SlashCommandBuilder, TextChannel,
+    MessageReaction, PartialGroupDMChannel, PermissionFlagsBits, SlashCommandBuilder, TextChannel,
     User,
     VoiceState
 } from "discord.js";
@@ -177,7 +177,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
                         } catch (e) {
                             console.error("Error deleting message for PNG resolution check: ", e);
                         }
-                        const warningMsg: Message = await message.channel.send(msg);
+                        const warningMsg: Message = await (message.channel as Exclude<Message['channel'], PartialGroupDMChannel>).send(msg);
                         // Delete the warning message after some time
                         setTimeout(async () => {
                             await warningMsg.delete();
