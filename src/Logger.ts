@@ -1,6 +1,18 @@
 import winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 
+/**
+ * Winston Logger Configuration
+ * 
+ * Environment Variables:
+ * - LOG_LEVEL: Set log level (error, warn, info, debug) - defaults to 'info'
+ * 
+ * Outputs:
+ * - Console: Pretty formatted with colors and timestamps
+ * - logs/error-%DATE%.log: JSON formatted error logs only
+ * - logs/combined-%DATE%.log: JSON formatted logs at all levels
+ */
+
 const { combine, timestamp, errors, json, colorize, printf } = winston.format;
 
 const consoleFormat = combine(
