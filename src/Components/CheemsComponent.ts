@@ -1,130 +1,178 @@
 import { Component } from "../Component";
 import { ComponentCommands } from "../Constants/ComponentCommands";
-import { ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, SlashCommandBuilder, User, VoiceState } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  GuildMember,
+  Interaction,
+  Message,
+  MessageReaction,
+  SlashCommandBuilder,
+  User,
+  VoiceState,
+} from "discord.js";
 import { ComponentNames } from "../Constants/ComponentNames";
 
 const cheemsCommand = new SlashCommandBuilder();
 cheemsCommand.setName(ComponentCommands.CHEEMS);
 cheemsCommand.setDescription("Converts the user's message to cheems speak");
-cheemsCommand.addStringOption(input => input.setName("message").setDescription("The message to convert to cheems speak").setRequired(true));
+cheemsCommand.addStringOption((input) =>
+  input
+    .setName("message")
+    .setDescription("The message to convert to cheems speak")
+    .setRequired(true),
+);
 
-interface CheemsComponentSave { }
+interface CheemsComponentSave {}
 export class CheemsComponent extends Component<CheemsComponentSave> {
+  name: ComponentNames = ComponentNames.CHEEMS;
+  commands: SlashCommandBuilder[] = [cheemsCommand];
 
-    name: ComponentNames = ComponentNames.CHEEMS;
-    commands: SlashCommandBuilder[] = [cheemsCommand];
+  async onMessageCreateWithGuildPrefix(
+    args: string[],
+    message: Message,
+  ): Promise<void> {
+    return Promise.resolve(undefined);
+  }
 
-    async onMessageCreateWithGuildPrefix(args: string[], message: Message): Promise<void> {
-        return Promise.resolve(undefined);
+  async getSaveData(): Promise<CheemsComponentSave> {
+    return {};
+  }
+
+  async afterLoadJSON(
+    parsedJSON: CheemsComponentSave | undefined,
+  ): Promise<void> {
+    return Promise.resolve(undefined);
+  }
+
+  async onReady(): Promise<void> {
+    return Promise.resolve(undefined);
+  }
+
+  async onGuildMemberAdd(member: GuildMember): Promise<void> {
+    return Promise.resolve(undefined);
+  }
+
+  async onMessageCreate(args: string[], message: Message): Promise<void> {
+    return Promise.resolve(undefined);
+  }
+
+  async onMessageReactionAdd(
+    messageReaction: MessageReaction,
+    user: User,
+  ): Promise<void> {
+    return Promise.resolve(undefined);
+  }
+
+  async onMessageReactionRemove(
+    messageReaction: MessageReaction,
+    user: User,
+  ): Promise<void> {
+    return Promise.resolve(undefined);
+  }
+
+  async onMessageUpdate(
+    oldMessage: Message,
+    newMessage: Message,
+  ): Promise<void> {
+    return Promise.resolve(undefined);
+  }
+
+  async onVoiceStateUpdate(
+    oldState: VoiceState,
+    newState: VoiceState,
+  ): Promise<void> {
+    return Promise.resolve(undefined);
+  }
+
+  async onInteractionCreate(interaction: Interaction): Promise<void> {
+    if (!interaction.isChatInputCommand()) {
+      return;
     }
-
-    async getSaveData(): Promise<CheemsComponentSave> {
-        return {};
+    if (interaction.commandName === ComponentCommands.CHEEMS) {
+      await this.cheemsCmd(
+        interaction.options.getString("message", true),
+        interaction,
+      );
     }
+  }
 
-    async afterLoadJSON(parsedJSON: CheemsComponentSave | undefined): Promise<void> {
-        return Promise.resolve(undefined);
+  insert(str: string, index: number, insert: string) {
+    if (index >= 0) {
+      return (
+        str.substring(0, index + 1) +
+        insert +
+        str.substring(index + 1, str.length)
+      );
+    } else {
+      return str;
     }
+  }
 
-    async onReady(): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
-    async onGuildMemberAdd(member: GuildMember): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
-    async onMessageCreate(args: string[], message: Message): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
-    async onMessageReactionAdd(messageReaction: MessageReaction, user: User): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
-    async onMessageReactionRemove(messageReaction: MessageReaction, user: User): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
-    async onMessageUpdate(oldMessage: Message, newMessage: Message): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
-    async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
-    async onInteractionCreate(interaction: Interaction): Promise<void> {
-        if (!interaction.isChatInputCommand()) {
-            return;
+  async cheemsCmd(message: string, interaction: ChatInputCommandInteraction) {
+    const cheemsChars = ["a", "e", "i", "o", "u", "r"];
+    const CHEEMS_M = "m";
+    const ADDTIONAL_CHANCE = 0.15;
+    const minimumRequired = 1; // The minimum amount of m's to add
+    let result = "";
+    const indices: number[] = [];
+    let index = 0;
+    const words = message.split(" ");
+    // Find all indices where a vowel exists
+    for (const word of words) {
+      for (let i = 0; i < word.length; i++) {
+        const character = word.charAt(i);
+        const characterLower = character.toLowerCase(); // output text will be lowercase
+        result += characterLower;
+        // if we find a vowel, save the current index in our indices array
+        if (
+          cheemsChars.includes(characterLower) && // is a cheems char
+          i + 1 < word.length && // is not the end
+          !cheemsChars.includes(word.charAt(i + 1)) && // next letter is not a cheems char
+          word.charAt(i + 1) !== CHEEMS_M
+        ) {
+          // next letter is not 'm'
+          indices.push(index);
         }
-        if (interaction.commandName === ComponentCommands.CHEEMS) {
-            await this.cheemsCmd(interaction.options.getString("message", true), interaction);
-        }
+        index++;
+      }
+      result += " ";
+      index++;
     }
 
-    insert(str: string, index: number, insert: string) {
-        if (index >= 0) {
-            return str.substring(0, index + 1) + insert + str.substring(index + 1, str.length);
-        } else {
-            return str;
+    // Add the minimum required m's to our result string
+    for (
+      let charAdditions = 0;
+      charAdditions < minimumRequired;
+      charAdditions++
+    ) {
+      if (indices.length > 0) {
+        const chosenIndex = Math.round(Math.random() * indices.length); // choose an index from our indices array at random
+        const requiredIndex = indices[chosenIndex];
+        // We need to increment the indices of all cheemsChars after the chosen one since we're adding an m to the string
+        for (let i = chosenIndex + 1; i < indices.length; i++) {
+          indices[i]++;
         }
+        // Insert an m, and remove the index for our list of indices
+        result = this.insert(result, requiredIndex, CHEEMS_M);
+        indices.splice(chosenIndex, 1);
+      }
     }
 
-    async cheemsCmd(message: string, interaction: ChatInputCommandInteraction) {
-        const cheemsChars = ['a', 'e', 'i', 'o', 'u', 'r'];
-        const CHEEMS_M = 'm';
-        const ADDTIONAL_CHANCE = .15;
-        const minimumRequired = 1; // The minimum amount of m's to add
-        let result = "";
-        let indices: number[] = [];
-        let index = 0;
-        const words = message.split(" ");
-        // Find all indices where a vowel exists
-        for (const word of words) {
-            for (let i = 0; i < word.length; i++) {
-                const character = word.charAt(i);
-                let characterLower = character.toLowerCase(); // output text will be lowercase
-                result += characterLower;
-                // if we find a vowel, save the current index in our indices array
-                if (cheemsChars.includes(characterLower) && // is a cheems char
-                    i + 1 < word.length && // is not the end
-                    !cheemsChars.includes(word.charAt(i + 1)) && // next letter is not a cheems char
-                    word.charAt(i + 1) !== CHEEMS_M) { // next letter is not 'm'
-                    indices.push(index);
-                }
-                index++;
-            }
-            result += ' ';
-            index++;
-        }
-
-        // Add the minimum required m's to our result string
-        for (let charAdditions = 0; charAdditions < minimumRequired; charAdditions++) {
-            if (indices.length > 0) {
-                const chosenIndex = Math.round(Math.random() * indices.length); // choose an index from our indices array at random
-                const requiredIndex = indices[chosenIndex];
-                // We need to increment the indices of all cheemsChars after the chosen one since we're adding an m to the string
-                for (let i = chosenIndex + 1; i < indices.length; i++) {
-                    indices[i]++;
-                }
-                // Insert an m, and remove the index for our list of indices
-                result = this.insert(result, requiredIndex, CHEEMS_M);
-                indices.splice(chosenIndex, 1)
-            }
-        }
-
-
-        // For the rest of the remaining indices, use random chance to potentially add an m
-        let randomsAdded = 0;
-        indices.forEach((index, loopIndex) => {
-            if (Math.random() < ADDTIONAL_CHANCE) {
-                result = this.insert(result, index + randomsAdded, CHEEMS_M);
-                indices.splice(loopIndex, 1);
-                randomsAdded++;
-            }
-        });
-        // And we get the bot to say the thing:
-        await interaction.reply({ content: result.length > 0 ? result : "Given message was empty, try typing something this time." });
-    }
+    // For the rest of the remaining indices, use random chance to potentially add an m
+    let randomsAdded = 0;
+    indices.forEach((index, loopIndex) => {
+      if (Math.random() < ADDTIONAL_CHANCE) {
+        result = this.insert(result, index + randomsAdded, CHEEMS_M);
+        indices.splice(loopIndex, 1);
+        randomsAdded++;
+      }
+    });
+    // And we get the bot to say the thing:
+    await interaction.reply({
+      content:
+        result.length > 0
+          ? result
+          : "Given message was empty, try typing something this time.",
+    });
+  }
 }
