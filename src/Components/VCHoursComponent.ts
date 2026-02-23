@@ -44,21 +44,21 @@ setHoursCommand.addIntegerOption((input) =>
 setHoursCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 // Declare data you want to save in JSON here
-interface VCHoursComponentSave {}
+type VCHoursComponentSave = Record<string, unknown>;
 
 export class VCHoursComponent extends Component<VCHoursComponentSave> {
   name: ComponentNames = ComponentNames.VC_HOURS;
   consecutiveHours: Map<VoiceTextPair, number> = new Map();
   commands: SlashCommandBuilder[] = [setHoursCommand];
 
-  async getSaveData(): Promise<VCHoursComponentSave> {
-    return {};
+  getSaveData(): Promise<VCHoursComponentSave> {
+    return Promise.resolve({});
   }
 
-  async afterLoadJSON(
-    loadedObject: VCHoursComponentSave | undefined,
+  afterLoadJSON(
+    _loadedObject: VCHoursComponentSave | undefined,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   async onReady(): Promise<void> {
@@ -70,52 +70,52 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
     for (const pair of vcChannelPairs) {
       this.consecutiveHours.set(pair, 0);
     }
-    Cron.getInstance().schedule("0 0 0-23 * * *", async () => {
-      await this.vcRemindersJob();
+    Cron.getInstance().schedule("0 0 0-23 * * *", () => {
+      void this.vcRemindersJob();
     });
 
     return Promise.resolve(undefined);
   }
 
-  async onGuildMemberAdd(member: GuildMember): Promise<void> {
+  async onGuildMemberAdd(_member: GuildMember): Promise<void> {
     return Promise.resolve(undefined);
   }
 
-  async onMessageCreate(args: string[], message: Message): Promise<void> {
+  async onMessageCreate(_args: string[], _message: Message): Promise<void> {
     return Promise.resolve(undefined);
   }
 
   async onMessageReactionAdd(
-    messageReaction: MessageReaction,
-    user: User,
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
     return Promise.resolve(undefined);
   }
 
   async onMessageReactionRemove(
-    messageReaction: MessageReaction,
-    user: User,
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
     return Promise.resolve(undefined);
   }
 
   async onMessageUpdate(
-    oldMessage: Message,
-    newMessage: Message,
+    _oldMessage: Message,
+    _newMessage: Message,
   ): Promise<void> {
     return Promise.resolve(undefined);
   }
 
   async onMessageCreateWithGuildPrefix(
-    args: string[],
-    message: Message,
+    _args: string[],
+    _message: Message,
   ): Promise<void> {
     return Promise.resolve(undefined);
   }
 
   async onVoiceStateUpdate(
-    oldState: VoiceState,
-    newState: VoiceState,
+    _oldState: VoiceState,
+    _newState: VoiceState,
   ): Promise<void> {
     return Promise.resolve(undefined);
   }
@@ -124,7 +124,7 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === ComponentCommands.SET_HOURS) {
+    if (interaction.commandName === String(ComponentCommands.SET_HOURS)) {
       await this.setHoursCmd(
         interaction.options.getChannel("voicechannel", true),
         interaction.options.getChannel("textchannel", true),

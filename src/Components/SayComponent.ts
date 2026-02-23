@@ -10,7 +10,7 @@ import {
   VoiceState,
 } from "discord.js";
 import { ComponentCommands } from "../Constants/ComponentCommands";
-import { isInteractionAdmin, isMessageAdmin } from "../HelperFunctions";
+import { isInteractionAdmin } from "../HelperFunctions";
 import { ComponentNames } from "../Constants/ComponentNames";
 
 const sayCommand = new SlashCommandBuilder();
@@ -23,13 +23,13 @@ sayCommand.addStringOption((input) =>
     .setRequired(true),
 );
 
-interface SayComponentSave {}
+type SayComponentSave = Record<string, unknown>;
 export class SayComponent extends Component<SayComponentSave> {
   name: ComponentNames = ComponentNames.SAY;
 
   async onMessageCreateWithGuildPrefix(
-    args: string[],
-    message: Message,
+    _args: string[],
+    _message: Message,
   ): Promise<void> {
     return Promise.resolve(undefined);
   }
@@ -39,12 +39,12 @@ export class SayComponent extends Component<SayComponentSave> {
     const args = sayMessage.split(" ");
     const userId = `<@${interaction.member?.user.id}>`;
     const deniedMsgs = [
-      `Sorry ${userId}, there\'s a 5% chance i\'ll actually say that.`,
+      `Sorry ${userId}, there's a 5% chance i'll actually say that.`,
       "Reh",
       ":RioluUgh:767528910065762315",
-      `I\'m gonna send you to the ranch, ${userId}`,
+      `I'm gonna send you to the ranch, ${userId}`,
       `You have no power over me, ${userId}`,
-      `I\'m not gonna say that ${userId}...`,
+      `I'm not gonna say that ${userId}...`,
       `Why should I say ${sayMessage}?`,
       `${sayMessage}???????`,
       `${args.reverse().join(" ")}`,
@@ -54,7 +54,7 @@ export class SayComponent extends Component<SayComponentSave> {
     ];
     if (!isInteractionAdmin(interaction) && Math.random() < 0.95) {
       await interaction.reply({
-        content: deniedMsgs[Math.round(Math.random() * deniedMsgs.length)],
+        content: deniedMsgs[Math.floor(Math.random() * deniedMsgs.length)],
         allowedMentions: {},
       });
       return;
@@ -69,52 +69,52 @@ export class SayComponent extends Component<SayComponentSave> {
     });
   }
 
-  async getSaveData(): Promise<SayComponentSave> {
-    return {};
+  getSaveData(): Promise<SayComponentSave> {
+    return Promise.resolve({});
   }
 
-  async afterLoadJSON(
-    loadedObject: SayComponentSave | undefined,
+  afterLoadJSON(
+    _loadedObject: SayComponentSave | undefined,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   async onReady(): Promise<void> {
     return Promise.resolve(undefined);
   }
 
-  async onGuildMemberAdd(member: GuildMember): Promise<void> {
+  async onGuildMemberAdd(_member: GuildMember): Promise<void> {
     return Promise.resolve(undefined);
   }
 
-  async onMessageCreate(args: string[], message: Message): Promise<void> {
+  async onMessageCreate(_args: string[], _message: Message): Promise<void> {
     return Promise.resolve(undefined);
   }
 
   async onMessageReactionAdd(
-    messageReaction: MessageReaction,
-    user: User,
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
     return Promise.resolve(undefined);
   }
 
   async onMessageReactionRemove(
-    messageReaction: MessageReaction,
-    user: User,
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
     return Promise.resolve(undefined);
   }
 
   async onMessageUpdate(
-    oldMessage: Message,
-    newMessage: Message,
+    _oldMessage: Message,
+    _newMessage: Message,
   ): Promise<void> {
     return Promise.resolve(undefined);
   }
 
   async onVoiceStateUpdate(
-    oldState: VoiceState,
-    newState: VoiceState,
+    _oldState: VoiceState,
+    _newState: VoiceState,
   ): Promise<void> {
     return Promise.resolve(undefined);
   }
@@ -123,7 +123,7 @@ export class SayComponent extends Component<SayComponentSave> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === ComponentCommands.SAY) {
+    if (interaction.commandName === String(ComponentCommands.SAY)) {
       await this.sayCmd(
         interaction.options.getString("message", true),
         interaction,
