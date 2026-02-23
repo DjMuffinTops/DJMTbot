@@ -27,7 +27,7 @@ importers:
         specifier: ^7.2.3
         version: 7.2.3
       typescript:
-        specifier: ^5.0.4
+        specifier: ^5.9.3
         version: 5.9.3
     devDependencies:
       '@types/dotenv':
@@ -37,8 +37,8 @@ importers:
         specifier: ^1.25.1
         version: 1.27.1
       '@types/node':
-        specifier: ^14.0.26
-        version: 14.18.63
+        specifier: ^24.0.0
+        version: 24.10.13
       '@types/node-cron':
         specifier: ^2.0.3
         version: 2.0.8
@@ -98,8 +98,8 @@ packages:
   '@types/node-cron@2.0.8':
     resolution: {integrity: sha512-YeoqKLt4ElsPHNIwc3tZ86yLRcyZ8GzUN1PbP4dnmBrwMISZfNaiH9OIqHdDq8fnhxxdjHN+G6HYYQ0MaRoDYA==}
 
-  '@types/node@14.18.63':
-    resolution: {integrity: sha512-fAtCfv4jJg+ExtXhvCkCqUKZ+4ok/JQk01qDKhL5BDDoS3AxKXhV5/MAVUZyQnSEd2GT92fkgZl0pz0Q0AzcIQ==}
+  '@types/node@24.10.13':
+    resolution: {integrity: sha512-oH72nZRfDv9lADUBSo104Aq7gPHpQZc4BTx38r9xf9pg5LfP6EzSyH2n7qFmmxRQXh7YlUXODcYsg6PuTDSxGg==}
 
   '@types/probe-image-size@5.0.1':
     resolution: {integrity: sha512-81i/4VhMVlQTa9nWLT5TZ62XAZDVWRx/968BpIPjmRf2H37Kimw/sLcvyQ6TiSqQXYi3GzGgD3oEx1+tD/e+fw==}
@@ -434,6 +434,9 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  undici-types@7.16.0:
+    resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
+
   undici@6.21.3:
     resolution: {integrity: sha512-gBLkYIlEnSp8pFbT64yFgGE6UIB9tAkhukC23PmMDCe5Nd+cRqKxSjw5y54MK2AZMgZfJWMaNE4nYUHgi1XEOw==}
     engines: {node: '>=18.17'}
@@ -536,17 +539,19 @@ snapshots:
     dependencies:
       '@types/tz-offset': 0.0.3
 
-  '@types/node@14.18.63': {}
+  '@types/node@24.10.13':
+    dependencies:
+      undici-types: 7.16.0
 
   '@types/probe-image-size@5.0.1':
     dependencies:
-      '@types/node': 14.18.63
+      '@types/node': 24.10.13
 
   '@types/tz-offset@0.0.3': {}
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 14.18.63
+      '@types/node': 24.10.13
 
   '@vladfrangu/async_event_emitter@2.4.7': {}
 
@@ -914,6 +919,8 @@ snapshots:
       mime-types: 2.1.35
 
   typescript@5.9.3: {}
+
+  undici-types@7.16.0: {}
 
   undici@6.21.3: {}
 

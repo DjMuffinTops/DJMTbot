@@ -21,12 +21,12 @@
     "luxon": "^3.4.4",
     "node-cron": "^3.0.2",
     "probe-image-size": "^7.2.3",
-    "typescript": "^5.0.4"
+    "typescript": "^5.9.3"
   },
   "devDependencies": {
     "@types/dotenv": "^8.2.0",
     "@types/luxon": "^1.25.1",
-    "@types/node": "^14.0.26",
+    "@types/node": "^24.0.0",
     "@types/node-cron": "^2.0.3",
     "@types/probe-image-size": "^5.0.1"
   }
