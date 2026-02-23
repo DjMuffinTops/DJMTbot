@@ -33,6 +33,7 @@
     "@changesets/cli": "^2.29.8",
     "@eslint/eslintrc": "^3.3.3",
     "@eslint/js": "^10.0.1",
+    "@types/express": "^5.0.6",
     "@types/luxon": "^1.27.1",
     "@types/node": "^24.0.0",
     "@types/node-cron": "^2.0.8",

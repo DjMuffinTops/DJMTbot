@@ -1,5 +1,5 @@
 import { DJMTbot } from "./DJMTbot";
-const express = require("express");
+import express, { Request, Response } from "express";
 const app = express();
 const PORT = 8080;
 
@@ -11,7 +11,7 @@ if (!process.env.APPLICATION_ID) {
   throw new Error("APPLICATION_ID ENV not set.");
 }
 
-app.get("/", (req: any, res: any) => {
+app.get("/", (req: Request, res: Response) => {
   const data = {
     uptime: process.uptime(),
     message: "Ok",
@@ -21,8 +21,9 @@ app.get("/", (req: any, res: any) => {
 });
 
 // Literally only doing this so digital ocean can pass health checks ugh
-app.listen(PORT, console.log("Server has started at port " + PORT));
+app.listen(PORT, () => console.log("Server has started at port " + PORT));
 
 DJMTbot.getInstance()
   .run()
-  .then((r) => console.log("Bot has been run"));
+  .then(() => console.log("Bot has been run"))
+  .catch((err) => console.error("Error running bot:", err));
