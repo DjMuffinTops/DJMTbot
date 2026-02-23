@@ -14,7 +14,6 @@ import {
   VoiceState,
 } from "discord.js";
 import { ComponentNames } from "../Constants/ComponentNames";
-import { isMessageAdmin } from "../HelperFunctions";
 import { ComponentCommands } from "../Constants/ComponentCommands";
 
 const setVcPairCommand = new SlashCommandBuilder();
@@ -58,63 +57,64 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
   voiceTextPairs: VoiceTextPair[] = [];
   commands: SlashCommandBuilder[] = [setVcPairCommand, printVcPairCommand];
 
-  async getSaveData(): Promise<VoiceTextPairComponentSave> {
-    return {
+  getSaveData(): Promise<VoiceTextPairComponentSave> {
+    return Promise.resolve({
       voiceTextPairs: this.voiceTextPairs,
-    };
+    });
   }
 
-  async afterLoadJSON(
+  afterLoadJSON(
     loadedObject: VoiceTextPairComponentSave | undefined,
   ): Promise<void> {
     if (loadedObject) {
       this.voiceTextPairs = loadedObject.voiceTextPairs;
     }
+    return Promise.resolve();
   }
 
   async onReady(): Promise<void> {
     return Promise.resolve(undefined);
   }
 
-  async onGuildMemberAdd(member: GuildMember): Promise<void> {
+  async onGuildMemberAdd(_member: GuildMember): Promise<void> {
     return Promise.resolve(undefined);
   }
 
-  async onMessageCreate(args: string[], message: Message): Promise<void> {
+  async onMessageCreate(_args: string[], _message: Message): Promise<void> {
     return Promise.resolve(undefined);
   }
 
   async onMessageReactionAdd(
-    messageReaction: MessageReaction,
-    user: User,
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
     return Promise.resolve(undefined);
   }
 
   async onMessageReactionRemove(
-    messageReaction: MessageReaction,
-    user: User,
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
     return Promise.resolve(undefined);
   }
 
   async onMessageUpdate(
-    oldMessage: Message,
-    newMessage: Message,
+    _oldMessage: Message,
+    _newMessage: Message,
   ): Promise<void> {
     return Promise.resolve(undefined);
   }
 
   async onMessageCreateWithGuildPrefix(
-    args: string[],
-    message: Message,
+    _args: string[],
+    _message: Message,
   ): Promise<void> {
     return Promise.resolve(undefined);
   }
 
   async onVoiceStateUpdate(
-    oldState: VoiceState,
-    newState: VoiceState,
+    _oldState: VoiceState,
+    _newState: VoiceState,
   ): Promise<void> {
     return Promise.resolve(undefined);
   }
@@ -123,7 +123,7 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === ComponentCommands.SET_VC_PAIRS) {
+    if (interaction.commandName === String(ComponentCommands.SET_VC_PAIRS)) {
       await this.handleVoiceTextPair(
         interaction.options.getChannel<ChannelType.GuildVoice>(
           "voicechannel",
@@ -135,7 +135,7 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
         ),
         interaction,
       );
-    } else if (interaction.commandName === ComponentCommands.PRINT_VC_PAIRS) {
+    } else if (interaction.commandName === String(ComponentCommands.PRINT_VC_PAIRS)) {
       await this.printVoiceTextPairs(interaction);
     }
   }
@@ -146,10 +146,7 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
   ): Promise<boolean> {
     const pair: VoiceTextPair = { voiceChannel, textChannel };
     for (const pair of this.voiceTextPairs) {
-      if (
-        pair.voiceChannel.id === voiceChannel.id &&
-        pair.textChannel.id === textChannel.id
-      ) {
+      if (pair.voiceChannel.id === voiceChannel.id && pair.textChannel.id === textChannel.id) {
         this.voiceTextPairs.splice(this.voiceTextPairs.indexOf(pair), 1);
         await this.djmtGuild.saveJSON();
         return false;
@@ -185,18 +182,12 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
     const success = await this.setVoiceTextPair(voiceChannel, textChannel);
     if (success) {
       await interaction.reply({
-        content: `Added ${[
-          voiceChannel.toString(),
-          textChannel.toString(),
-        ]} to the VC Channels list!`,
+        content: `Added ${[voiceChannel.toString(), textChannel.toString()].join(" ")} to the VC Channels list!`,
         ephemeral: true,
       });
     } else {
       await interaction.reply({
-        content: `Removed ${[
-          voiceChannel.toString(),
-          textChannel.toString(),
-        ]} from VC Channels list!`,
+        content: `Removed ${[voiceChannel.toString(), textChannel.toString()].join(" ")} from VC Channels list!`,
         ephemeral: true,
       });
     }
