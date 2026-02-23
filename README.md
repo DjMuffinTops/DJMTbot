@@ -35,6 +35,7 @@ Create a `.env` file in the root directory with the following environment variab
 | `APPLICATION_ID` | **Required.** Your Discord bot application ID | `APPLICATION_ID=123456789012345678` |
 | `LOG_LEVEL` | Log verbosity level. Options: `error`, `warn`, `info`, `debug`. Default: `info` | `LOG_LEVEL=debug` |
 | `PRETTY_LOGS` | Controls console log formatting. Set to `true` for pretty-printed metadata (indented multiline JSON). Default: inline compact JSON format | `PRETTY_LOGS=true` |
+| `GUILD_IDS` | Optional comma-separated or JSON array of guild IDs to restrict which guilds the bot creates instances for. If not set, the bot loads all guilds. | `GUILD_IDS=123,456,789` or `GUILD_IDS="[\"123\",\"456\",\"789\"]"` |
 
 **Example `.env` file:**
 ```env
