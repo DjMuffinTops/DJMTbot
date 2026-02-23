@@ -25,15 +25,34 @@ To get your own bot token, [create a bot!](https://discordjs.guide/preparations/
 You may also ask me for access to the PW Test server and dev bot token on Discord!
 
 ## Create a .env file in the root directory
-```TOKEN``` and ```APPLICATION_ID``` environment variables must be defined, one easy way to set them is by creating an `.env` file.
+Create a `.env` file in the root directory with the following environment variables:
 
-Your .env should look like this
-```
+## Environment Variables
+
+| Environment Variable | Description | Example Value |
+|---------------------|-------------|---------------|
+| `TOKEN` | **Required.** Your Discord bot token from the [Discord Developer Portal](https://discord.com/developers/applications) | `TOKEN=YOUR_TOKEN_HERE` |
+| `APPLICATION_ID` | **Required.** Your Discord bot application ID | `APPLICATION_ID=123456789012345678` |
+| `LOG_LEVEL` | Log verbosity level. Options: `error`, `warn`, `info`, `debug`. Default: `info` | `LOG_LEVEL=debug` |
+| `PRETTY_LOGS` | Controls console log formatting. Set to `true` for pretty-printed metadata (indented multiline JSON). Default: inline compact JSON format | `PRETTY_LOGS=true` |
+
+**Example `.env` file:**
+```env
 TOKEN=YOUR_DISCORD_BOT_TOKEN_HERE
-APPLICATION_ID=DISCORD_BOT_APPLICATION_ID
+APPLICATION_ID=YOUR_APPLICATION_ID_HERE
+LOG_LEVEL=info
+PRETTY_LOGS=true
 ```
-**DO NOT COMMIT YOUR .ENV file to GIT. 
-If you accidentally expose your token publicly, RESET THE TOKEN through the discord developer page ASAP!**
+
+**⚠️ SECURITY WARNING:** DO NOT COMMIT YOUR `.env` FILE TO GIT!  
+If you accidentally expose your token publicly, RESET THE TOKEN through the Discord Developer Portal immediately!
+
+### Logging
+Logs are automatically written to the `logs/` directory:
+- `logs/error-YYYY-MM-DD.log` - Error logs only
+- `logs/combined-YYYY-MM-DD.log` - All logs
+
+Log files rotate daily and are retained for 14 days (max 20MB per file).
 
 ## Start the Bot
 ```
