@@ -1,9 +1,7 @@
 import { Component } from "../Component";
 import {
-  Channel,
   GuildMember,
   Message,
-  AttachmentBuilder,
   EmbedBuilder,
   MessageReaction,
   TextChannel,
@@ -16,7 +14,6 @@ import {
   ChatInputCommandInteraction,
 } from "discord.js";
 import { ComponentNames } from "../Constants/ComponentNames";
-import { isMessageAdmin } from "../HelperFunctions";
 import { ComponentCommands } from "../Constants/ComponentCommands";
 import { DJMTbot } from "../DJMTbot";
 
@@ -129,34 +126,38 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
     printStarCommand,
   ];
 
-  async getSaveData(): Promise<ReactBoardSave> {
-    const clearedERMap = new Map(this.emoteReactBoardMap);
+  getSaveData(): Promise<ReactBoardSave> {
+    const clearedERMap = new Map<string, ReactBoardMapValue>(this.emoteReactBoardMap as Iterable<readonly [string, ReactBoardMapValue]>);
     // recentMsgIds do not need to be saved
     for (const key of Array.from(clearedERMap.keys())) {
-      // @ts-ignore
-      clearedERMap.get(key).recentMsgIds = [];
+      const entry = clearedERMap.get(key);
+      if (entry) {
+        entry.recentMsgIds = [];
+        clearedERMap.set(key, entry);
+      }
     }
-    return {
-      emoteReactBoardMap: this.emoteReactBoardMap,
+    return Promise.resolve({
+      emoteReactBoardMap: clearedERMap,
       autoReactMap: this.autoReactMap,
       starChannels: this.starChannels,
-    };
+    });
   }
 
-  async afterLoadJSON(loadedObject: ReactBoardSave | undefined): Promise<void> {
+  afterLoadJSON(loadedObject: ReactBoardSave | undefined): Promise<void> {
     if (loadedObject) {
       this.emoteReactBoardMap = loadedObject.emoteReactBoardMap;
       this.autoReactMap = loadedObject.autoReactMap;
       this.starChannels = loadedObject.starChannels;
     }
+    return Promise.resolve();
   }
 
-  async onReady(): Promise<void> {
-    return Promise.resolve(undefined);
+  onReady(): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onGuildMemberAdd(member: GuildMember): Promise<void> {
-    return Promise.resolve(undefined);
+  onGuildMemberAdd(_member: GuildMember): Promise<void> {
+    return Promise.resolve();
   }
 
   async onMessageCreate(args: string[], message: Message): Promise<void> {
@@ -167,45 +168,45 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
 
   async onMessageReactionAdd(
     messageReaction: MessageReaction,
-    user: User,
+    _user: User,
   ): Promise<void> {
     await this.checkReactBoard(messageReaction);
     return Promise.resolve(undefined);
   }
 
-  async onMessageReactionRemove(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionRemove(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageUpdate(
-    oldMessage: Message,
-    newMessage: Message,
+  onMessageUpdate(
+    _oldMessage: Message,
+    _newMessage: Message,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageCreateWithGuildPrefix(
-    args: string[],
-    message: Message,
+  onMessageCreateWithGuildPrefix(
+    _args: string[],
+    _message: Message,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onVoiceStateUpdate(
-    oldState: VoiceState,
-    newState: VoiceState,
+  onVoiceStateUpdate(
+    _oldState: VoiceState,
+    _newState: VoiceState,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   async onInteractionCreate(interaction: Interaction): Promise<void> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === ComponentCommands.SET_AUTO_REACT) {
+    if (interaction.commandName === String(ComponentCommands.SET_AUTO_REACT)) {
       await this.setAutoReactCmd(
         interaction.options.getString("emote", true),
         interaction.options.getChannel<ChannelType.GuildText>(
@@ -214,9 +215,9 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
         ),
         interaction,
       );
-    } else if (interaction.commandName === ComponentCommands.PRINT_AUTO_REACT) {
+    } else if (interaction.commandName === String(ComponentCommands.PRINT_AUTO_REACT)) {
       await this.printAutoReactCmd(interaction);
-    } else if (interaction.commandName === ComponentCommands.SET_REACT_PAIRS) {
+    } else if (interaction.commandName === String(ComponentCommands.SET_REACT_PAIRS)) {
       await this.setReactPairsCmd(
         interaction.options.getString("emote", true),
         interaction.options.getChannel<ChannelType.GuildText>(
@@ -226,11 +227,9 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
         interaction.options.getInteger("threshold", true),
         interaction,
       );
-    } else if (
-      interaction.commandName === ComponentCommands.PRINT_REACT_PAIRS
-    ) {
+    } else if (interaction.commandName === String(ComponentCommands.PRINT_REACT_PAIRS)) {
       await this.printReactPairsCmd(interaction);
-    } else if (interaction.commandName === ComponentCommands.SET_STAR) {
+    } else if (interaction.commandName === String(ComponentCommands.SET_STAR)) {
       await this.setStarCmd(
         interaction.options.getChannel<ChannelType.GuildText>(
           "channel",
@@ -238,21 +237,20 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
         ),
         interaction,
       );
-    } else if (interaction.commandName === ComponentCommands.PRINT_STAR) {
+    } else if (interaction.commandName === String(ComponentCommands.PRINT_STAR)) {
       await this.printStartCmd(interaction);
     }
     return Promise.resolve(undefined);
   }
 
   async printAutoReactCmd(interaction: ChatInputCommandInteraction) {
-    const msg = "";
+    let msg = "";
     if (this.autoReactMap.size > 0) {
-      let msg = "";
-      this.autoReactMap.forEach((channelIds, rawEmojiId) => {
-        channelIds.forEach((channelId) => {
+      for (const [rawEmojiId, channelIds] of this.autoReactMap) {
+        for (const channelId of channelIds) {
           msg += `${rawEmojiId} => <#${channelId}>\n`;
-        });
-      });
+        }
+      }
       await interaction.reply({
         content: `Auto React Channels:\n${msg}`,
         ephemeral: true,
@@ -274,8 +272,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
       rawEmote.lastIndexOf(":") + 1,
       rawEmote.indexOf(">"),
     );
-    let foundEmote = undefined;
-    foundEmote = DJMTbot.getInstance().client.emojis.cache.get(emoteId);
+    const foundEmote = DJMTbot.getInstance().client.emojis.cache.get(emoteId);
     if (!foundEmote) {
       await interaction.reply({
         content: `The given emote could not be found, make sure this bot in is the server the emote is from!`,
@@ -293,26 +290,25 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
       return;
     }
     if (this.autoReactMap.has(rawEmote)) {
-      if (this.autoReactMap.get(rawEmote)?.includes(channelId)) {
+      const arr = this.autoReactMap.get(rawEmote);
+      if (arr && arr.includes(channelId)) {
         // If we have a match delete it from the map
-        // @ts-ignore
-        this.autoReactMap
-          .get(rawEmote)
-          .splice(this.autoReactMap.get(rawEmote).indexOf(channelId), 1);
-        // @ts-ignore
-        if (this.autoReactMap.get(rawEmote).length < 1) {
+        arr.splice(arr.indexOf(channelId), 1);
+        if (arr.length < 1) {
           this.autoReactMap.delete(rawEmote);
+        } else {
+          this.autoReactMap.set(rawEmote, arr);
         }
         await this.djmtGuild.saveJSON();
         await interaction.reply({
-          content: `Removed ${channel} from the auto react list for ${rawEmote}`,
+          content: `Removed ${channel.toString()} from the auto react list for ${rawEmote}`,
           ephemeral: true,
         });
       } else {
-        this.autoReactMap.get(rawEmote)?.push(channelId);
+        arr?.push(channelId);
         await this.djmtGuild.saveJSON();
         await interaction.reply({
-          content: `Added ${channel} to the auto react list for ${rawEmote}!`,
+          content: `Added ${channel.toString()} to the auto react list for ${rawEmote}!`,
           ephemeral: true,
         });
       }
@@ -320,7 +316,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
       this.autoReactMap.set(rawEmote, [channelId]);
       await this.djmtGuild.saveJSON();
       await interaction.reply({
-        content: `Added ${channel} to the auto react list for ${rawEmote}!`,
+        content: `Added ${channel.toString()} to the auto react list for ${rawEmote}!`,
         ephemeral: true,
       });
     }
@@ -382,14 +378,13 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
       this.emoteReactBoardMap.has(rawEmote) &&
       this.emoteReactBoardMap.get(rawEmote)?.channelId === channelId
     ) {
-      // @ts-ignore
-      const val: ReactBoardMapValue = this.emoteReactBoardMap.get(rawEmote);
+      const val = this.emoteReactBoardMap.get(rawEmote);
       // If we have a match delete it from the map and the config
       this.emoteReactBoardMap.delete(rawEmote);
 
       await this.djmtGuild.saveJSON();
-      await interaction.reply({
-        content: `Removed [${rawEmote}, ${val.channelId}, ${val.threshold}] from React Channels list!`,
+        await interaction.reply({
+        content: `Removed [${rawEmote}, ${val?.channelId}, ${val?.threshold}] from React Channels list!`,
         ephemeral: true,
       });
       return;
@@ -416,14 +411,13 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
 
   async checkAutoReact(args: string[], message: Message) {
     const channelId = message.channel.id;
-    this.autoReactMap.forEach((channelIds, rawEmojiId) => {
+    for (const [rawEmojiId, channelIds] of this.autoReactMap) {
       const emoteId = rawEmojiId.substring(
         rawEmojiId.lastIndexOf(":") + 1,
         rawEmojiId.indexOf(">"),
       );
       const foundEmote = DJMTbot.getInstance().client.emojis.cache.get(emoteId);
-      channelIds.forEach(async (mapChannelId) => {
-        // TODO: async might be weird here
+      for (const mapChannelId of channelIds) {
         if (foundEmote && channelId === mapChannelId) {
           try {
             await message.react(foundEmote);
@@ -433,14 +427,12 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
                 `[${this.djmtGuild.guildId}] checkAutoReact Unknown message error, message was probably already deleted`,
               );
             } else {
-              console.log(
-                `[${this.djmtGuild.guildId}] checkAutoReact error: ${e}`,
-              );
+              console.log(`[${this.djmtGuild.guildId}] checkAutoReact error:`, e);
             }
           }
         }
-      });
-    });
+      }
+    }
   }
   async checkReactBoard(reaction: MessageReaction) {
     // let channelId = reaction.message.channel.id;
@@ -530,7 +522,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
     interaction: ChatInputCommandInteraction,
   ) {
     const channelId = channel.id;
-    const foundChannel = await this.djmtGuild.getGuildChannel(channelId);
+    const foundChannel = this.djmtGuild.getGuildChannel(channelId);
     if (!foundChannel) {
       await interaction.reply({
         content: "The given channel is invalid!",
@@ -542,7 +534,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
       this.starChannels.splice(this.starChannels.indexOf(channelId), 1);
       await this.djmtGuild.saveJSON();
       await interaction.reply({
-        content: `Removed ${channel} from the star channels list!`,
+        content: `Removed ${channel.toString()} from the star channels list!`,
         ephemeral: true,
       });
     } else {
@@ -552,7 +544,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
       this.starChannels.push(channelId);
       await this.djmtGuild.saveJSON();
       await interaction.reply({
-        content: `Added ${channel} to the star channels list!`,
+        content: `Added ${channel.toString()} to the star channels list!`,
         ephemeral: true,
       });
     }
@@ -569,7 +561,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
             `[${this.djmtGuild.guildId}] autoStar Unknown message error, message was probably already deleted`,
           );
         } else {
-          console.log(`[${this.djmtGuild.guildId}] autoStar error: ${e}`);
+          console.log(`[${this.djmtGuild.guildId}] autoStar error:`, e);
         }
       }
     }
