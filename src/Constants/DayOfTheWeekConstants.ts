@@ -1,4 +1,9 @@
-export const dayOfTheWeekConstants: any = {
+export interface DayInfo {
+  day: string;
+  messages: string[];
+}
+
+export const dayOfTheWeekConstants: Record<string, DayInfo> = {
   "0": {
     day: "Sunday",
     messages: [
