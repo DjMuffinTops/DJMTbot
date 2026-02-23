@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       discord.js:
-        specifier: ^14.11.0
+        specifier: ^14.25.1
         version: 14.25.1
       dotenv:
         specifier: ^16.6.1
