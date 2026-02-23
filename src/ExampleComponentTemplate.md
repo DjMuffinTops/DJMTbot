@@ -1,3 +1,4 @@
+```ts
 import { Component } from "./Component";
 import {
   GuildMember,
@@ -98,3 +99,4 @@ export class ExampleComponentTemplate extends Component<ExampleComponentSave> {
     return Promise.resolve(undefined);
   }
 }
+```

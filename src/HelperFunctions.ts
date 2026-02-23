@@ -4,7 +4,6 @@ import {
   Interaction,
   Message,
   MessageReplyOptions,
-  PermissionFlagsBits,
   PermissionsBitField,
   Role,
 } from "discord.js";
@@ -87,22 +86,33 @@ export function mapKeys<T, V, U>(
   return new Map(Array.from(m.entries(), transformPair));
 }
 
-export function JSONStringifyReplacer(key: any, value: any) {
+type SerializedMap = {
+  dataType: "Map";
+  value: Array<readonly [unknown, unknown]>;
+};
+
+function isSerializedMap(v: unknown): v is SerializedMap {
+  return (
+    typeof v === "object" &&
+    v !== null &&
+    (v as Record<string, unknown>).dataType === "Map" &&
+    Array.isArray((v as Record<string, unknown>).value)
+  );
+}
+
+export function JSONStringifyReplacer(key: string, value: unknown): unknown {
   if (value instanceof Map) {
     return {
       dataType: "Map",
-      value: Array.from(value.entries()), // or with spread: value: [...value]
+      value: Array.from((value as Map<unknown, unknown>).entries()),
     };
-  } else {
-    return value;
   }
+  return value;
 }
 
-export function JSONStringifyReviver(key: any, value: any) {
-  if (typeof value === "object" && value !== null) {
-    if (value.dataType === "Map") {
-      return new Map(value.value);
-    }
+export function JSONStringifyReviver(key: string, value: unknown): unknown {
+  if (isSerializedMap(value)) {
+    return new Map(value.value as Iterable<readonly [unknown, unknown]>);
   }
   return value;
 }
