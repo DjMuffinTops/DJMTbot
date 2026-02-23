@@ -16,76 +16,75 @@ const pingCommand = new SlashCommandBuilder();
 pingCommand.setName(ComponentCommands.PING);
 pingCommand.setDescription("Pings the bot");
 
-interface PingComponentSave {}
+type PingComponentSave = Record<string, unknown>;
 export class PingComponent extends Component<PingComponentSave> {
   name: ComponentNames = ComponentNames.PING;
   commands: SlashCommandBuilder[] = [pingCommand];
 
-  async onMessageCreateWithGuildPrefix(
-    args: string[],
-    message: Message,
+  onMessageCreateWithGuildPrefix(
+    _args: string[],
+    _message: Message,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
+  }
+  getSaveData(): Promise<PingComponentSave> {
+    return Promise.resolve({} as PingComponentSave);
   }
 
-  async getSaveData(): Promise<PingComponentSave> {
-    return {};
-  }
-
-  async afterLoadJSON(
-    loadedObject: PingComponentSave | undefined,
+  afterLoadJSON(
+    _loadedObject: PingComponentSave | undefined,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onReady(): Promise<void> {
-    return Promise.resolve(undefined);
+  onReady(): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onGuildMemberAdd(member: GuildMember): Promise<void> {
-    return Promise.resolve(undefined);
+  onGuildMemberAdd(_member: GuildMember): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onMessageCreate(args: string[], message: Message): Promise<void> {
-    return Promise.resolve(undefined);
+  onMessageCreate(_args: string[], _message: Message): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onMessageReactionAdd(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionAdd(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageReactionRemove(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionRemove(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageUpdate(
-    oldMessage: Message,
-    newMessage: Message,
+  onMessageUpdate(
+    _oldMessage: Message,
+    _newMessage: Message,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onVoiceStateUpdate(
-    oldState: VoiceState,
-    newState: VoiceState,
+  onVoiceStateUpdate(
+    _oldState: VoiceState,
+    _newState: VoiceState,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   async onInteractionCreate(interaction: Interaction): Promise<void> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === ComponentCommands.PING) {
+    if (interaction.commandName === String(ComponentCommands.PING)) {
       await this.pingCmd(interaction);
     }
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   async pingCmd(interaction: ChatInputCommandInteraction) {

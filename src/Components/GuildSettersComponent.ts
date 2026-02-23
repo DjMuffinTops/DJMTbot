@@ -73,7 +73,7 @@ setModLoggingChannelCommand.setDefaultMemberPermissions(
 );
 
 // Declare data you want to save in JSON here
-interface DebugComponentSave {}
+type DebugComponentSave = Record<string, unknown>;
 
 export class GuildSettersComponent extends Component<DebugComponentSave> {
   name: ComponentNames = ComponentNames.DEBUG;
@@ -85,74 +85,74 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
     setModLoggingChannelCommand,
   ];
 
-  async getSaveData(): Promise<DebugComponentSave> {
-    return {};
+  getSaveData(): Promise<DebugComponentSave> {
+    return Promise.resolve({} as DebugComponentSave);
   }
 
-  async afterLoadJSON(
-    parsedJSON: DebugComponentSave | undefined,
+  afterLoadJSON(
+    _parsedJSON: DebugComponentSave | undefined,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onReady(): Promise<void> {
-    return Promise.resolve(undefined);
+  onReady(): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onGuildMemberAdd(member: GuildMember): Promise<void> {
-    return Promise.resolve(undefined);
+  onGuildMemberAdd(_member: GuildMember): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onMessageCreate(args: string[], message: Message): Promise<void> {
-    return Promise.resolve(undefined);
+  onMessageCreate(_args: string[], _message: Message): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onMessageReactionAdd(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionAdd(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageReactionRemove(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionRemove(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageUpdate(
-    oldMessage: Message,
-    newMessage: Message,
+  onMessageUpdate(
+    _oldMessage: Message,
+    _newMessage: Message,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   async onInteractionCreate(interaction: Interaction): Promise<void> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === ComponentCommands.SET_DEBUG_CHANNEL) {
+    if (interaction.commandName === String(ComponentCommands.SET_DEBUG_CHANNEL)) {
       await this.setDebugChannel(
         interaction.options.getChannel<ChannelType.GuildText>("channel", true),
         interaction,
       );
-    } else if (interaction.commandName === ComponentCommands.DEBUG_MODE) {
+    } else if (interaction.commandName === String(ComponentCommands.DEBUG_MODE)) {
       await this.debugModeCmd(interaction);
-    } else if (interaction.commandName === ComponentCommands.SET_PREFIX) {
+    } else if (interaction.commandName === String(ComponentCommands.SET_PREFIX)) {
       await this.setPrefixCmd(
         interaction.options.getString("prefix", true),
         interaction,
       );
     } else if (
-      interaction.commandName === ComponentCommands.SET_MOD_ALERTS_CHANNEL
+      interaction.commandName === String(ComponentCommands.SET_MOD_ALERTS_CHANNEL)
     ) {
       await this.setModAlertsChannel(
         interaction.options.getChannel<ChannelType.GuildText>("channel", true),
         interaction,
       );
     } else if (
-      interaction.commandName === ComponentCommands.SET_MOD_LOGGING_CHANNEL
+      interaction.commandName === String(ComponentCommands.SET_MOD_LOGGING_CHANNEL)
     ) {
       await this.setModLoggingChannel(
         interaction.options.getChannel<ChannelType.GuildText>("channel", true),
@@ -163,17 +163,17 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
   }
 
   async onMessageCreateWithGuildPrefix(
-    args: string[],
-    message: Message,
+    _args: string[],
+    _message: Message,
   ): Promise<void> {
-    const command = args?.shift()?.toLowerCase() || "";
+    const _command = _args?.shift()?.toLowerCase() || "";
 
     return Promise.resolve(undefined);
   }
 
   async onVoiceStateUpdate(
-    oldState: VoiceState,
-    newState: VoiceState,
+    _oldState: VoiceState,
+    _newState: VoiceState,
   ): Promise<void> {
     return Promise.resolve(undefined);
   }

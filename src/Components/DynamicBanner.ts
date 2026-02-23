@@ -14,7 +14,6 @@ import { ComponentNames } from "../Constants/ComponentNames";
 import probe, { ProbeResult } from "probe-image-size";
 import { ComponentCommands } from "../Constants/ComponentCommands";
 import { Cron } from "../Cron";
-import { isMessageAdmin } from "../HelperFunctions";
 
 const setBannerCommand = new SlashCommandBuilder();
 setBannerCommand.setName(ComponentCommands.SET_BANNER);
@@ -60,86 +59,83 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
     printBannerCommand,
   ];
 
-  async getSaveData(): Promise<DynamicBannerSave> {
-    return {
-      imageUrls: this.imageUrls,
-    };
+  getSaveData(): Promise<DynamicBannerSave> {
+    return Promise.resolve({ imageUrls: this.imageUrls });
   }
 
-  async afterLoadJSON(
-    loadedObject: DynamicBannerSave | undefined,
+  afterLoadJSON(
+    _loadedObject: DynamicBannerSave | undefined,
   ): Promise<void> {
-    if (loadedObject) {
-      this.imageUrls = loadedObject.imageUrls;
+    if (_loadedObject) {
+      this.imageUrls = _loadedObject.imageUrls;
     }
+    return Promise.resolve();
   }
 
-  async onReady(): Promise<void> {
+  onReady(): Promise<void> {
     // Every X hours, change the banner
-    Cron.getInstance().schedule(
-      `0 0 */${this.hourInterval} * * *`,
-      async () => {
-        console.log(`[${this.djmtGuild.guildId}] Running Dynamic Banner Job`);
-        await this.rotateServerBanner();
-      },
-    );
+    Cron.getInstance().schedule(`0 0 */${this.hourInterval} * * *`, () => {
+      console.log(`[${this.djmtGuild.guildId}] Running Dynamic Banner Job`);
+      void this.rotateServerBanner();
+    });
+    return Promise.resolve();
   }
 
-  async onGuildMemberAdd(member: GuildMember): Promise<void> {
-    return Promise.resolve(undefined);
+  onGuildMemberAdd(_member: GuildMember): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onMessageCreate(args: string[], message: Message): Promise<void> {
-    return Promise.resolve(undefined);
+  onMessageCreate(_args: string[], _message: Message): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onMessageReactionAdd(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionAdd(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageReactionRemove(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionRemove(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageUpdate(
-    oldMessage: Message,
-    newMessage: Message,
+  onMessageUpdate(
+    _oldMessage: Message,
+    _newMessage: Message,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageCreateWithGuildPrefix(
-    args: string[],
-    message: Message,
+  onMessageCreateWithGuildPrefix(
+    _args: string[],
+    _message: Message,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onVoiceStateUpdate(
-    oldState: VoiceState,
-    newState: VoiceState,
+  onVoiceStateUpdate(
+    _oldState: VoiceState,
+    _newState: VoiceState,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   async onInteractionCreate(interaction: Interaction): Promise<void> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === ComponentCommands.PRINT_BANNER) {
+    if (interaction.commandName === String(ComponentCommands.PRINT_BANNER)) {
       await this.printBannerQueue(interaction);
-    } else if (interaction.commandName === ComponentCommands.SET_BANNER) {
+    } else if (interaction.commandName === String(ComponentCommands.SET_BANNER)) {
       await this.addOrRemoveImageUrl(
         interaction.options.getString("imageurl", true),
         interaction,
       );
-    } else if (interaction.commandName === ComponentCommands.ROTATE_BANNER) {
+    } else if (interaction.commandName === String(ComponentCommands.ROTATE_BANNER)) {
       await this.rotateServerBanner(interaction);
     }
   }
@@ -179,12 +175,14 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
             });
           }
         } catch (e) {
-          console.log(
-            `[${this.djmtGuild.guildId}] Failed to change server banner to ${nextUrl}: ${e}`,
-          );
+            console.log(
+              `[${this.djmtGuild.guildId}] Failed to change server banner to ${nextUrl}: ${String(
+                e,
+              )}`,
+            );
           if (interaction) {
             await interaction.reply({
-              content: `Failed to change server banner to ${nextUrl}: ${e}`,
+              content: `Failed to change server banner to ${nextUrl}: ${String(e)}`,
               ephemeral: true,
             });
           }
@@ -255,13 +253,12 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
     try {
       image = await probe(imageUrl);
     } catch (e) {
-      console.error(e);
+      const originalError = e instanceof Error ? e : new Error(String(e));
+      console.error(originalError);
       console.error(
         `[${this.djmtGuild.guildId}] Did not add image url ${imageUrl} is not an image file.`,
       );
-      throw new Error(
-        `Did not add image url ${imageUrl} is not an image file.`,
-      );
+      throw originalError;
     }
     // Image must be a png or jpg
     if (image.type !== "png" && image.type !== "jpg") {

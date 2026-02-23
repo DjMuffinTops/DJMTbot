@@ -65,29 +65,26 @@ export class EveryoneSpamTimeout extends Component<EveryoneSpamTimeoutSave> {
   enabled: boolean = false;
   // Place SlashCommandBuilder(s) directly into this array for them to be registered.
 
-  async getSaveData(): Promise<EveryoneSpamTimeoutSave> {
-    return {
-      enabled: this.enabled,
-      permittedRoleIds: this.permittedRoleIds,
-    };
+  getSaveData(): Promise<EveryoneSpamTimeoutSave> {
+    return Promise.resolve({ enabled: this.enabled, permittedRoleIds: this.permittedRoleIds });
   }
 
-  async afterLoadJSON(
-    loadedObject: EveryoneSpamTimeoutSave | undefined,
+  afterLoadJSON(
+    _loadedObject: EveryoneSpamTimeoutSave | undefined,
   ): Promise<void> {
-    if (loadedObject) {
-      this.enabled = loadedObject.enabled;
-      this.permittedRoleIds = loadedObject.permittedRoleIds;
+    if (_loadedObject) {
+      this.enabled = _loadedObject.enabled;
+      this.permittedRoleIds = _loadedObject.permittedRoleIds;
     }
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onReady(): Promise<void> {
-    return Promise.resolve(undefined);
+  onReady(): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onGuildMemberAdd(member: GuildMember): Promise<void> {
-    return Promise.resolve(undefined);
+  onGuildMemberAdd(_member: GuildMember): Promise<void> {
+    return Promise.resolve();
   }
 
   async onMessageCreate(args: string[], message: Message): Promise<void> {
@@ -95,52 +92,56 @@ export class EveryoneSpamTimeout extends Component<EveryoneSpamTimeoutSave> {
       await this.handleEveryoneSpam(message);
     } catch (error) {
       console.error(
-        `[${this.djmtGuild.guildId}] Error in EveryoneSpamTimeout.onMessageCreate for member ${message.member?.user.username}: ${error}`,
+        `[${this.djmtGuild.guildId}] Error in EveryoneSpamTimeout.onMessageCreate for member ${String(
+          message.member?.user.username,
+        )}: ${String(error)}`,
       );
     }
     return Promise.resolve(undefined);
   }
 
-  async onMessageReactionAdd(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionAdd(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageReactionRemove(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionRemove(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageUpdate(
-    oldMessage: Message,
+  onMessageUpdate(
+    _oldMessage: Message,
     newMessage: Message,
   ): Promise<void> {
     try {
-      await this.handleEveryoneSpam(newMessage);
+      void this.handleEveryoneSpam(newMessage);
     } catch (error) {
       console.error(
-        `[${this.djmtGuild.guildId}] Error in EveryoneSpamTimeout.onMessageUpdate: ${error}`,
+        `[${this.djmtGuild.guildId}] Error in EveryoneSpamTimeout.onMessageUpdate: ${String(
+          error,
+        )}`,
       );
     }
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageCreateWithGuildPrefix(
-    args: string[],
-    message: Message,
+  onMessageCreateWithGuildPrefix(
+    _args: string[],
+    _message: Message,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onVoiceStateUpdate(
-    oldState: VoiceState,
-    newState: VoiceState,
+  onVoiceStateUpdate(
+    _oldState: VoiceState,
+    _newState: VoiceState,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   async onInteractionCreate(interaction: Interaction): Promise<void> {
@@ -148,7 +149,7 @@ export class EveryoneSpamTimeout extends Component<EveryoneSpamTimeoutSave> {
       return;
     }
     if (
-      interaction.commandName === ComponentCommands.TOGGLE_EVERYONE_SPAM_TIMEOUT
+      interaction.commandName === String(ComponentCommands.TOGGLE_EVERYONE_SPAM_TIMEOUT)
     ) {
       this.enabled = !this.enabled;
       await this.djmtGuild.saveJSON();
@@ -159,7 +160,7 @@ export class EveryoneSpamTimeout extends Component<EveryoneSpamTimeoutSave> {
       });
     } else if (
       interaction.commandName ===
-      ComponentCommands.SET_EVERYONE_SPAM_TIMEOUT_ROLES
+      String(ComponentCommands.SET_EVERYONE_SPAM_TIMEOUT_ROLES)
     ) {
       const role = interaction.options.getRole("role", true);
       if (this.permittedRoleIds.includes(role.id)) {
@@ -226,9 +227,9 @@ export class EveryoneSpamTimeout extends Component<EveryoneSpamTimeoutSave> {
 
     // Send a warning message to the mod alerts channel
     const modAlertsChannel = this.djmtGuild.getModAlertsChannel();
-    if (modAlertsChannel) {
+      if (modAlertsChannel) {
       const msg1 = await modAlertsChannel.send(
-        `⚠️ ${message.author} has been timed out for attempting to send the following everyone and/or here pings in <#${message.channel.id}>`,
+        `⚠️ ${String(message.author)} has been timed out for attempting to send the following everyone and/or here pings in <#${message.channel.id}>`,
       );
       // Relay the exact same message content to the mod alerts channel with all included attachments and embeds
       await msg1.reply(getCensoredMessageReplyOptions(message));

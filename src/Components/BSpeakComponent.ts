@@ -22,73 +22,73 @@ bSpeakCommand.addStringOption((input) =>
     .setRequired(true),
 );
 
-interface BSpeakComponentSave {}
+type BSpeakComponentSave = Record<string, unknown>;
 export class BSpeakComponent extends Component<BSpeakComponentSave> {
   name: ComponentNames = ComponentNames.BSPEAK;
   commands: SlashCommandBuilder[] = [bSpeakCommand];
 
-  async onMessageCreateWithGuildPrefix(
-    args: string[],
-    message: Message,
+  onMessageCreateWithGuildPrefix(
+    _args: string[],
+    _message: Message,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async getSaveData(): Promise<BSpeakComponentSave> {
-    return {};
+  getSaveData(): Promise<BSpeakComponentSave> {
+    return Promise.resolve({} as BSpeakComponentSave);
   }
 
-  async afterLoadJSON(
-    loadedObject: BSpeakComponentSave | undefined,
+  afterLoadJSON(
+    _loadedObject: BSpeakComponentSave | undefined,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onReady(): Promise<void> {
-    return Promise.resolve(undefined);
+  onReady(): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onGuildMemberAdd(member: GuildMember): Promise<void> {
-    return Promise.resolve(undefined);
+  onGuildMemberAdd(_member: GuildMember): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onMessageCreate(args: string[], message: Message): Promise<void> {
-    return Promise.resolve(undefined);
+  onMessageCreate(_args: string[], _message: Message): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onMessageReactionAdd(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionAdd(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageReactionRemove(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionRemove(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageUpdate(
-    oldMessage: Message,
-    newMessage: Message,
+  onMessageUpdate(
+    _oldMessage: Message,
+    _newMessage: Message,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onVoiceStateUpdate(
-    oldState: VoiceState,
-    newState: VoiceState,
+  onVoiceStateUpdate(
+    _oldState: VoiceState,
+    _newState: VoiceState,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   async onInteractionCreate(interaction: Interaction): Promise<void> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === ComponentCommands.B_SPEAK) {
+    if (interaction.commandName === String(ComponentCommands.B_SPEAK)) {
       await this.bCmd(
         interaction.options.getString("message", true),
         interaction,

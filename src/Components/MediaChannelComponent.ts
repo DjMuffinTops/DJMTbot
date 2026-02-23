@@ -13,7 +13,7 @@ import {
   VoiceState,
 } from "discord.js";
 import { ComponentNames } from "../Constants/ComponentNames";
-import { isMessageAdmin, MEDIA_LINK_REGEX } from "../HelperFunctions";
+import { MEDIA_LINK_REGEX } from "../HelperFunctions";
 import { ComponentCommands } from "../Constants/ComponentCommands";
 
 const setMediaChannelCommand = new SlashCommandBuilder();
@@ -58,17 +58,15 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
   ];
   // may move to constants in future if needed?
 
-  async getSaveData(): Promise<MediaComponentSave> {
-    return {
-      channels: this.channelsArray.map((channel) => channel.id),
-    };
+  getSaveData(): Promise<MediaComponentSave> {
+    return Promise.resolve({ channels: this.channelsArray.map((c) => c.id) });
   }
 
-  async afterLoadJSON(
-    loadedObject: MediaComponentSave | undefined,
+  afterLoadJSON(
+    _loadedObject: MediaComponentSave | undefined,
   ): Promise<void> {
-    if (loadedObject) {
-      for (const c of loadedObject.channels) {
+    if (_loadedObject) {
+      for (const c of _loadedObject.channels) {
         const channel = this.djmtGuild.getGuildChannel(c) as TextChannel;
         if (!channel) {
           console.error(`[MediaChannelCheck]: could not load ${c}`);
@@ -77,69 +75,70 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
         this.channelsArray.push(channel);
       }
     }
+    return Promise.resolve();
   }
 
-  async onReady(): Promise<void> {
-    return Promise.resolve(undefined);
+  onReady(): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onGuildMemberAdd(member: GuildMember): Promise<void> {
-    return Promise.resolve(undefined);
+  onGuildMemberAdd(_member: GuildMember): Promise<void> {
+    return Promise.resolve();
   }
 
   async onMessageCreate(args: string[], message: Message): Promise<void> {
     await this.checkMedia(message);
   }
 
-  async onMessageReactionAdd(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionAdd(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageReactionRemove(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionRemove(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageUpdate(
-    oldMessage: Message,
-    newMessage: Message,
+  onMessageUpdate(
+    _oldMessage: Message,
+    _newMessage: Message,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   async onInteractionCreate(interaction: Interaction): Promise<void> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === ComponentCommands.SET_MEDIA_CHANNEL) {
+    if (interaction.commandName === String(ComponentCommands.SET_MEDIA_CHANNEL)) {
       await this.setMediaChannel(
         interaction.options.getChannel<ChannelType.GuildText>("channel", true),
         interaction,
       );
     } else if (
-      interaction.commandName === ComponentCommands.PRINT_MEDIA_CHANNEL
+      interaction.commandName === String(ComponentCommands.PRINT_MEDIA_CHANNEL)
     ) {
       await this.getMediaChannel(interaction);
     }
   }
 
-  async onMessageCreateWithGuildPrefix(
-    args: string[],
-    message: Message,
+  onMessageCreateWithGuildPrefix(
+    _args: string[],
+    _message: Message,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onVoiceStateUpdate(
-    oldState: VoiceState,
-    newState: VoiceState,
+  onVoiceStateUpdate(
+    _oldState: VoiceState,
+    _newState: VoiceState,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   /**
@@ -154,7 +153,7 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
   ): Promise<void> {
     if (!channel) {
       await interaction.reply({
-        content: `${channel} is not a valid channel`,
+        content: `Invalid channel provided: ${String(channel)}`,
         ephemeral: true,
       });
     }
@@ -169,13 +168,13 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
     });
     if (exists) {
       await interaction.reply({
-        content: `Removed ${channel} as a media channel.`,
+        content: `Removed ${channel.toString()} as a media channel.`,
         ephemeral: true,
       });
     } else {
       this.channelsArray.push(channel);
       await interaction.reply({
-        content: `Successfully added ${channel} as a media channel.`,
+        content: `Successfully added ${channel.toString()} as a media channel.`,
         ephemeral: true,
       });
     }
@@ -225,8 +224,8 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
         if (message.channel.isSendable()) {
           const warningMsg: Message = await message.channel.send(msg);
           // Delete the warning message after some time
-          setTimeout(async () => {
-            await warningMsg.delete();
+          setTimeout(() => {
+            void warningMsg.delete();
           }, 15000);
         }
       }

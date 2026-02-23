@@ -8,7 +8,6 @@ import {
   MessageType,
   PermissionFlagsBits,
   SlashCommandBuilder,
-  TextChannel,
   User,
   VoiceState,
 } from "discord.js";
@@ -118,31 +117,32 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
   newUserBanThresholdInDays: number = NEW_USER_BAN_THRESHOLD_IN_DAYS_DEFAULT;
   newUserBanEnabled: boolean = false;
 
-  async getSaveData(): Promise<NewUserProtectionSave> {
-    return {
+  getSaveData(): Promise<NewUserProtectionSave> {
+    return Promise.resolve({
       newUserMediaLockEnabled: this.newUserMediaLockEnabled,
       newUserMediaLockThresholdInDays: this.newUserMediaThresholdInDays,
       newUserBanEnabled: this.newUserBanEnabled,
       newUserBanThresholdInDays: this.newUserBanThresholdInDays,
       permittedUsers: Array.from(this.permittedUsers),
-    };
+    });
   }
 
-  async afterLoadJSON(
-    loadedObject: NewUserProtectionSave | undefined,
+  afterLoadJSON(
+    _loadedObject: NewUserProtectionSave | undefined,
   ): Promise<void> {
-    if (loadedObject) {
-      this.newUserMediaLockEnabled = loadedObject.newUserMediaLockEnabled;
+    if (_loadedObject) {
+      this.newUserMediaLockEnabled = _loadedObject.newUserMediaLockEnabled;
       this.newUserMediaThresholdInDays =
-        loadedObject.newUserMediaLockThresholdInDays;
-      this.newUserBanEnabled = loadedObject.newUserBanEnabled;
-      this.newUserBanThresholdInDays = loadedObject.newUserBanThresholdInDays;
-      this.permittedUsers = new Set<string>(loadedObject.permittedUsers);
+        _loadedObject.newUserMediaLockThresholdInDays;
+      this.newUserBanEnabled = _loadedObject.newUserBanEnabled;
+      this.newUserBanThresholdInDays = _loadedObject.newUserBanThresholdInDays;
+      this.permittedUsers = new Set<string>(_loadedObject.permittedUsers);
     }
+    return Promise.resolve();
   }
 
-  async onReady(): Promise<void> {
-    return Promise.resolve(undefined);
+  onReady(): Promise<void> {
+    return Promise.resolve();
   }
 
   async onGuildMemberAdd(member: GuildMember): Promise<void> {
@@ -206,39 +206,39 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
     await this.handleNewUserMediaLock(message);
   }
 
-  async onMessageReactionAdd(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionAdd(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageReactionRemove(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionRemove(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageUpdate(
-    oldMessage: Message,
-    newMessage: Message,
+  onMessageUpdate(
+    _oldMessage: Message,
+    _newMessage: Message,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageCreateWithGuildPrefix(
-    args: string[],
-    message: Message,
+  onMessageCreateWithGuildPrefix(
+    _args: string[],
+    _message: Message,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onVoiceStateUpdate(
-    oldState: VoiceState,
-    newState: VoiceState,
+  onVoiceStateUpdate(
+    _oldState: VoiceState,
+    _newState: VoiceState,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   async onInteractionCreate(interaction: Interaction): Promise<void> {
@@ -246,14 +246,14 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
       return;
     }
     if (
-      interaction.commandName === ComponentCommands.PERMIT_NEW_USER_RESTRICTIONS
+      interaction.commandName === String(ComponentCommands.PERMIT_NEW_USER_RESTRICTIONS)
     ) {
       await this.permitNewUserMedia(
         interaction.options.getUser("user", true),
         interaction,
       );
     } else if (
-      interaction.commandName === ComponentCommands.TOGGLE_NEW_USER_MEDIA_LOCK
+      interaction.commandName === String(ComponentCommands.TOGGLE_NEW_USER_MEDIA_LOCK)
     ) {
       this.newUserMediaLockEnabled = !this.newUserMediaLockEnabled;
       await this.djmtGuild.saveJSON();
@@ -263,7 +263,7 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
         }.`,
       });
     } else if (
-      interaction.commandName === ComponentCommands.TOGGLE_NEW_USER_BAN
+      interaction.commandName === String(ComponentCommands.TOGGLE_NEW_USER_BAN)
     ) {
       this.newUserBanEnabled = !this.newUserBanEnabled;
       await this.djmtGuild.saveJSON();
@@ -273,8 +273,9 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
         }.`,
       });
     } else if (
-      interaction.commandName ===
-      ComponentCommands.SET_NEW_USER_MEDIA_LOCK_THRESHOLD_IN_DAYS
+      interaction.commandName === String(
+        ComponentCommands.SET_NEW_USER_MEDIA_LOCK_THRESHOLD_IN_DAYS,
+      )
     ) {
       this.newUserMediaThresholdInDays = interaction.options.getInteger(
         "days",
@@ -285,8 +286,9 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
         content: `Set new user threshold in days to ${this.newUserMediaThresholdInDays}.`,
       });
     } else if (
-      interaction.commandName ===
-      ComponentCommands.SET_NEW_USER_BAN_THRESHOLD_IN_DAYS
+      interaction.commandName === String(
+        ComponentCommands.SET_NEW_USER_BAN_THRESHOLD_IN_DAYS,
+      )
     ) {
       this.newUserBanThresholdInDays = interaction.options.getInteger(
         "days",
@@ -427,9 +429,11 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
       }
     } catch (e) {
       console.error("Error banning new user: ", e);
-      modAlertsChannel?.send(
-        `⚠️ Error banning new user <@${member.user.id}>: ${e}`,
-      );
+      if (modAlertsChannel) {
+        void modAlertsChannel.send(
+          `⚠️ Error banning new user <@${member.user.id}>: ${String(e)}`,
+        );
+      }
     }
   }
 

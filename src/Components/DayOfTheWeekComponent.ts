@@ -16,7 +16,7 @@ import {
 } from "discord.js";
 import { ComponentNames } from "../Constants/ComponentNames";
 import { dayOfTheWeekConstants } from "../Constants/DayOfTheWeekConstants";
-import { isInteractionAdmin, isMessageAdmin } from "../HelperFunctions";
+import { isInteractionAdmin } from "../HelperFunctions";
 import { ComponentCommands } from "../Constants/ComponentCommands";
 
 const setDotwCommand = new SlashCommandBuilder();
@@ -53,81 +53,79 @@ export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> 
   commands: SlashCommandBuilder[] = [setDotwCommand, printDotwCommand];
   dotwChannels: string[] = [];
 
-  async getSaveData(): Promise<DayOfTheWeekComponentSave> {
-    return {
-      dotwChannels: this.dotwChannels,
-    };
+  getSaveData(): Promise<DayOfTheWeekComponentSave> {
+    return Promise.resolve({ dotwChannels: this.dotwChannels });
   }
 
-  async afterLoadJSON(
-    loadedObject: DayOfTheWeekComponentSave | undefined,
+  afterLoadJSON(
+    _loadedObject: DayOfTheWeekComponentSave | undefined,
   ): Promise<void> {
-    if (loadedObject) {
-      this.dotwChannels = loadedObject.dotwChannels;
+    if (_loadedObject) {
+      this.dotwChannels = _loadedObject.dotwChannels;
     }
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onReady(): Promise<void> {
-    Cron.getInstance().schedule("0 59 10 * * *", async () => {
-      await this.dotwJob();
+  onReady(): Promise<void> {
+    Cron.getInstance().schedule("0 59 10 * * *", () => {
+      void this.dotwJob();
     });
 
-    Cron.getInstance().schedule("0 30 17 * * *", async () => {
-      await this.pleasantEveningJob();
+    Cron.getInstance().schedule("0 30 17 * * *", () => {
+      void this.pleasantEveningJob();
     });
 
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onGuildMemberAdd(member: GuildMember): Promise<void> {
-    return Promise.resolve(undefined);
+  onGuildMemberAdd(_member: GuildMember): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onMessageCreate(args: string[], message: Message): Promise<void> {
-    return Promise.resolve(undefined);
+  onMessageCreate(_args: string[], _message: Message): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onMessageReactionAdd(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionAdd(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageReactionRemove(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionRemove(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageUpdate(
-    oldMessage: Message,
-    newMessage: Message,
+  onMessageUpdate(
+    _oldMessage: Message,
+    _newMessage: Message,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageCreateWithGuildPrefix(
-    args: string[],
-    message: Message,
+  onMessageCreateWithGuildPrefix(
+    _args: string[],
+    _message: Message,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onVoiceStateUpdate(
-    oldState: VoiceState,
-    newState: VoiceState,
+  onVoiceStateUpdate(
+    _oldState: VoiceState,
+    _newState: VoiceState,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   async onInteractionCreate(interaction: Interaction): Promise<void> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === ComponentCommands.SET_DOTW) {
+    if (interaction.commandName === String(ComponentCommands.SET_DOTW)) {
       // Admin only
       if (!isInteractionAdmin(interaction)) {
         await interaction.reply({
@@ -139,7 +137,7 @@ export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> 
         interaction.options.getChannel<ChannelType.GuildText>("channel", true),
         interaction,
       );
-    } else if (interaction.commandName === ComponentCommands.PRINT_DOTW) {
+    } else if (interaction.commandName === String(ComponentCommands.PRINT_DOTW)) {
       // Admin only
       if (!isInteractionAdmin(interaction)) {
         await interaction.reply({

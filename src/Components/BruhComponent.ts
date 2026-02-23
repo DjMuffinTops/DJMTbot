@@ -65,60 +65,58 @@ export class BruhComponent extends Component<BruhComponentSave> {
     recacheBruh,
   ];
 
-  async getSaveData(): Promise<BruhComponentSave> {
-    return {
-      bruhChannels: this.bruhChannels,
-    };
+  getSaveData(): Promise<BruhComponentSave> {
+    return Promise.resolve({ bruhChannels: this.bruhChannels });
   }
 
-  async afterLoadJSON(
-    loadedObject: BruhComponentSave | undefined,
+  afterLoadJSON(
+    _loadedObject: BruhComponentSave | undefined,
   ): Promise<void> {
-    if (loadedObject) {
-      this.bruhChannels = loadedObject.bruhChannels;
+    if (_loadedObject) {
+      this.bruhChannels = _loadedObject.bruhChannels;
     }
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   async onReady(): Promise<void> {
     await this.cacheAllBruhMessages();
     return Promise.resolve(undefined);
   }
-  async onGuildMemberAdd(member: GuildMember): Promise<void> {
-    return Promise.resolve(undefined);
+  onGuildMemberAdd(_member: GuildMember): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onMessageCreate(args: string[], message: Message): Promise<void> {
-    return Promise.resolve(undefined);
+  onMessageCreate(_args: string[], _message: Message): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onMessageReactionAdd(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionAdd(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageReactionRemove(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionRemove(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageUpdate(
-    oldMessage: Message,
-    newMessage: Message,
+  onMessageUpdate(
+    _oldMessage: Message,
+    _newMessage: Message,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
   async onInteractionCreate(interaction: Interaction): Promise<void> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === ComponentCommands.BRUH) {
+    if (interaction.commandName === String(ComponentCommands.BRUH)) {
       await this.bruhCmd(interaction);
-    } else if (interaction.commandName === ComponentCommands.SET_BRUH) {
+    } else if (interaction.commandName === String(ComponentCommands.SET_BRUH)) {
       // Admin only
       if (!isInteractionAdmin(interaction)) {
         await interaction.reply(
@@ -131,7 +129,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
         interaction,
       );
       await this.cacheAllBruhMessages(interaction);
-    } else if (interaction.commandName === ComponentCommands.PRINT_BRUH) {
+    } else if (interaction.commandName === String(ComponentCommands.PRINT_BRUH)) {
       // Admin only
       if (!isInteractionAdmin(interaction)) {
         await interaction.reply(
@@ -140,7 +138,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
         return;
       }
       await this.printBruhInfo(interaction);
-    } else if (interaction.commandName === ComponentCommands.BRUH_RECACHE) {
+    } else if (interaction.commandName === String(ComponentCommands.BRUH_RECACHE)) {
       await interaction.deferReply({ ephemeral: true });
       // Admin only
       if (!isInteractionAdmin(interaction)) {
@@ -153,18 +151,18 @@ export class BruhComponent extends Component<BruhComponentSave> {
     }
   }
 
-  async onMessageCreateWithGuildPrefix(
-    args: string[],
-    message: Message,
+  onMessageCreateWithGuildPrefix(
+    _args: string[],
+    _message: Message,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onVoiceStateUpdate(
-    oldState: VoiceState,
-    newState: VoiceState,
+  onVoiceStateUpdate(
+    _oldState: VoiceState,
+    _newState: VoiceState,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   async setBruhCmd(
@@ -217,25 +215,25 @@ export class BruhComponent extends Component<BruhComponentSave> {
         // let messages = await channel.messages.fetch(); // get the messages
         // let messagesArray = messages.array(); // get it as an array
         const randomIndex = Math.floor(this.messageCache.length * Math.random()); // choose a random message index
-        const randomMsg = await this.messageCache[randomIndex]; // get the random message
+        const randomMsg = this.messageCache[randomIndex]; // get the random message
         if (randomMsg) {
           // If theres an embed, its probably a floof bot star embed
           if (randomMsg.embeds && randomMsg.embeds.length > 0) {
             const embed = randomMsg.embeds[0];
             // console.log(embed);
             if (embed.fields) {
-              embed.fields.forEach((field: any) => {
+              embed.fields.forEach((field: { name?: string; value?: string }) => {
                 if (field.name === "Message") {
-                  msgContent = field.value;
+                  msgContent = field.value || "";
                 }
               });
             }
             if (embed?.image?.url) {
-              const attachment = await new AttachmentBuilder(embed.image.url);
+              const attachment = new AttachmentBuilder(embed.image.url);
               attachmentList.push(attachment);
             }
             if (embed?.video?.url) {
-              const attachment = await new AttachmentBuilder(embed.video.url);
+              const attachment = new AttachmentBuilder(embed.video.url);
               attachmentList.push(attachment);
             }
 
@@ -248,10 +246,9 @@ export class BruhComponent extends Component<BruhComponentSave> {
                 descriptionStr.length - 1,
               );
               let channelId = "";
-              let searchMessage = null;
               if (embed.fields) {
-                embed.fields.forEach((field: any) => {
-                  if (field.name === "Channel") {
+                embed.fields.forEach((field: { name?: string; value?: string }) => {
+                  if (field.name === "Channel" && field.value) {
                     channelId = field.value.substring(
                       field.value.indexOf("#") + 1,
                       field.value.length - 1,
@@ -263,7 +260,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
                 const foundChannel = this.djmtGuild.getGuildChannel(
                   channelId,
                 ) as TextChannel;
-                searchMessage = await foundChannel.messages.fetch(messageId);
+                const searchMessage = await foundChannel.messages.fetch(messageId);
                 msgContent = searchMessage.content;
                 [...searchMessage.attachments.values()].forEach(
                   (attachment) => {
@@ -275,8 +272,8 @@ export class BruhComponent extends Component<BruhComponentSave> {
             }
             // In the chance there is just an image and its not a floof bot embed (like a link or something) relay the images
             for (const embed of randomMsg.embeds) {
-              if (embed.data.url) {
-                const attachment = await new AttachmentBuilder(embed.data.url);
+              if (embed.data?.url) {
+                const attachment = new AttachmentBuilder(embed.data.url);
                 attachmentList.push(attachment);
               }
             }
@@ -310,7 +307,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
         });
       }
     } catch (e) {
-      console.error(`[${this.djmtGuild.guildId}] ${e}`);
+      console.error(`[${this.djmtGuild.guildId}] ${String(e)}`);
       await interaction.reply({
         content: "there was a bruh bug... bruhhhhhhh",
         ephemeral: true,
@@ -327,13 +324,13 @@ export class BruhComponent extends Component<BruhComponentSave> {
       return;
     }
     this.onCooldown = true;
-    setTimeout(async () => {
+    setTimeout(() => {
       this.onCooldown = false;
     }, 2500);
     try {
       await this.sendBruh(interaction);
     } catch (e) {
-      console.error(`[${this.djmtGuild.guildId}] ${e}`);
+      console.error(`[${this.djmtGuild.guildId}] ${String(e)}`);
       await interaction.reply({
         content: "there was a bruh bug... bruhhhhhhh",
         ephemeral: true,
@@ -351,17 +348,17 @@ export class BruhComponent extends Component<BruhComponentSave> {
           bruhChannelId,
         ) as TextChannel; // get the channel object
       let last_id = "";
-      let messages: Collection<string, Message> | undefined = undefined;
+      let messages: Collection<string, Message> | undefined;
       do {
         const options: FetchMessagesOptions = {
           limit: 100,
           cache: true,
         };
         if (last_id.length > 0) {
-          // @ts-ignore
+          // @ts-expect-error: `before` exists on older discord.js FetchMessagesOptions
           options.before = last_id;
         }
-        messages = await channel?.messages?.fetch(options);
+        messages = channel ? await channel.messages.fetch(options) : undefined;
         const msgArray = messages ? [...messages.values()] : [];
         this.messageCache.push(...msgArray);
         if (msgArray.length > 0) {

@@ -30,75 +30,75 @@ resetConfigCommand.setDefaultMemberPermissions(
   PermissionFlagsBits.Administrator,
 );
 
-interface ConfigComponentSave {}
+type ConfigComponentSave = Record<string, unknown>;
 export class ConfigComponent extends Component<ConfigComponentSave> {
   name: ComponentNames = ComponentNames.CONFIG;
   commands: SlashCommandBuilder[] = [exportConfigCommand, resetConfigCommand];
 
-  async onMessageCreateWithGuildPrefix(
-    args: string[],
-    message: Message,
+  onMessageCreateWithGuildPrefix(
+    _args: string[],
+    _message: Message,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async getSaveData(): Promise<ConfigComponentSave> {
-    return {};
+  getSaveData(): Promise<ConfigComponentSave> {
+    return Promise.resolve({} as ConfigComponentSave);
   }
 
-  async afterLoadJSON(
-    parsedJSON: ConfigComponentSave | undefined,
+  afterLoadJSON(
+    _parsedJSON: ConfigComponentSave | undefined,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onReady(): Promise<void> {
-    return Promise.resolve(undefined);
+  onReady(): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onGuildMemberAdd(member: GuildMember): Promise<void> {
-    return Promise.resolve(undefined);
+  onGuildMemberAdd(_member: GuildMember): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onMessageCreate(args: string[], message: Message): Promise<void> {
-    return Promise.resolve(undefined);
+  onMessageCreate(_args: string[], _message: Message): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onMessageReactionAdd(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionAdd(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageReactionRemove(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionRemove(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageUpdate(
-    oldMessage: Message,
-    newMessage: Message,
+  onMessageUpdate(
+    _oldMessage: Message,
+    _newMessage: Message,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onVoiceStateUpdate(
-    oldState: VoiceState,
-    newState: VoiceState,
+  onVoiceStateUpdate(
+    _oldState: VoiceState,
+    _newState: VoiceState,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   async onInteractionCreate(interaction: Interaction): Promise<void> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === ComponentCommands.EXPORT_CONFIG) {
+    if (interaction.commandName === String(ComponentCommands.EXPORT_CONFIG)) {
       await this.exportConfig(interaction);
-    } else if (interaction.commandName === ComponentCommands.RESET_CONFIG) {
+    } else if (interaction.commandName === String(ComponentCommands.RESET_CONFIG)) {
       await this.resetConfig(interaction);
     }
   }

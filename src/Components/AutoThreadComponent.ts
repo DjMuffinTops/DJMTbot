@@ -76,34 +76,32 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
     printAutoThreadCommand,
   ];
 
-  async getSaveData(): Promise<AutoThreadComponentSave> {
-    return {
-      channels: mapKeys(this.channelsMap, (AutoThreadChannel) => {
-        return {
-          channel: AutoThreadChannel.channel.id,
-          namePrefix: AutoThreadChannel.namePrefix,
-        };
-      }),
-    };
+  getSaveData(): Promise<AutoThreadComponentSave> {
+    return Promise.resolve({
+      channels: mapKeys(this.channelsMap, (AutoThreadChannel) => ({
+        channel: AutoThreadChannel.channel.id,
+        namePrefix: AutoThreadChannel.namePrefix,
+      })),
+    });
   }
 
-  async afterLoadJSON(
-    loadedObject: AutoThreadComponentSave | undefined,
+  afterLoadJSON(
+    _loadedObject: AutoThreadComponentSave | undefined,
   ): Promise<void> {
-    if (loadedObject) {
+    if (_loadedObject) {
       const newMap: Map<string, AutoThreadEntry> = new Map<
         string,
         AutoThreadEntry
       >();
-      for (const key of Array.from(loadedObject.channels.keys())) {
+      for (const key of Array.from(_loadedObject.channels.keys())) {
         const value: AutoThreadEntrySave | undefined =
-          loadedObject.channels.get(key);
+          _loadedObject.channels.get(key);
         if (value) {
           const channel = this.djmtGuild.getGuildChannel(
             value.channel,
           ) as TextChannel;
           if (!channel || channel.type !== ChannelType.GuildText) {
-            console.error(`[AutoThread]: could not load ${value}`);
+            console.error(`[AutoThread]: could not load ${JSON.stringify(value)}`);
             continue;
           }
           const newValue: AutoThreadEntry = {
@@ -117,60 +115,61 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
       }
       this.channelsMap = newMap;
     }
+    return Promise.resolve();
   }
 
-  async onReady(): Promise<void> {
-    return Promise.resolve(undefined);
+  onReady(): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onGuildMemberAdd(member: GuildMember): Promise<void> {
-    return Promise.resolve(undefined);
+  onGuildMemberAdd(_member: GuildMember): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onMessageCreate(args: string[], message: Message): Promise<void> {
-    this.createThread(message);
+  async onMessageCreate(_args: string[], message: Message): Promise<void> {
+    await this.createThread(message);
   }
 
-  async onMessageReactionAdd(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionAdd(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageReactionRemove(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionRemove(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   async onMessageUpdate(
-    oldMessage: Message,
+    _oldMessage: Message,
     newMessage: Message,
   ): Promise<void> {
     await this.updateThread(newMessage);
   }
 
-  async onMessageCreateWithGuildPrefix(
-    args: string[],
-    message: Message,
+  onMessageCreateWithGuildPrefix(
+    _args: string[],
+    _message: Message,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onVoiceStateUpdate(
-    oldState: VoiceState,
-    newState: VoiceState,
+  onVoiceStateUpdate(
+    _oldState: VoiceState,
+    _newState: VoiceState,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   async onInteractionCreate(interaction: Interaction): Promise<void> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === ComponentCommands.PRINT_AUTO_THREAD) {
+    if (interaction.commandName === String(ComponentCommands.PRINT_AUTO_THREAD)) {
       // Admin only
       if (!isInteractionAdmin(interaction)) {
         await interaction.reply({
@@ -180,7 +179,7 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
         return;
       }
       await this.printAutoThread(interaction);
-    } else if (interaction.commandName === ComponentCommands.SET_AUTO_THREAD) {
+    } else if (interaction.commandName === String(ComponentCommands.SET_AUTO_THREAD)) {
       // Admin only
       if (!isInteractionAdmin(interaction)) {
         await interaction.reply({
@@ -195,7 +194,7 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
         interaction,
       );
     }
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   /**
@@ -210,11 +209,11 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
     );
     if (entry) {
       try {
-        const thread = await message.startThread({
-          name: this.extractThreadName(message, entry.namePrefix),
-          autoArchiveDuration: 1440,
-          reason: "DJMTbot Auto Thread",
-        });
+          await message.startThread({
+            name: this.extractThreadName(message, entry.namePrefix),
+            autoArchiveDuration: 1440,
+            reason: "DJMTbot Auto Thread",
+          });
       } catch (e) {
         if (e instanceof Error && e.message === "Unknown Message") {
           console.log(
@@ -222,7 +221,7 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
           );
         } else {
           console.log(
-            `[${this.djmtGuild.guildId}] checkAutoThread error: ${e}`,
+            `[${this.djmtGuild.guildId}] checkAutoThread error: ${String(e)}`,
           );
         }
       }
@@ -244,11 +243,10 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
     const firstAttachmentName =
       attachments.length > 0 ? attachments[0].name?.split(".")[0] : "";
     const messageContentName = message.content;
-    const coreName =
-      firstEmbedName || messageContentName || firstAttachmentName;
-    return `${prefix}-${message.author.username}${
-      coreName ? `-${coreName}` : ""
-    }`.substring(0, 100);
+      const coreName = firstEmbedName || messageContentName || firstAttachmentName;
+      return `${String(prefix)}-${String(message.author?.username)}${
+        coreName ? `-${String(coreName)}` : ""
+      }`.substring(0, 100);
   }
 
   /**
@@ -320,7 +318,7 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
     } else {
       let msg = "";
       this.channelsMap.forEach((autoThreadEntry) => {
-        msg += `\`channel\`: ${autoThreadEntry.channel}, \`namePrefix\`: ${autoThreadEntry.namePrefix}\n`;
+        msg += `\`channel\`: ${autoThreadEntry.channel.toString()}, \`namePrefix\`: ${autoThreadEntry.namePrefix}\n`;
       });
       await interaction.reply({
         content: `Auto Thread Channels:\n${msg}`,

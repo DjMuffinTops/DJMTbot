@@ -1,7 +1,6 @@
 import { Component } from "../Component";
 import {
   ChatInputCommandInteraction,
-  Channel,
   ChannelType,
   GuildMember,
   Interaction,
@@ -80,25 +79,19 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
   creatingChannel: Map<string, boolean> = new Map();
   commands: SlashCommandBuilder[] = [printDVCCommand, setDVCCommmand];
 
-  async getSaveData(): Promise<DynamicVoiceChannelsSave> {
-    return {
+  getSaveData(): Promise<DynamicVoiceChannelsSave> {
+    return Promise.resolve({
       markedRootVoiceChannelIds: this.markedVoiceChannels
         .filter((markedVC) => markedVC.root)
-        .map((rootVC) => {
-          const result: RootDynamicVoiceChannelSave = {
-            channelId: rootVC.id,
-            maxChildren: rootVC.rootsMaxChildren,
-          };
-          return result;
-        }),
-    };
+        .map((rootVC) => ({ channelId: rootVC.id, maxChildren: rootVC.rootsMaxChildren })),
+    });
   }
 
-  async afterLoadJSON(
-    loadedObject: DynamicVoiceChannelsSave | undefined,
+  afterLoadJSON(
+    _loadedObject: DynamicVoiceChannelsSave | undefined,
   ): Promise<void> {
-    if (loadedObject) {
-      this.markedVoiceChannels = loadedObject.markedRootVoiceChannelIds
+    if (_loadedObject) {
+      this.markedVoiceChannels = _loadedObject.markedRootVoiceChannelIds
         .map((rootChannelSave) => {
           const voiceChannel: DynamicVoiceChannel =
             this.djmtGuild.getGuildChannel(
@@ -114,6 +107,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
         })
         .filter((dynamicChannel) => dynamicChannel);
     }
+    return Promise.resolve();
   }
 
   async onReady(): Promise<void> {
@@ -159,7 +153,9 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
                 );
               } catch (e) {
                 console.error(
-                  `[${this.djmtGuild.guildId}] Error deleting child voice channel ${guildVoiceChannel.name} ${guildVoiceChannel.id}: ${e}`,
+                  `[${this.djmtGuild.guildId}] Error deleting child voice channel ${guildVoiceChannel.name} ${guildVoiceChannel.id}: ${String(
+                    e,
+                  )}`,
                 );
               }
               continue;
@@ -185,7 +181,9 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
               this.markedVoiceChannels.push(newRootDynamicChannel);
             } catch (e) {
               console.log(
-                `[${this.djmtGuild.guildId}] Caught error rewiring on ready. ${e}`,
+                `[${this.djmtGuild.guildId}] Caught error rewiring on ready. ${String(
+                  e,
+                )}`,
               );
             }
           }
@@ -196,40 +194,40 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
     }
   }
 
-  async onGuildMemberAdd(member: GuildMember): Promise<void> {
-    return Promise.resolve(undefined);
+  onGuildMemberAdd(_member: GuildMember): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onMessageCreate(args: string[], message: Message): Promise<void> {
-    return Promise.resolve(undefined);
+  onMessageCreate(_args: string[], _message: Message): Promise<void> {
+    return Promise.resolve();
   }
 
-  async onMessageReactionAdd(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionAdd(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageReactionRemove(
-    messageReaction: MessageReaction,
-    user: User,
+  onMessageReactionRemove(
+    _messageReaction: MessageReaction,
+    _user: User,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageUpdate(
-    oldMessage: Message,
-    newMessage: Message,
+  onMessageUpdate(
+    _oldMessage: Message,
+    _newMessage: Message,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
-  async onMessageCreateWithGuildPrefix(
-    args: string[],
-    message: Message,
+  onMessageCreateWithGuildPrefix(
+    _args: string[],
+    _message: Message,
   ): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   async onVoiceStateUpdate(
@@ -253,7 +251,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === ComponentCommands.SET_DYNAMIC_VC) {
+    if (interaction.commandName === String(ComponentCommands.SET_DYNAMIC_VC)) {
       await this.setRootDynamicVoiceChannel(
         interaction.options.getChannel<ChannelType.GuildVoice>(
           "voicechannel",
@@ -262,10 +260,10 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
         interaction.options.getInteger("maxchildren", true),
         interaction,
       );
-    } else if (interaction.commandName === ComponentCommands.PRINT_DYNAMIC_VC) {
-      this.printDyanamicVoiceChannels(interaction);
+    } else if (interaction.commandName === String(ComponentCommands.PRINT_DYNAMIC_VC)) {
+      await this.printDyanamicVoiceChannels(interaction);
     }
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   /**
@@ -288,7 +286,9 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
         if (markedVC.parentChannel.members.size === 0) {
           await this.deleteChildVC(
             markedVC,
-            `${markedVC.name} and parent channel ${markedVC.parentChannel.name} are empty.`,
+            `${markedVC.name} and parent channel ${String(
+              markedVC.parentChannel?.name,
+            )} are empty.`,
           );
         }
       }
@@ -565,9 +565,11 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
       console.log(
         `[${this.djmtGuild.guildId}] Deleted ${voiceChannel.name} ${voiceChannel.id}`,
       );
-    } catch (e) {
+      } catch (e) {
       console.error(
-        `[${this.djmtGuild.guildId}] Error deleting voice channel ${voiceChannel.name} ${voiceChannel.id}: ${e}`,
+        `[${this.djmtGuild.guildId}] Error deleting voice channel ${voiceChannel.name} ${voiceChannel.id}: ${String(
+          e,
+        )}`,
       );
     }
   }
