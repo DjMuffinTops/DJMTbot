@@ -125,7 +125,7 @@ export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> 
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === String(ComponentCommands.SET_DOTW)) {
+    if (interaction.commandName === ComponentCommands.SET_DOTW) {
       // Admin only
       if (!isInteractionAdmin(interaction)) {
         await interaction.reply({
@@ -137,7 +137,7 @@ export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> 
         interaction.options.getChannel<ChannelType.GuildText>("channel", true),
         interaction,
       );
-    } else if (interaction.commandName === String(ComponentCommands.PRINT_DOTW)) {
+    } else if (interaction.commandName === ComponentCommands.PRINT_DOTW) {
       // Admin only
       if (!isInteractionAdmin(interaction)) {
         await interaction.reply({

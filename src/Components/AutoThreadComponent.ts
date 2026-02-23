@@ -169,7 +169,7 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === String(ComponentCommands.PRINT_AUTO_THREAD)) {
+    if (interaction.commandName === ComponentCommands.PRINT_AUTO_THREAD) {
       // Admin only
       if (!isInteractionAdmin(interaction)) {
         await interaction.reply({
@@ -179,7 +179,7 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
         return;
       }
       await this.printAutoThread(interaction);
-    } else if (interaction.commandName === String(ComponentCommands.SET_AUTO_THREAD)) {
+    } else if (interaction.commandName === ComponentCommands.SET_AUTO_THREAD) {
       // Admin only
       if (!isInteractionAdmin(interaction)) {
         await interaction.reply({

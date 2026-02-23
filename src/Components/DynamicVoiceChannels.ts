@@ -251,7 +251,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === String(ComponentCommands.SET_DYNAMIC_VC)) {
+    if (interaction.commandName === ComponentCommands.SET_DYNAMIC_VC) {
       await this.setRootDynamicVoiceChannel(
         interaction.options.getChannel<ChannelType.GuildVoice>(
           "voicechannel",
@@ -260,7 +260,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
         interaction.options.getInteger("maxchildren", true),
         interaction,
       );
-    } else if (interaction.commandName === String(ComponentCommands.PRINT_DYNAMIC_VC)) {
+    } else if (interaction.commandName === ComponentCommands.PRINT_DYNAMIC_VC) {
       await this.printDyanamicVoiceChannels(interaction);
     }
     return Promise.resolve();

@@ -123,7 +123,7 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === String(ComponentCommands.SET_VC_PAIRS)) {
+    if (interaction.commandName === ComponentCommands.SET_VC_PAIRS) {
       await this.handleVoiceTextPair(
         interaction.options.getChannel<ChannelType.GuildVoice>(
           "voicechannel",
@@ -135,7 +135,7 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
         ),
         interaction,
       );
-    } else if (interaction.commandName === String(ComponentCommands.PRINT_VC_PAIRS)) {
+    } else if (interaction.commandName === ComponentCommands.PRINT_VC_PAIRS) {
       await this.printVoiceTextPairs(interaction);
     }
   }

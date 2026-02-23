@@ -81,7 +81,7 @@ export class PingComponent extends Component<PingComponentSave> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === String(ComponentCommands.PING)) {
+    if (interaction.commandName === ComponentCommands.PING) {
       await this.pingCmd(interaction);
     }
     return Promise.resolve();

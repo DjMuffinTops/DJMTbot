@@ -128,14 +128,14 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === String(ComponentCommands.PRINT_BANNER)) {
+    if (interaction.commandName === ComponentCommands.PRINT_BANNER) {
       await this.printBannerQueue(interaction);
-    } else if (interaction.commandName === String(ComponentCommands.SET_BANNER)) {
+    } else if (interaction.commandName === ComponentCommands.SET_BANNER) {
       await this.addOrRemoveImageUrl(
         interaction.options.getString("imageurl", true),
         interaction,
       );
-    } else if (interaction.commandName === String(ComponentCommands.ROTATE_BANNER)) {
+    } else if (interaction.commandName === ComponentCommands.ROTATE_BANNER) {
       await this.rotateServerBanner(interaction);
     }
   }

@@ -88,7 +88,7 @@ export class CheemsComponent extends Component<CheemsComponentSave> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === String(ComponentCommands.CHEEMS)) {
+    if (interaction.commandName === ComponentCommands.CHEEMS) {
       await this.cheemsCmd(
         interaction.options.getString("message", true),
         interaction,

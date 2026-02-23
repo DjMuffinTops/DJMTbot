@@ -168,14 +168,14 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === String(ComponentCommands.SET_PNGRC)) {
+    if (interaction.commandName === ComponentCommands.SET_PNGRC) {
       await this.parseAndSetChannel(
         interaction.options.getChannel<ChannelType.GuildText>("channel", true),
         interaction.options.getInteger("width", true),
         interaction.options.getInteger("height", true),
         interaction,
       );
-    } else if (interaction.commandName === String(ComponentCommands.PRINT_PNGRC)) {
+    } else if (interaction.commandName === ComponentCommands.PRINT_PNGRC) {
       await this.printPNGRC(interaction);
     }
   }

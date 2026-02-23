@@ -96,9 +96,9 @@ export class ConfigComponent extends Component<ConfigComponentSave> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === String(ComponentCommands.EXPORT_CONFIG)) {
+    if (interaction.commandName === ComponentCommands.EXPORT_CONFIG) {
       await this.exportConfig(interaction);
-    } else if (interaction.commandName === String(ComponentCommands.RESET_CONFIG)) {
+    } else if (interaction.commandName === ComponentCommands.RESET_CONFIG) {
       await this.resetConfig(interaction);
     }
   }

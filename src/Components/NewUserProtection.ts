@@ -246,14 +246,14 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
       return;
     }
     if (
-      interaction.commandName === String(ComponentCommands.PERMIT_NEW_USER_RESTRICTIONS)
+      interaction.commandName === ComponentCommands.PERMIT_NEW_USER_RESTRICTIONS
     ) {
       await this.permitNewUserMedia(
         interaction.options.getUser("user", true),
         interaction,
       );
     } else if (
-      interaction.commandName === String(ComponentCommands.TOGGLE_NEW_USER_MEDIA_LOCK)
+      interaction.commandName === ComponentCommands.TOGGLE_NEW_USER_MEDIA_LOCK
     ) {
       this.newUserMediaLockEnabled = !this.newUserMediaLockEnabled;
       await this.djmtGuild.saveJSON();
@@ -263,7 +263,7 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
         }.`,
       });
     } else if (
-      interaction.commandName === String(ComponentCommands.TOGGLE_NEW_USER_BAN)
+      interaction.commandName === ComponentCommands.TOGGLE_NEW_USER_BAN
     ) {
       this.newUserBanEnabled = !this.newUserBanEnabled;
       await this.djmtGuild.saveJSON();
@@ -273,9 +273,7 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
         }.`,
       });
     } else if (
-      interaction.commandName === String(
-        ComponentCommands.SET_NEW_USER_MEDIA_LOCK_THRESHOLD_IN_DAYS,
-      )
+      interaction.commandName === ComponentCommands.SET_NEW_USER_MEDIA_LOCK_THRESHOLD_IN_DAYS
     ) {
       this.newUserMediaThresholdInDays = interaction.options.getInteger(
         "days",
@@ -286,9 +284,7 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
         content: `Set new user threshold in days to ${this.newUserMediaThresholdInDays}.`,
       });
     } else if (
-      interaction.commandName === String(
-        ComponentCommands.SET_NEW_USER_BAN_THRESHOLD_IN_DAYS,
-      )
+      interaction.commandName === ComponentCommands.SET_NEW_USER_BAN_THRESHOLD_IN_DAYS
     ) {
       this.newUserBanThresholdInDays = interaction.options.getInteger(
         "days",

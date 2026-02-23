@@ -132,27 +132,27 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === String(ComponentCommands.SET_DEBUG_CHANNEL)) {
+    if (interaction.commandName === ComponentCommands.SET_DEBUG_CHANNEL) {
       await this.setDebugChannel(
         interaction.options.getChannel<ChannelType.GuildText>("channel", true),
         interaction,
       );
-    } else if (interaction.commandName === String(ComponentCommands.DEBUG_MODE)) {
+    } else if (interaction.commandName === ComponentCommands.DEBUG_MODE) {
       await this.debugModeCmd(interaction);
-    } else if (interaction.commandName === String(ComponentCommands.SET_PREFIX)) {
+    } else if (interaction.commandName === ComponentCommands.SET_PREFIX) {
       await this.setPrefixCmd(
         interaction.options.getString("prefix", true),
         interaction,
       );
     } else if (
-      interaction.commandName === String(ComponentCommands.SET_MOD_ALERTS_CHANNEL)
+      interaction.commandName === ComponentCommands.SET_MOD_ALERTS_CHANNEL
     ) {
       await this.setModAlertsChannel(
         interaction.options.getChannel<ChannelType.GuildText>("channel", true),
         interaction,
       );
     } else if (
-      interaction.commandName === String(ComponentCommands.SET_MOD_LOGGING_CHANNEL)
+      interaction.commandName === ComponentCommands.SET_MOD_LOGGING_CHANNEL
     ) {
       await this.setModLoggingChannel(
         interaction.options.getChannel<ChannelType.GuildText>("channel", true),

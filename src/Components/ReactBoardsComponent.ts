@@ -206,7 +206,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === String(ComponentCommands.SET_AUTO_REACT)) {
+    if (interaction.commandName === ComponentCommands.SET_AUTO_REACT) {
       await this.setAutoReactCmd(
         interaction.options.getString("emote", true),
         interaction.options.getChannel<ChannelType.GuildText>(
@@ -215,9 +215,9 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
         ),
         interaction,
       );
-    } else if (interaction.commandName === String(ComponentCommands.PRINT_AUTO_REACT)) {
+    } else if (interaction.commandName === ComponentCommands.PRINT_AUTO_REACT) {
       await this.printAutoReactCmd(interaction);
-    } else if (interaction.commandName === String(ComponentCommands.SET_REACT_PAIRS)) {
+    } else if (interaction.commandName === ComponentCommands.SET_REACT_PAIRS) {
       await this.setReactPairsCmd(
         interaction.options.getString("emote", true),
         interaction.options.getChannel<ChannelType.GuildText>(
@@ -227,9 +227,9 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
         interaction.options.getInteger("threshold", true),
         interaction,
       );
-    } else if (interaction.commandName === String(ComponentCommands.PRINT_REACT_PAIRS)) {
+    } else if (interaction.commandName === ComponentCommands.PRINT_REACT_PAIRS) {
       await this.printReactPairsCmd(interaction);
-    } else if (interaction.commandName === String(ComponentCommands.SET_STAR)) {
+    } else if (interaction.commandName === ComponentCommands.SET_STAR) {
       await this.setStarCmd(
         interaction.options.getChannel<ChannelType.GuildText>(
           "channel",
@@ -237,7 +237,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
         ),
         interaction,
       );
-    } else if (interaction.commandName === String(ComponentCommands.PRINT_STAR)) {
+    } else if (interaction.commandName === ComponentCommands.PRINT_STAR) {
       await this.printStartCmd(interaction);
     }
     return Promise.resolve(undefined);

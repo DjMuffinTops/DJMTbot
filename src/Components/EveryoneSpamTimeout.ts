@@ -149,7 +149,7 @@ export class EveryoneSpamTimeout extends Component<EveryoneSpamTimeoutSave> {
       return;
     }
     if (
-      interaction.commandName === String(ComponentCommands.TOGGLE_EVERYONE_SPAM_TIMEOUT)
+      interaction.commandName === ComponentCommands.TOGGLE_EVERYONE_SPAM_TIMEOUT
     ) {
       this.enabled = !this.enabled;
       await this.djmtGuild.saveJSON();
@@ -160,7 +160,7 @@ export class EveryoneSpamTimeout extends Component<EveryoneSpamTimeoutSave> {
       });
     } else if (
       interaction.commandName ===
-      String(ComponentCommands.SET_EVERYONE_SPAM_TIMEOUT_ROLES)
+      ComponentCommands.SET_EVERYONE_SPAM_TIMEOUT_ROLES
     ) {
       const role = interaction.options.getRole("role", true);
       if (this.permittedRoleIds.includes(role.id)) {

@@ -88,7 +88,7 @@ export class BSpeakComponent extends Component<BSpeakComponentSave> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === String(ComponentCommands.B_SPEAK)) {
+    if (interaction.commandName === ComponentCommands.B_SPEAK) {
       await this.bCmd(
         interaction.options.getString("message", true),
         interaction,

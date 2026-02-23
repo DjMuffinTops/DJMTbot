@@ -123,7 +123,7 @@ export class SayComponent extends Component<SayComponentSave> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === String(ComponentCommands.SAY)) {
+    if (interaction.commandName === ComponentCommands.SAY) {
       await this.sayCmd(
         interaction.options.getString("message", true),
         interaction,

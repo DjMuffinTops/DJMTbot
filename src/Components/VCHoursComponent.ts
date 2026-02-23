@@ -124,7 +124,7 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === String(ComponentCommands.SET_HOURS)) {
+    if (interaction.commandName === ComponentCommands.SET_HOURS) {
       await this.setHoursCmd(
         interaction.options.getChannel("voicechannel", true),
         interaction.options.getChannel("textchannel", true),

@@ -115,13 +115,13 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === String(ComponentCommands.SET_MEDIA_CHANNEL)) {
+    if (interaction.commandName === ComponentCommands.SET_MEDIA_CHANNEL) {
       await this.setMediaChannel(
         interaction.options.getChannel<ChannelType.GuildText>("channel", true),
         interaction,
       );
     } else if (
-      interaction.commandName === String(ComponentCommands.PRINT_MEDIA_CHANNEL)
+      interaction.commandName === ComponentCommands.PRINT_MEDIA_CHANNEL
     ) {
       await this.getMediaChannel(interaction);
     }

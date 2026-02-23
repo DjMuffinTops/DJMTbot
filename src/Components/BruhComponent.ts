@@ -114,9 +114,9 @@ export class BruhComponent extends Component<BruhComponentSave> {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-    if (interaction.commandName === String(ComponentCommands.BRUH)) {
+    if (interaction.commandName === ComponentCommands.BRUH) {
       await this.bruhCmd(interaction);
-    } else if (interaction.commandName === String(ComponentCommands.SET_BRUH)) {
+    } else if (interaction.commandName === ComponentCommands.SET_BRUH) {
       // Admin only
       if (!isInteractionAdmin(interaction)) {
         await interaction.reply(
@@ -129,7 +129,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
         interaction,
       );
       await this.cacheAllBruhMessages(interaction);
-    } else if (interaction.commandName === String(ComponentCommands.PRINT_BRUH)) {
+    } else if (interaction.commandName === ComponentCommands.PRINT_BRUH) {
       // Admin only
       if (!isInteractionAdmin(interaction)) {
         await interaction.reply(
@@ -138,7 +138,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
         return;
       }
       await this.printBruhInfo(interaction);
-    } else if (interaction.commandName === String(ComponentCommands.BRUH_RECACHE)) {
+    } else if (interaction.commandName === ComponentCommands.BRUH_RECACHE) {
       await interaction.deferReply({ ephemeral: true });
       // Admin only
       if (!isInteractionAdmin(interaction)) {
