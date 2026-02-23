@@ -173,15 +173,17 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
                         }
                         // Delete the message and send a warning.
                         try {
-                            await message.delete();    
+                            await message.delete();
                         } catch (e) {
                             console.error("Error deleting message for PNG resolution check: ", e);
                         }
-                        const warningMsg: Message = await message.channel.send(msg);
-                        // Delete the warning message after some time
-                        setTimeout(async () => {
-                            await warningMsg.delete();
-                        }, 15000);
+                        if (message.channel.isSendable()) {
+                            const warningMsg: Message = await message.channel.send(msg);
+                            // Delete the warning message after some time
+                            setTimeout(async () => {
+                                await warningMsg.delete();
+                            }, 15000);
+                        }
                     }
                 }
             }
@@ -190,13 +192,13 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
 
     private async printPNGRC(interaction: ChatInputCommandInteraction) {
         if (this.channelsMap.size <= 0) {
-            await interaction.reply({content: `No PNG Resolution Checking Channels have been set!`, ephemeral: true});
+            await interaction.reply({ content: `No PNG Resolution Checking Channels have been set!`, ephemeral: true });
         } else {
             let msg = '';
             this.channelsMap.forEach((PNGResolutionEntry) => {
                 msg += `${PNGResolutionEntry.channel} : width: ${PNGResolutionEntry.width} height: ${PNGResolutionEntry.height}\n`;
             });
-            await interaction.reply({content: `PNG Resolution Checking Channels:\n${msg}`, ephemeral: true});
+            await interaction.reply({ content: `PNG Resolution Checking Channels:\n${msg}`, ephemeral: true });
         }
     }
 
@@ -208,7 +210,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
         } else {
             res = await this.addPNGRCChannel({ channel: channel, width, height });
         }
-        await interaction.reply({content: res, ephemeral: true});
+        await interaction.reply({ content: res, ephemeral: true });
 
     }
 

@@ -253,7 +253,7 @@ export class DJMTGuild {
     async onMessageCreate(args: string[], message: Message): Promise<void> {
         if (this.isReady) {
             // Display the prefix when mentioned. Don't do this if the message is from an everyone ping
-            if (this.guild?.client.user && message.mentions.has(this.guild?.client.user) && !message.mentions.everyone) {
+            if (this.guild?.client.user && message.mentions.has(this.guild?.client.user) && !message.mentions.everyone && message.channel.isSendable()) {
                 await message.channel.send(`Type / to see my slash commands!`);
             }
             for (const component of Array.from(this.components.values())) {
@@ -377,7 +377,7 @@ export class DJMTGuild {
     get modAlertsChannelId(): string {
         return this._modAlertsChannelId;
     }
-    
+
     set modAlertsChannelId(value: string) {
         this._modAlertsChannelId = value;
         this.saveJSON();

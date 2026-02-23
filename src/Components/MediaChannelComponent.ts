@@ -1,8 +1,8 @@
-import {Component} from "../Component";
-import {ChannelType, ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, PermissionFlagsBits, SlashCommandBuilder, TextChannel, User, VoiceState} from "discord.js";
-import {ComponentNames} from "../Constants/ComponentNames";
-import {isMessageAdmin, MEDIA_LINK_REGEX} from "../HelperFunctions";
-import {ComponentCommands} from "../Constants/ComponentCommands";
+import { Component } from "../Component";
+import { ChannelType, ChatInputCommandInteraction, GuildMember, Interaction, Message, MessageReaction, PermissionFlagsBits, SlashCommandBuilder, TextChannel, User, VoiceState } from "discord.js";
+import { ComponentNames } from "../Constants/ComponentNames";
+import { isMessageAdmin, MEDIA_LINK_REGEX } from "../HelperFunctions";
+import { ComponentCommands } from "../Constants/ComponentCommands";
 
 const setMediaChannelCommand = new SlashCommandBuilder();
 setMediaChannelCommand.setName(ComponentCommands.SET_MEDIA_CHANNEL);
@@ -103,25 +103,25 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
      * @private
      */
     private async setMediaChannel(channel: TextChannel, interaction: ChatInputCommandInteraction): Promise<void> {
-            if (!channel) {
-                await interaction.reply({content: `${channel} is not a valid channel`, ephemeral: true});
+        if (!channel) {
+            await interaction.reply({ content: `${channel} is not a valid channel`, ephemeral: true });
+        }
+        const chid = channel.id;
+        // find channel in the list of media channels, if it exists
+        let exists = false;
+        this.channelsArray.forEach((item, index) => {
+            if (item.id === chid) {
+                exists = true;
+                this.channelsArray.splice(index, 1);
             }
-            const chid = channel.id;
-            // find channel in the list of media channels, if it exists
-            let exists = false;
-            this.channelsArray.forEach( (item, index) => {
-                if (item.id === chid) {
-                    exists = true;
-                    this.channelsArray.splice(index, 1);
-                }
-            });
-            if (exists) {
-                await interaction.reply({content: `Removed ${channel} as a media channel.`, ephemeral: true});
-            }
-            else {
-                this.channelsArray.push(channel);
-                await interaction.reply({content: `Successfully added ${channel} as a media channel.`, ephemeral: true});
-            }
+        });
+        if (exists) {
+            await interaction.reply({ content: `Removed ${channel} as a media channel.`, ephemeral: true });
+        }
+        else {
+            this.channelsArray.push(channel);
+            await interaction.reply({ content: `Successfully added ${channel} as a media channel.`, ephemeral: true });
+        }
         await this.djmtGuild.saveJSON();
     }
 
@@ -132,14 +132,14 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
      */
     private async getMediaChannel(interaction: ChatInputCommandInteraction): Promise<void> {
         if (this.channelsArray.length === 0) {
-            await interaction.reply({content: `There are no set media channels.`, ephemeral: true});
+            await interaction.reply({ content: `There are no set media channels.`, ephemeral: true });
             return;
         }
         let m = 'The current set media channels are:\n';
         for (const c of this.channelsArray) {
             m += `<#${c.id}>\n`;
         }
-        await interaction.reply({content: m, ephemeral: true});
+        await interaction.reply({ content: m, ephemeral: true });
     }
 
     /**
@@ -158,11 +158,14 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
                 catch (e) {
                     console.error("Error deleting message for media channel check: ", e);
                 }
-                const warningMsg: Message = await message.channel.send(msg);
-                // Delete the warning message after some time
-                setTimeout(async () => {
-                    await warningMsg.delete();
-                }, 15000);
+                if (message.channel.isSendable()) {
+                    const warningMsg: Message = await message.channel.send(msg);
+                    // Delete the warning message after some time
+                    setTimeout(async () => {
+                        await warningMsg.delete();
+                    }, 15000);
+                }
+
             }
         }
     }

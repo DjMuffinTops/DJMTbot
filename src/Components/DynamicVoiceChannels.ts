@@ -107,7 +107,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
                 console.log(`[${this.djmtGuild.guildId}]: Could not retrieve all channels for Dynamic Voice Channels component.`)
                 return;
             }
-            const allGuildVoiceChannels: VoiceChannel[] = [...allGuildChannels.cache.filter(channel => channel.type === ChannelType.GuildVoice).values()] as VoiceChannel[] ?? [];
+            const allGuildVoiceChannels: VoiceChannel[] = [...allGuildChannels.cache.filter(channel => channel.type === ChannelType.GuildVoice).values()] satisfies VoiceChannel[];
             // Delete Children that mightve been left over first
             for (const guildVoiceChannel of allGuildVoiceChannels) {
                 // Search for existing child channels with each possible child name

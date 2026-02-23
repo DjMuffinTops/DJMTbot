@@ -205,8 +205,10 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
                     // Relay the exact same message content to the mod alerts channel with all included attachments and embeds
                     await msg1.reply(getCensoredMessageReplyOptions(copy));
                 }
-                // Send a message to the user
-                await message.channel.send(`Hello, <@${user.id}>! Your account is not permitted to post media due to being a new discord account.\nPlease request to post media by messaging staff through ModMail!`);
+                if (message.channel.isSendable()) {
+                    // Send a message to the user
+                    await message.channel.send(`Hello, <@${user.id}>! Your account is not permitted to post media due to being a new discord account.\nPlease request to post media by messaging staff through ModMail!`);
+                }
             }
             return;
         }
