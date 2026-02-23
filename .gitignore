@@ -11,3 +11,4 @@ json/guilds/
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+ignore/
