@@ -355,7 +355,6 @@ export class BruhComponent extends Component<BruhComponentSave> {
           cache: true,
         };
         if (last_id.length > 0) {
-          // @ts-expect-error: `before` exists on older discord.js FetchMessagesOptions
           options.before = last_id;
         }
         messages = channel ? await channel.messages.fetch(options) : undefined;
@@ -364,7 +363,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
         if (msgArray.length > 0) {
           last_id = msgArray[msgArray.length - 1].id;
         }
-      } while (messages?.size > 0);
+      } while ((messages?.size ?? 0) > 0);
     }
     if (interaction) {
       if (interaction.replied || interaction.deferred) {

@@ -1,7 +1,6 @@
 import { Component } from "../Component";
 import {
   ChannelType,
-  ChannelType,
   ChatInputCommandInteraction,
   GuildMember,
   Interaction,

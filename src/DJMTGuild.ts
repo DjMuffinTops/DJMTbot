@@ -54,11 +54,11 @@ export class DJMTGuild {
   isReady: boolean = false;
   readonly guildId: string;
   // Config
-  private _debugMode: boolean = defaultConfig.debugMode;
+  private _debugMode: boolean = !!defaultConfig.debugMode;
   private _prefix: string = "djmt!";
-  private _debugChannelId: string = defaultConfig.debugChannelId;
-  private _modAlertsChannelId: string = defaultConfig.modAlertsChannelId;
-  private _modLoggingChannelId: string = defaultConfig.modLoggingChannelId;
+  private _debugChannelId: string = defaultConfig.debugChannelId || "";
+  private _modAlertsChannelId: string = defaultConfig.modAlertsChannelId || "";
+  private _modLoggingChannelId: string = defaultConfig.modLoggingChannelId || "";
   private componentData: Record<string, unknown> = defaultConfig.componentData || {};
   private components: Map<ComponentNames, Component<unknown>>;
 
