@@ -19,19 +19,18 @@
   "license": "ISC",
   "dependencies": {
     "discord.js": "^14.11.0",
-    "dotenv": "^16.0.3",
-    "express": "^4.19.2",
-    "luxon": "^3.4.4",
-    "node-cron": "^3.0.2",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.1",
+    "luxon": "^3.7.2",
+    "node-cron": "^3.0.3",
     "probe-image-size": "^7.2.3",
     "typescript": "^5.9.3"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
-    "@types/dotenv": "^8.2.0",
-    "@types/luxon": "^1.25.1",
+    "@types/luxon": "^1.27.1",
     "@types/node": "^24.0.0",
-    "@types/node-cron": "^2.0.3",
+    "@types/node-cron": "^2.0.8",
     "@types/probe-image-size": "^5.0.1"
   }
 }

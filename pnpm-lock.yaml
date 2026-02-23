@@ -12,16 +12,16 @@ importers:
         specifier: ^14.11.0
         version: 14.25.1
       dotenv:
-        specifier: ^16.0.3
+        specifier: ^16.6.1
         version: 16.6.1
       express:
-        specifier: ^4.19.2
+        specifier: ^4.22.1
         version: 4.22.1
       luxon:
-        specifier: ^3.4.4
+        specifier: ^3.7.2
         version: 3.7.2
       node-cron:
-        specifier: ^3.0.2
+        specifier: ^3.0.3
         version: 3.0.3
       probe-image-size:
         specifier: ^7.2.3
@@ -33,17 +33,14 @@ importers:
       '@changesets/cli':
         specifier: ^2.29.8
         version: 2.29.8(@types/node@24.10.13)
-      '@types/dotenv':
-        specifier: ^8.2.0
-        version: 8.2.3
       '@types/luxon':
-        specifier: ^1.25.1
+        specifier: ^1.27.1
         version: 1.27.1
       '@types/node':
         specifier: ^24.0.0
         version: 24.10.13
       '@types/node-cron':
-        specifier: ^2.0.3
+        specifier: ^2.0.8
         version: 2.0.8
       '@types/probe-image-size':
         specifier: ^5.0.1
@@ -176,10 +173,6 @@ packages:
   '@sapphire/snowflake@3.5.3':
     resolution: {integrity: sha512-jjmJywLAFoWeBi1W7994zZyiNWPIiqRRNAmSERxyg93xRGzNYvGjlZ0gR6x0F4gPRi2+0O6S71kOZYyr3cxaIQ==}
     engines: {node: '>=v14.0.0', npm: '>=7.0.0'}
-
-  '@types/dotenv@8.2.3':
-    resolution: {integrity: sha512-g2FXjlDX/cYuc5CiQvyU/6kkbP1JtmGzh0obW50zD7OKeILVL0NSpPWLXVfqoAGQjom2/SLLx9zHq0KXvD6mbw==}
-    deprecated: This is a stub types definition. dotenv provides its own type definitions, so you do not need this installed.
 
   '@types/luxon@1.27.1':
     resolution: {integrity: sha512-cPiXpOvPFDr2edMnOXlz3UBDApwUfR+cpizvxCy0n3vp9bz/qe8BWzHPIEFcy+ogUOyjKuCISgyq77ELZPmkkg==}
@@ -1084,10 +1077,6 @@ snapshots:
       lodash: 4.17.23
 
   '@sapphire/snowflake@3.5.3': {}
-
-  '@types/dotenv@8.2.3':
-    dependencies:
-      dotenv: 16.6.1
 
   '@types/luxon@1.27.1': {}
 
