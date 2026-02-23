@@ -1,5 +1,5 @@
-import { Component } from "../Component";
-import { logger } from "../Logger";
+import {Component} from '../Component';
+import {logger} from '../Logger';
 import {
   ChannelType,
   ChatInputCommandInteraction,
@@ -12,43 +12,43 @@ import {
   TextChannel,
   User,
   VoiceState,
-} from "discord.js";
-import { ComponentNames } from "../Constants/ComponentNames";
-import { mapKeys } from "../HelperFunctions";
-import { ComponentCommands } from "../Constants/ComponentCommands";
-import probe, { ProbeResult } from "probe-image-size";
+} from 'discord.js';
+import {ComponentNames} from '../Constants/ComponentNames';
+import {mapKeys} from '../HelperFunctions';
+import {ComponentCommands} from '../Constants/ComponentCommands';
+import probe, {ProbeResult} from 'probe-image-size';
 
 const setPNGRCCommand = new SlashCommandBuilder();
 setPNGRCCommand.setName(ComponentCommands.SET_PNGRC);
 setPNGRCCommand.setDescription(
-  "Sets the PNG Resolution Checking Channel and dimensions to check for",
+  'Sets the PNG Resolution Checking Channel and dimensions to check for',
 );
-setPNGRCCommand.addChannelOption((input) =>
+setPNGRCCommand.addChannelOption(input =>
   input
-    .setName("channel")
+    .setName('channel')
     .setDescription(
-      "The channel to add or remove from the PNG Resolution Checking Channels list",
+      'The channel to add or remove from the PNG Resolution Checking Channels list',
     )
     .addChannelTypes(ChannelType.GuildText)
     .setRequired(true),
 );
-setPNGRCCommand.addIntegerOption((input) =>
+setPNGRCCommand.addIntegerOption(input =>
   input
-    .setName("width")
-    .setDescription("The width to check for")
+    .setName('width')
+    .setDescription('The width to check for')
     .setRequired(true),
 );
-setPNGRCCommand.addIntegerOption((input) =>
+setPNGRCCommand.addIntegerOption(input =>
   input
-    .setName("height")
-    .setDescription("The height to check for")
+    .setName('height')
+    .setDescription('The height to check for')
     .setRequired(true),
 );
 setPNGRCCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 const printPNGRCCommand = new SlashCommandBuilder();
 printPNGRCCommand.setName(ComponentCommands.PRINT_PNGRC);
-printPNGRCCommand.setDescription("Prints the PNG Resolution Checking Channels");
+printPNGRCCommand.setDescription('Prints the PNG Resolution Checking Channels');
 printPNGRCCommand.setDefaultMemberPermissions(
   PermissionFlagsBits.Administrator,
 );
@@ -83,7 +83,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
 
   getSaveData(): Promise<PNGResolutionCheckSave> {
     return Promise.resolve({
-      channels: mapKeys(this.channelsMap, (PNGResolutionChannel) => ({
+      channels: mapKeys(this.channelsMap, PNGResolutionChannel => ({
         channel: PNGResolutionChannel.channel.id,
         width: PNGResolutionChannel.width,
         height: PNGResolutionChannel.height,
@@ -91,15 +91,22 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
     });
   }
 
-  afterLoadJSON(loadedObject: PNGResolutionCheckSave | undefined): Promise<void> {
+  afterLoadJSON(
+    loadedObject: PNGResolutionCheckSave | undefined,
+  ): Promise<void> {
     if (loadedObject) {
-      const newMap: Map<string, PNGResolutionEntry> = new Map<string, PNGResolutionEntry>();
+      const newMap: Map<string, PNGResolutionEntry> = new Map<
+        string,
+        PNGResolutionEntry
+      >();
       for (const key of Array.from(loadedObject.channels.keys())) {
         const value = loadedObject.channels.get(key);
         if (value) {
-          const channel = this.djmtGuild.getGuildChannel(value.channel) as TextChannel;
+          const channel = this.djmtGuild.getGuildChannel(
+            value.channel,
+          ) as TextChannel;
           if (!channel) {
-            logger.error("[PNGResolutionCheck] Could not load value", { value });
+            logger.error('[PNGResolutionCheck] Could not load value', {value});
             continue;
           }
           const newValue: PNGResolutionEntry = {
@@ -109,7 +116,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
           };
           newMap.set(key, newValue);
         } else {
-          logger.warn("[PNGResolutionCheck] No loaded value found");
+          logger.warn('[PNGResolutionCheck] No loaded value found');
         }
       }
       this.channelsMap = newMap;
@@ -143,10 +150,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
     return Promise.resolve();
   }
 
-  onMessageUpdate(
-    _oldMessage: Message,
-    _newMessage: Message,
-  ): Promise<void> {
+  onMessageUpdate(_oldMessage: Message, _newMessage: Message): Promise<void> {
     return Promise.resolve();
   }
 
@@ -170,9 +174,9 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
     }
     if (interaction.commandName === ComponentCommands.SET_PNGRC) {
       await this.parseAndSetChannel(
-        interaction.options.getChannel<ChannelType.GuildText>("channel", true),
-        interaction.options.getInteger("width", true),
-        interaction.options.getInteger("height", true),
+        interaction.options.getChannel<ChannelType.GuildText>('channel', true),
+        interaction.options.getInteger('width', true),
+        interaction.options.getInteger('height', true),
         interaction,
       );
     } else if (interaction.commandName === ComponentCommands.PRINT_PNGRC) {
@@ -193,34 +197,34 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
           try {
             image = await probe(attachment.url);
           } catch (e) {
-            logger.error("PNGResolutionCheck probe error", {
+            logger.error('PNGResolutionCheck probe error', {
               guildId: this.djmtGuild.guildId,
               attachmentUrl: attachment.url,
-              error: e
+              error: e,
             });
             return;
           }
           // Verify the image properties
           if (image) {
             if (
-              image.type === "png" &&
+              image.type === 'png' &&
               image.width === entry.width &&
               image.height === entry.height
             ) {
-              logger.debug("[PNGResolutionCheck] Image verified", {
+              logger.debug('[PNGResolutionCheck] Image verified', {
                 guildId: this.djmtGuild.guildId,
-                messageId: message.id
+                messageId: message.id,
               });
-              await message.react("✅");
+              await message.react('✅');
               return;
             }
             // Explain to the user why their image was not verified
             let msg = `${message.author.toString()}, your message has been deleted because:`;
-            if (image.type !== "png") {
-              msg += "\n• Your message is not a .png";
+            if (image.type !== 'png') {
+              msg += '\n• Your message is not a .png';
             }
             if (
-              image.type === "png" &&
+              image.type === 'png' &&
               (image.width !== entry.width || image.height !== entry.height)
             ) {
               msg += `\n• Your png has incorrect dimensions.\n      Expected: ${entry.width}px x ${entry.height}px\n      Your image: ${image.width}${image.wUnits} x ${image.height}${image.hUnits}`;
@@ -229,10 +233,10 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
             try {
               await message.delete();
             } catch (e) {
-              logger.error("Error deleting message for PNG resolution check", {
+              logger.error('Error deleting message for PNG resolution check', {
                 guildId: this.djmtGuild.guildId,
                 messageId: message.id,
-                error: e
+                error: e,
               });
             }
             if (message.channel.isSendable()) {
@@ -251,12 +255,12 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
   private async printPNGRC(interaction: ChatInputCommandInteraction) {
     if (this.channelsMap.size <= 0) {
       await interaction.reply({
-        content: `No PNG Resolution Checking Channels have been set!`,
+        content: 'No PNG Resolution Checking Channels have been set!',
         ephemeral: true,
       });
     } else {
-      let msg = "";
-      this.channelsMap.forEach((PNGResolutionEntry) => {
+      let msg = '';
+      this.channelsMap.forEach(PNGResolutionEntry => {
         msg += `${PNGResolutionEntry.channel.toString()} : width: ${PNGResolutionEntry.width} height: ${PNGResolutionEntry.height}\n`;
       });
       await interaction.reply({
@@ -277,9 +281,9 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
     if (this.channelsMap.get(channel.id)) {
       res = await this.removePNGRCChannel(channel);
     } else {
-      res = await this.addPNGRCChannel({ channel: channel, width, height });
+      res = await this.addPNGRCChannel({channel: channel, width, height});
     }
-    await interaction.reply({ content: res, ephemeral: true });
+    await interaction.reply({content: res, ephemeral: true});
   }
 
   /**

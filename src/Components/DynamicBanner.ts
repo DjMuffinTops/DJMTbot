@@ -1,5 +1,5 @@
-import { Component } from "../Component";
-import { logger } from "../Logger";
+import {Component} from '../Component';
+import {logger} from '../Logger';
 import {
   ChatInputCommandInteraction,
   GuildMember,
@@ -10,33 +10,33 @@ import {
   SlashCommandBuilder,
   User,
   VoiceState,
-} from "discord.js";
-import { ComponentNames } from "../Constants/ComponentNames";
-import probe, { ProbeResult } from "probe-image-size";
-import { ComponentCommands } from "../Constants/ComponentCommands";
-import { Cron } from "../Cron";
+} from 'discord.js';
+import {ComponentNames} from '../Constants/ComponentNames';
+import probe, {ProbeResult} from 'probe-image-size';
+import {ComponentCommands} from '../Constants/ComponentCommands';
+import {Cron} from '../Cron';
 
 const setBannerCommand = new SlashCommandBuilder();
 setBannerCommand.setName(ComponentCommands.SET_BANNER);
-setBannerCommand.setDescription("Adds a banner to the banner queue");
-setBannerCommand.addStringOption((input) =>
+setBannerCommand.setDescription('Adds a banner to the banner queue');
+setBannerCommand.addStringOption(input =>
   input
-    .setName("imageurl")
-    .setDescription("The image url of the banner")
+    .setName('imageurl')
+    .setDescription('The image url of the banner')
     .setRequired(true),
 );
 setBannerCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 const rotateBannerCommand = new SlashCommandBuilder();
 rotateBannerCommand.setName(ComponentCommands.ROTATE_BANNER);
-rotateBannerCommand.setDescription("Rotate to the next banner in the queue");
+rotateBannerCommand.setDescription('Rotate to the next banner in the queue');
 rotateBannerCommand.setDefaultMemberPermissions(
   PermissionFlagsBits.Administrator,
 );
 
 const printBannerCommand = new SlashCommandBuilder();
 printBannerCommand.setName(ComponentCommands.PRINT_BANNER);
-printBannerCommand.setDescription("Prints the banner queue");
+printBannerCommand.setDescription('Prints the banner queue');
 printBannerCommand.setDefaultMemberPermissions(
   PermissionFlagsBits.Administrator,
 );
@@ -61,12 +61,10 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
   ];
 
   getSaveData(): Promise<DynamicBannerSave> {
-    return Promise.resolve({ imageUrls: this.imageUrls });
+    return Promise.resolve({imageUrls: this.imageUrls});
   }
 
-  afterLoadJSON(
-    _loadedObject: DynamicBannerSave | undefined,
-  ): Promise<void> {
+  afterLoadJSON(_loadedObject: DynamicBannerSave | undefined): Promise<void> {
     if (_loadedObject) {
       this.imageUrls = _loadedObject.imageUrls;
     }
@@ -76,7 +74,9 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
   onReady(): Promise<void> {
     // Every X hours, change the banner
     Cron.getInstance().schedule(`0 0 */${this.hourInterval} * * *`, () => {
-      logger.info("Running Dynamic Banner job", { guildId: this.djmtGuild.guildId });
+      logger.info('Running Dynamic Banner job', {
+        guildId: this.djmtGuild.guildId,
+      });
       void this.rotateServerBanner();
     });
     return Promise.resolve();
@@ -104,10 +104,7 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
     return Promise.resolve();
   }
 
-  onMessageUpdate(
-    _oldMessage: Message,
-    _newMessage: Message,
-  ): Promise<void> {
+  onMessageUpdate(_oldMessage: Message, _newMessage: Message): Promise<void> {
     return Promise.resolve();
   }
 
@@ -133,7 +130,7 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
       await this.printBannerQueue(interaction);
     } else if (interaction.commandName === ComponentCommands.SET_BANNER) {
       await this.addOrRemoveImageUrl(
-        interaction.options.getString("imageurl", true),
+        interaction.options.getString('imageurl', true),
         interaction,
       );
     } else if (interaction.commandName === ComponentCommands.ROTATE_BANNER) {
@@ -147,10 +144,12 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
    */
   async rotateServerBanner(interaction?: ChatInputCommandInteraction) {
     if (this.imageUrls.length <= 0) {
-      logger.info("No Dynamic Banner images in queue", { guildId: this.djmtGuild.guildId });
+      logger.info('No Dynamic Banner images in queue', {
+        guildId: this.djmtGuild.guildId,
+      });
       if (interaction) {
         await interaction.reply({
-          content: `No Dynamic Banner images in queue to rotate to.`,
+          content: 'No Dynamic Banner images in queue to rotate to.',
           ephemeral: true,
         });
       }
@@ -160,13 +159,13 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
         try {
           await this.djmtGuild.guild?.setBanner(
             nextUrl,
-            `DJMTbot Dynamic Banner Change`,
+            'DJMTbot Dynamic Banner Change',
           );
           this.imageUrls.push(nextUrl); // Push to the back of the array
           await this.djmtGuild.saveJSON();
-          logger.info("Changed server banner successfully", {
+          logger.info('Changed server banner successfully', {
             guildId: this.djmtGuild.guildId,
-            imageUrl: nextUrl
+            imageUrl: nextUrl,
           });
           if (interaction) {
             await interaction.reply({
@@ -175,11 +174,11 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
             });
           }
         } catch (e) {
-            logger.error("Failed to change server banner", {
-              guildId: this.djmtGuild.guildId,
-              imageUrl: nextUrl,
-              error: e
-            });
+          logger.error('Failed to change server banner', {
+            guildId: this.djmtGuild.guildId,
+            imageUrl: nextUrl,
+            error: e,
+          });
           if (interaction) {
             await interaction.reply({
               content: `Failed to change server banner to ${nextUrl}: ${String(e)}`,
@@ -193,14 +192,14 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
 
   private async printBannerQueue(interaction: ChatInputCommandInteraction) {
     if (this.imageUrls.length > 0) {
-      let msg = "Dynamic Banner Queue in order:";
-      this.imageUrls.forEach((url) => {
+      let msg = 'Dynamic Banner Queue in order:';
+      this.imageUrls.forEach(url => {
         msg += `\n${url}`;
       });
-      await interaction.reply({ content: msg, ephemeral: true });
+      await interaction.reply({content: msg, ephemeral: true});
     } else {
       await interaction.reply({
-        content: `No Dynamic Banner Images in the queue`,
+        content: 'No Dynamic Banner Images in the queue',
         ephemeral: true,
       });
     }
@@ -232,7 +231,7 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
         });
       } catch (e) {
         if (e instanceof Error) {
-          await interaction.reply({ content: e.message, ephemeral: true });
+          await interaction.reply({content: e.message, ephemeral: true});
         } else {
           await interaction.reply({
             content: JSON.stringify(e),
@@ -254,32 +253,32 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
       image = await probe(imageUrl);
     } catch (e) {
       const originalError = e instanceof Error ? e : new Error(String(e));
-      logger.error("Failed to add image URL", {
+      logger.error('Failed to add image URL', {
         guildId: this.djmtGuild.guildId,
         imageUrl,
         error: originalError,
-        reason: "not an image file"
+        reason: 'not an image file',
       });
       throw originalError;
     }
     // Image must be a png or jpg
-    if (image.type !== "png" && image.type !== "jpg") {
-      logger.error("Failed to add image URL", {
+    if (image.type !== 'png' && image.type !== 'jpg') {
+      logger.error('Failed to add image URL', {
         guildId: this.djmtGuild.guildId,
         imageUrl,
         imageType: image.type,
-        reason: "not a png or jpg"
+        reason: 'not a png or jpg',
       });
       throw new Error(`Did not add image url ${imageUrl} is not a png or jpg`);
     }
     // Image must be at least 960x540 pixels
     if (!(image.width >= 960 && image.height >= 540)) {
-      logger.error("Failed to add image URL", {
+      logger.error('Failed to add image URL', {
         guildId: this.djmtGuild.guildId,
         imageUrl,
         width: image.width,
         height: image.height,
-        reason: "does not meet minimum dimensions"
+        reason: 'does not meet minimum dimensions',
       });
       throw new Error(
         `Did not add image url ${imageUrl} does not meet the minimum dimensions`,
@@ -288,9 +287,9 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
     // Successfully verified image
     this.imageUrls.push(imageUrl);
     await this.djmtGuild.saveJSON();
-    logger.info("Added image URL to Dynamic Banner queue", {
+    logger.info('Added image URL to Dynamic Banner queue', {
       guildId: this.djmtGuild.guildId,
-      imageUrl
+      imageUrl,
     });
   }
 
@@ -299,11 +298,11 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
    * @param imageUrl The url to remove
    */
   async removeImageUrl(imageUrl: string): Promise<void> {
-    this.imageUrls = this.imageUrls.filter((url) => url !== imageUrl);
+    this.imageUrls = this.imageUrls.filter(url => url !== imageUrl);
     await this.djmtGuild.saveJSON();
-    logger.info("Removed image URL from Dynamic Banner queue", {
+    logger.info('Removed image URL from Dynamic Banner queue', {
       guildId: this.djmtGuild.guildId,
-      imageUrl
+      imageUrl,
     });
   }
 }

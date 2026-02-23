@@ -6,9 +6,9 @@ import {
   SlashCommandBuilder,
   User,
   VoiceState,
-} from "discord.js";
-import { DJMTGuild } from "./DJMTGuild";
-import { ComponentNames } from "./Constants/ComponentNames";
+} from 'discord.js';
+import {DJMTGuild} from './DJMTGuild';
+import {ComponentNames} from './Constants/ComponentNames';
 
 /**
  * Represents a Guild component. New functionality should be attached to guilds using an

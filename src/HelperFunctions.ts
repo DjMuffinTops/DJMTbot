@@ -6,9 +6,9 @@ import {
   MessageReplyOptions,
   PermissionsBitField,
   Role,
-} from "discord.js";
-import { DJMTbot } from "./DJMTbot";
-import { logger } from './Logger';
+} from 'discord.js';
+import {DJMTbot} from './DJMTbot';
+import {logger} from './Logger';
 
 export const MEDIA_LINK_REGEX: RegExp = /(https?:\/\/[^\s]+)/; // not great but should work for all but weird edge cases
 
@@ -25,7 +25,7 @@ export function isInteractionAdmin(interaction: Interaction) {
 }
 
 export function getGuildMembersRoles(member: GuildMember): Role[] {
-  return member.roles.cache.map((role) => role);
+  return member.roles.cache.map(role => role);
 }
 
 export function getCensoredMessageReplyOptions(
@@ -33,7 +33,7 @@ export function getCensoredMessageReplyOptions(
 ): MessageReplyOptions {
   return {
     content: message.content.length > 0 ? `||${message.content}||` : undefined,
-    files: message.attachments.map((attachment) => {
+    files: message.attachments.map(attachment => {
       return {
         attachment: attachment.url,
         name: `SPOILER_${attachment.name}`,
@@ -49,7 +49,7 @@ export function getCensoredMessageReplyOptions(
  * @param channelMention A String in the format of a Text Channel Mention
  */
 export function channelMentionToChannelId(channelMention: string): string {
-  if (channelMention.startsWith("<#") && channelMention.endsWith(">")) {
+  if (channelMention.startsWith('<#') && channelMention.endsWith('>')) {
     return channelMention.substring(2, channelMention.length - 1);
   }
   throw new Error(
@@ -67,13 +67,13 @@ export async function channelIdToChannel(
 ): Promise<Channel | null> {
   let id: string = channelId;
   // Determine whether the given id is a mention or just the id
-  if (channelId.startsWith("<#") && channelId.endsWith(">")) {
+  if (channelId.startsWith('<#') && channelId.endsWith('>')) {
     id = channelMentionToChannelId(id);
   }
-  if (!id.match("[0-9]+")) {
-    throw new Error("channelId must be numerical");
+  if (!id.match('[0-9]+')) {
+    throw new Error('channelId must be numerical');
   }
-  logger.debug("HelperFunctions id", { id });
+  logger.debug('HelperFunctions id', {id});
   return await DJMTbot.getInstance().client.channels.fetch(id);
 }
 
@@ -88,15 +88,15 @@ export function mapKeys<T, V, U>(
 }
 
 type SerializedMap = {
-  dataType: "Map";
+  dataType: 'Map';
   value: Array<readonly [unknown, unknown]>;
 };
 
 function isSerializedMap(v: unknown): v is SerializedMap {
   return (
-    typeof v === "object" &&
+    typeof v === 'object' &&
     v !== null &&
-    (v as Record<string, unknown>).dataType === "Map" &&
+    (v as Record<string, unknown>).dataType === 'Map' &&
     Array.isArray((v as Record<string, unknown>).value)
   );
 }
@@ -104,7 +104,7 @@ function isSerializedMap(v: unknown): v is SerializedMap {
 export function JSONStringifyReplacer(key: string, value: unknown): unknown {
   if (value instanceof Map) {
     return {
-      dataType: "Map",
+      dataType: 'Map',
       value: Array.from((value as Map<unknown, unknown>).entries()),
     };
   }

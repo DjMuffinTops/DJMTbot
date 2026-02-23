@@ -14,24 +14,24 @@ import {
   ChannelType,
   ChatInputCommandInteraction,
   PermissionFlagsBits,
-} from "discord.js";
-import { Component } from "../Component";
-import { logger } from '../Logger';
-import { ComponentCommands } from "../Constants/ComponentCommands";
-import { isInteractionAdmin } from "../HelperFunctions";
-import { ComponentNames } from "../Constants/ComponentNames";
+} from 'discord.js';
+import {Component} from '../Component';
+import {logger} from '../Logger';
+import {ComponentCommands} from '../Constants/ComponentCommands';
+import {isInteractionAdmin} from '../HelperFunctions';
+import {ComponentNames} from '../Constants/ComponentNames';
 
 const bruhCommand = new SlashCommandBuilder();
 bruhCommand.setName(ComponentCommands.BRUH);
-bruhCommand.setDescription("Get a bruh from the bruh channel");
+bruhCommand.setDescription('Get a bruh from the bruh channel');
 
 const setBruhCommmand = new SlashCommandBuilder();
 setBruhCommmand.setName(ComponentCommands.SET_BRUH);
-setBruhCommmand.setDescription("Sets the bruh channel");
-setBruhCommmand.addChannelOption((input) =>
+setBruhCommmand.setDescription('Sets the bruh channel');
+setBruhCommmand.addChannelOption(input =>
   input
-    .setName("channel")
-    .setDescription("The channel to add or remove from the bruh channels list")
+    .setName('channel')
+    .setDescription('The channel to add or remove from the bruh channels list')
     .addChannelTypes(ChannelType.GuildText)
     .setRequired(true),
 );
@@ -39,13 +39,13 @@ setBruhCommmand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 const printBruhCommand = new SlashCommandBuilder();
 printBruhCommand.setName(ComponentCommands.PRINT_BRUH);
-printBruhCommand.setDescription("Prints bruh information");
+printBruhCommand.setDescription('Prints bruh information');
 printBruhCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 const recacheBruh = new SlashCommandBuilder();
 recacheBruh.setName(ComponentCommands.BRUH_RECACHE);
 recacheBruh.setDescription(
-  "Recaches all of the bruh messages in the bruh channel",
+  'Recaches all of the bruh messages in the bruh channel',
 );
 recacheBruh.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
@@ -67,12 +67,10 @@ export class BruhComponent extends Component<BruhComponentSave> {
   ];
 
   getSaveData(): Promise<BruhComponentSave> {
-    return Promise.resolve({ bruhChannels: this.bruhChannels });
+    return Promise.resolve({bruhChannels: this.bruhChannels});
   }
 
-  afterLoadJSON(
-    _loadedObject: BruhComponentSave | undefined,
-  ): Promise<void> {
+  afterLoadJSON(_loadedObject: BruhComponentSave | undefined): Promise<void> {
     if (_loadedObject) {
       this.bruhChannels = _loadedObject.bruhChannels;
     }
@@ -105,10 +103,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
     return Promise.resolve();
   }
 
-  onMessageUpdate(
-    _oldMessage: Message,
-    _newMessage: Message,
-  ): Promise<void> {
+  onMessageUpdate(_oldMessage: Message, _newMessage: Message): Promise<void> {
     return Promise.resolve();
   }
   async onInteractionCreate(interaction: Interaction): Promise<void> {
@@ -121,12 +116,12 @@ export class BruhComponent extends Component<BruhComponentSave> {
       // Admin only
       if (!isInteractionAdmin(interaction)) {
         await interaction.reply(
-          `This command requires administrator permissions.`,
+          'This command requires administrator permissions.',
         );
         return;
       }
       await this.setBruhCmd(
-        interaction.options.getChannel<ChannelType.GuildText>("channel", true),
+        interaction.options.getChannel<ChannelType.GuildText>('channel', true),
         interaction,
       );
       await this.cacheAllBruhMessages(interaction);
@@ -134,17 +129,17 @@ export class BruhComponent extends Component<BruhComponentSave> {
       // Admin only
       if (!isInteractionAdmin(interaction)) {
         await interaction.reply(
-          `This command requires administrator permissions.`,
+          'This command requires administrator permissions.',
         );
         return;
       }
       await this.printBruhInfo(interaction);
     } else if (interaction.commandName === ComponentCommands.BRUH_RECACHE) {
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ephemeral: true});
       // Admin only
       if (!isInteractionAdmin(interaction)) {
         await interaction.reply(
-          `This command requires administrator permissions.`,
+          'This command requires administrator permissions.',
         );
         return;
       }
@@ -191,7 +186,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
   }
 
   private async printBruhInfo(interaction: ChatInputCommandInteraction) {
-    let channelString = "";
+    let channelString = '';
     if (this.bruhChannels && this.bruhChannels?.length > 0) {
       this.bruhChannels.forEach((channelId: string) => {
         channelString += `<#${channelId}> `;
@@ -202,7 +197,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
       });
     } else {
       await interaction.reply({
-        content: `No Bruh Channels have been set!`,
+        content: 'No Bruh Channels have been set!',
         ephemeral: true,
       });
     }
@@ -211,20 +206,22 @@ export class BruhComponent extends Component<BruhComponentSave> {
   async sendBruh(interaction: ChatInputCommandInteraction) {
     try {
       const attachmentList: AttachmentBuilder[] = [];
-      let msgContent = "";
+      let msgContent = '';
       if (this.bruhChannels && this.bruhChannels?.length > 0) {
         // let messages = await channel.messages.fetch(); // get the messages
         // let messagesArray = messages.array(); // get it as an array
-        const randomIndex = Math.floor(this.messageCache.length * Math.random()); // choose a random message index
+        const randomIndex = Math.floor(
+          this.messageCache.length * Math.random(),
+        ); // choose a random message index
         const randomMsg = this.messageCache[randomIndex]; // get the random message
         if (randomMsg) {
           // If theres an embed, its probably a floof bot star embed
           if (randomMsg.embeds && randomMsg.embeds.length > 0) {
             const embed = randomMsg.embeds[0];
             if (embed.fields) {
-              embed.fields.forEach((field: { name?: string; value?: string }) => {
-                if (field.name === "Message") {
-                  msgContent = field.value || "";
+              embed.fields.forEach((field: {name?: string; value?: string}) => {
+                if (field.name === 'Message') {
+                  msgContent = field.value || '';
                 }
               });
             }
@@ -240,34 +237,35 @@ export class BruhComponent extends Component<BruhComponentSave> {
             if (attachmentList.length <= 0) {
               // If the floof bot embed doesnt have an image or video, there might be one there, so we have to
               // check for it
-              const descriptionStr = embed.description || "";
+              const descriptionStr = embed.description || '';
               const messageId: string = descriptionStr.substring(
-                descriptionStr.lastIndexOf("/") + 1,
+                descriptionStr.lastIndexOf('/') + 1,
                 descriptionStr.length - 1,
               );
-              let channelId = "";
+              let channelId = '';
               if (embed.fields) {
-                embed.fields.forEach((field: { name?: string; value?: string }) => {
-                  if (field.name === "Channel" && field.value) {
-                    channelId = field.value.substring(
-                      field.value.indexOf("#") + 1,
-                      field.value.length - 1,
-                    );
-                  }
-                });
+                embed.fields.forEach(
+                  (field: {name?: string; value?: string}) => {
+                    if (field.name === 'Channel' && field.value) {
+                      channelId = field.value.substring(
+                        field.value.indexOf('#') + 1,
+                        field.value.length - 1,
+                      );
+                    }
+                  },
+                );
               }
               if (channelId) {
                 const foundChannel = this.djmtGuild.getGuildChannel(
                   channelId,
                 ) as TextChannel;
-                const searchMessage = await foundChannel.messages.fetch(messageId);
+                const searchMessage =
+                  await foundChannel.messages.fetch(messageId);
                 msgContent = searchMessage.content;
-                [...searchMessage.attachments.values()].forEach(
-                  (attachment) => {
-                    const msgattachment = new AttachmentBuilder(attachment.url);
-                    attachmentList.push(msgattachment);
-                  },
-                );
+                [...searchMessage.attachments.values()].forEach(attachment => {
+                  const msgattachment = new AttachmentBuilder(attachment.url);
+                  attachmentList.push(msgattachment);
+                });
               }
             }
             // In the chance there is just an image and its not a floof bot embed (like a link or something) relay the images
@@ -279,33 +277,39 @@ export class BruhComponent extends Component<BruhComponentSave> {
             }
           } else {
             // Its probably a standard message, get the attachments and relay the content
-            [...randomMsg.attachments.values()].forEach((attachment) => {
+            [...randomMsg.attachments.values()].forEach(attachment => {
               // do something with the attachment
               attachmentList.push(new AttachmentBuilder(attachment.url));
             });
             msgContent = randomMsg.content;
           }
           // GET RID OF ANY PINGS FROM THE CONTENT
-          msgContent = msgContent.split("@").join("[at]");
+          msgContent = msgContent.split('@').join('[at]');
           const reply = `${randomMsg.url}\n${msgContent}`;
-          await interaction.reply({ content: reply, files: attachmentList });
-          logger.info("Bruh returned reply", { guildId: this.djmtGuild.guildId, reply });
+          await interaction.reply({content: reply, files: attachmentList});
+          logger.info('Bruh returned reply', {
+            guildId: this.djmtGuild.guildId,
+            reply,
+          });
         } else {
           await interaction.reply({
-            content: "Could not find random message.",
+            content: 'Could not find random message.',
             ephemeral: true,
           });
         }
       } else {
         await interaction.reply({
-          content: `No Bruh Channels have been set!`,
+          content: 'No Bruh Channels have been set!',
           ephemeral: true,
         });
       }
     } catch (e) {
-      logger.error("BruhComponent sendBruh error", { guildId: this.djmtGuild.guildId, error: e });
+      logger.error('BruhComponent sendBruh error', {
+        guildId: this.djmtGuild.guildId,
+        error: e,
+      });
       await interaction.reply({
-        content: "there was a bruh bug... bruhhhhhhh",
+        content: 'there was a bruh bug... bruhhhhhhh',
         ephemeral: true,
       });
     }
@@ -314,7 +318,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
   async bruhCmd(interaction: ChatInputCommandInteraction) {
     if (this.onCooldown) {
       await interaction.reply({
-        content: `Please wait, the bruh command is on cooldown.`,
+        content: 'Please wait, the bruh command is on cooldown.',
         ephemeral: true,
       });
       return;
@@ -326,9 +330,12 @@ export class BruhComponent extends Component<BruhComponentSave> {
     try {
       await this.sendBruh(interaction);
     } catch (e) {
-      logger.error("BruhComponent error", { guildId: this.djmtGuild.guildId, error: e });
+      logger.error('BruhComponent error', {
+        guildId: this.djmtGuild.guildId,
+        error: e,
+      });
       await interaction.reply({
-        content: "there was a bruh bug... bruhhhhhhh",
+        content: 'there was a bruh bug... bruhhhhhhh',
         ephemeral: true,
       });
     }
@@ -343,7 +350,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
         this.djmtGuild.guild?.channels?.cache?.get(
           bruhChannelId,
         ) as TextChannel; // get the channel object
-      let last_id = "";
+      let last_id = '';
       let messages: Collection<string, Message> | undefined;
       do {
         const options: FetchMessagesOptions = {
@@ -374,6 +381,9 @@ export class BruhComponent extends Component<BruhComponentSave> {
         });
       }
     }
-    logger.info("Bruh cache ready", { guildId: this.djmtGuild.guildId, cacheSize: this.messageCache.length });
+    logger.info('Bruh cache ready', {
+      guildId: this.djmtGuild.guildId,
+      cacheSize: this.messageCache.length,
+    });
   }
 }

@@ -1,4 +1,4 @@
-import { Component } from "../Component";
+import {Component} from '../Component';
 import {
   ChatInputCommandInteraction,
   GuildMember,
@@ -8,18 +8,18 @@ import {
   SlashCommandBuilder,
   User,
   VoiceState,
-} from "discord.js";
-import { ComponentCommands } from "../Constants/ComponentCommands";
-import { isInteractionAdmin } from "../HelperFunctions";
-import { ComponentNames } from "../Constants/ComponentNames";
+} from 'discord.js';
+import {ComponentCommands} from '../Constants/ComponentCommands';
+import {isInteractionAdmin} from '../HelperFunctions';
+import {ComponentNames} from '../Constants/ComponentNames';
 
 const sayCommand = new SlashCommandBuilder();
 sayCommand.setName(ComponentCommands.SAY);
-sayCommand.setDescription("Makes the bot say something");
-sayCommand.addStringOption((input) =>
+sayCommand.setDescription('Makes the bot say something');
+sayCommand.addStringOption(input =>
   input
-    .setName("message")
-    .setDescription("The message to say")
+    .setName('message')
+    .setDescription('The message to say')
     .setRequired(true),
 );
 
@@ -36,18 +36,18 @@ export class SayComponent extends Component<SayComponentSave> {
 
   async sayCmd(sayMessage: string, interaction: ChatInputCommandInteraction) {
     // Split the message by spaces
-    const args = sayMessage.split(" ");
+    const args = sayMessage.split(' ');
     const userId = `<@${interaction.member?.user.id}>`;
     const deniedMsgs = [
       `Sorry ${userId}, there's a 5% chance i'll actually say that.`,
-      "Reh",
-      ":RioluUgh:767528910065762315",
+      'Reh',
+      ':RioluUgh:767528910065762315',
       `I'm gonna send you to the ranch, ${userId}`,
       `You have no power over me, ${userId}`,
       `I'm not gonna say that ${userId}...`,
       `Why should I say ${sayMessage}?`,
       `${sayMessage}???????`,
-      `${args.reverse().join(" ")}`,
+      `${args.reverse().join(' ')}`,
       `${sayMessage
         .toUpperCase()
         .substring(0, Math.round(sayMessage.length / 2))}-`,
@@ -64,7 +64,7 @@ export class SayComponent extends Component<SayComponentSave> {
 
     // And we get the bot to say the thing:
     await interaction.reply({
-      content: sayMessage.length ? sayMessage : `You didn't say anything! >:(`,
+      content: sayMessage.length ? sayMessage : "You didn't say anything! >:(",
       allowedMentions: {},
     });
   }
@@ -73,9 +73,7 @@ export class SayComponent extends Component<SayComponentSave> {
     return Promise.resolve({});
   }
 
-  afterLoadJSON(
-    _loadedObject: SayComponentSave | undefined,
-  ): Promise<void> {
+  afterLoadJSON(_loadedObject: SayComponentSave | undefined): Promise<void> {
     return Promise.resolve();
   }
 
@@ -125,7 +123,7 @@ export class SayComponent extends Component<SayComponentSave> {
     }
     if (interaction.commandName === ComponentCommands.SAY) {
       await this.sayCmd(
-        interaction.options.getString("message", true),
+        interaction.options.getString('message', true),
         interaction,
       );
     }

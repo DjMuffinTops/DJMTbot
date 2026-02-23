@@ -1,5 +1,5 @@
-import { Component } from "../Component";
-import { logger } from '../Logger';
+import {Component} from '../Component';
+import {logger} from '../Logger';
 import {
   ChannelType,
   ChatInputCommandInteraction,
@@ -12,27 +12,27 @@ import {
   TextChannel,
   User,
   VoiceState,
-} from "discord.js";
-import { ComponentNames } from "../Constants/ComponentNames";
-import { isInteractionAdmin, mapKeys } from "../HelperFunctions";
-import { ComponentCommands } from "../Constants/ComponentCommands";
+} from 'discord.js';
+import {ComponentNames} from '../Constants/ComponentNames';
+import {isInteractionAdmin, mapKeys} from '../HelperFunctions';
+import {ComponentCommands} from '../Constants/ComponentCommands';
 
 const setAutoThreadCommand = new SlashCommandBuilder();
 setAutoThreadCommand.setName(ComponentCommands.SET_AUTO_THREAD);
 setAutoThreadCommand.setDescription(
-  "Adds or removes a channel from the auto thread channel list.",
+  'Adds or removes a channel from the auto thread channel list.',
 );
-setAutoThreadCommand.addChannelOption((input) =>
+setAutoThreadCommand.addChannelOption(input =>
   input
-    .setName("channel")
-    .setDescription("The channel to add or remove")
+    .setName('channel')
+    .setDescription('The channel to add or remove')
     .addChannelTypes(ChannelType.GuildText)
     .setRequired(true),
 );
-setAutoThreadCommand.addStringOption((input) =>
+setAutoThreadCommand.addStringOption(input =>
   input
-    .setName("prefix")
-    .setDescription("The prefix to infront of the genearated thread names")
+    .setName('prefix')
+    .setDescription('The prefix to infront of the genearated thread names')
     .setRequired(true),
 );
 setAutoThreadCommand.setDefaultMemberPermissions(
@@ -41,7 +41,7 @@ setAutoThreadCommand.setDefaultMemberPermissions(
 
 const printAutoThreadCommand = new SlashCommandBuilder();
 printAutoThreadCommand.setName(ComponentCommands.PRINT_AUTO_THREAD);
-printAutoThreadCommand.setDescription("Prints the auto thread channel list.");
+printAutoThreadCommand.setDescription('Prints the auto thread channel list.');
 printAutoThreadCommand.setDefaultMemberPermissions(
   PermissionFlagsBits.Administrator,
 );
@@ -79,7 +79,7 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
 
   getSaveData(): Promise<AutoThreadComponentSave> {
     return Promise.resolve({
-      channels: mapKeys(this.channelsMap, (AutoThreadChannel) => ({
+      channels: mapKeys(this.channelsMap, AutoThreadChannel => ({
         channel: AutoThreadChannel.channel.id,
         namePrefix: AutoThreadChannel.namePrefix,
       })),
@@ -102,7 +102,7 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
             value.channel,
           ) as TextChannel;
           if (!channel || channel.type !== ChannelType.GuildText) {
-            logger.error("[AutoThread] Could not load value", { value });
+            logger.error('[AutoThread] Could not load value', {value});
             continue;
           }
           const newValue: AutoThreadEntry = {
@@ -111,7 +111,7 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
           };
           newMap.set(key, newValue);
         } else {
-          logger.warn("[AutoThread] No loaded value found");
+          logger.warn('[AutoThread] No loaded value found');
         }
       }
       this.channelsMap = newMap;
@@ -174,7 +174,7 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
       // Admin only
       if (!isInteractionAdmin(interaction)) {
         await interaction.reply({
-          content: `This command requires administrator permissions.`,
+          content: 'This command requires administrator permissions.',
           ephemeral: true,
         });
         return;
@@ -184,14 +184,14 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
       // Admin only
       if (!isInteractionAdmin(interaction)) {
         await interaction.reply({
-          content: `This command requires administrator permissions.`,
+          content: 'This command requires administrator permissions.',
           ephemeral: true,
         });
         return;
       }
       await this.addOrRemoveChannel(
-        interaction.options.getChannel<ChannelType.GuildText>("channel", true),
-        interaction.options.getString("prefix", true),
+        interaction.options.getChannel<ChannelType.GuildText>('channel', true),
+        interaction.options.getString('prefix', true),
         interaction,
       );
     }
@@ -210,16 +210,22 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
     );
     if (entry) {
       try {
-          await message.startThread({
-            name: this.extractThreadName(message, entry.namePrefix),
-            autoArchiveDuration: 1440,
-            reason: "DJMTbot Auto Thread",
-          });
+        await message.startThread({
+          name: this.extractThreadName(message, entry.namePrefix),
+          autoArchiveDuration: 1440,
+          reason: 'DJMTbot Auto Thread',
+        });
       } catch (e) {
-        if (e instanceof Error && e.message === "Unknown Message") {
-          logger.info("checkAutoThread Unknown message error, message was probably already deleted", { guildId: this.djmtGuild.guildId });
+        if (e instanceof Error && e.message === 'Unknown Message') {
+          logger.info(
+            'checkAutoThread Unknown message error, message was probably already deleted',
+            {guildId: this.djmtGuild.guildId},
+          );
         } else {
-          logger.info("checkAutoThread error", { guildId: this.djmtGuild.guildId, error: String(e) });
+          logger.info('checkAutoThread error', {
+            guildId: this.djmtGuild.guildId,
+            error: String(e),
+          });
         }
       }
     }
@@ -236,14 +242,15 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
     const attachments = [...message.attachments.values()];
     const embeds = [...message.embeds.values()];
     const firstEmbedName =
-      embeds.length > 0 ? (embeds[0].title ?? embeds[0].description ?? "") : ""; // title before description
+      embeds.length > 0 ? (embeds[0].title ?? embeds[0].description ?? '') : ''; // title before description
     const firstAttachmentName =
-      attachments.length > 0 ? attachments[0].name?.split(".")[0] : "";
+      attachments.length > 0 ? attachments[0].name?.split('.')[0] : '';
     const messageContentName = message.content;
-      const coreName = firstEmbedName || messageContentName || firstAttachmentName;
-      return `${String(prefix)}-${String(message.author?.username)}${
-        coreName ? `-${String(coreName)}` : ""
-      }`.substring(0, 100);
+    const coreName =
+      firstEmbedName || messageContentName || firstAttachmentName;
+    return `${String(prefix)}-${String(message.author?.username)}${
+      coreName ? `-${String(coreName)}` : ''
+    }`.substring(0, 100);
   }
 
   /**
@@ -280,7 +287,7 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
     namePrefix = namePrefix.trim();
     if (!namePrefix) {
       await interaction.reply({
-        content: `Prefix must not be empty!`,
+        content: 'Prefix must not be empty!',
         ephemeral: true,
       });
       return;
@@ -309,12 +316,12 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
   private async printAutoThread(interaction: ChatInputCommandInteraction) {
     if (this.channelsMap.size <= 0) {
       await interaction.reply({
-        content: `No Auto Thread Channels have been set!`,
+        content: 'No Auto Thread Channels have been set!',
         ephemeral: true,
       });
     } else {
-      let msg = "";
-      this.channelsMap.forEach((autoThreadEntry) => {
+      let msg = '';
+      this.channelsMap.forEach(autoThreadEntry => {
         msg += `\`channel\`: ${autoThreadEntry.channel.toString()}, \`namePrefix\`: ${autoThreadEntry.namePrefix}\n`;
       });
       await interaction.reply({

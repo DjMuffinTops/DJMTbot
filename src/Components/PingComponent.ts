@@ -7,14 +7,14 @@ import {
   SlashCommandBuilder,
   User,
   VoiceState,
-} from "discord.js";
-import { ComponentCommands } from "../Constants/ComponentCommands";
-import { Component } from "../Component";
-import { ComponentNames } from "../Constants/ComponentNames";
+} from 'discord.js';
+import {ComponentCommands} from '../Constants/ComponentCommands';
+import {Component} from '../Component';
+import {ComponentNames} from '../Constants/ComponentNames';
 
 const pingCommand = new SlashCommandBuilder();
 pingCommand.setName(ComponentCommands.PING);
-pingCommand.setDescription("Pings the bot");
+pingCommand.setDescription('Pings the bot');
 
 type PingComponentSave = Record<string, unknown>;
 export class PingComponent extends Component<PingComponentSave> {
@@ -31,9 +31,7 @@ export class PingComponent extends Component<PingComponentSave> {
     return Promise.resolve({} as PingComponentSave);
   }
 
-  afterLoadJSON(
-    _loadedObject: PingComponentSave | undefined,
-  ): Promise<void> {
+  afterLoadJSON(_loadedObject: PingComponentSave | undefined): Promise<void> {
     return Promise.resolve();
   }
 
@@ -63,10 +61,7 @@ export class PingComponent extends Component<PingComponentSave> {
     return Promise.resolve();
   }
 
-  onMessageUpdate(
-    _oldMessage: Message,
-    _newMessage: Message,
-  ): Promise<void> {
+  onMessageUpdate(_oldMessage: Message, _newMessage: Message): Promise<void> {
     return Promise.resolve();
   }
 
@@ -90,7 +85,7 @@ export class PingComponent extends Component<PingComponentSave> {
   async pingCmd(interaction: ChatInputCommandInteraction) {
     // Calculates ping between sending a message and editing it, giving a nice round-trip latency.
     // The second ping is an average latency between the bot and the websocket server (one-way, not round-trip)
-    const m = await interaction.reply("Ping?");
+    const m = await interaction.reply('Ping?');
     await m.edit(
       `Pong! Latency is ${
         m.createdTimestamp - interaction.createdTimestamp

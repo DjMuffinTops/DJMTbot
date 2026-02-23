@@ -1,5 +1,5 @@
-import { Component } from "../Component";
-import { logger } from "../Logger";
+import {Component} from '../Component';
+import {logger} from '../Logger';
 import {
   ChannelType,
   ChatInputCommandInteraction,
@@ -13,34 +13,31 @@ import {
   User,
   VoiceChannel,
   VoiceState,
-} from "discord.js";
-import { ComponentNames } from "../Constants/ComponentNames";
-import {
-  VoiceTextPairComponent,
-  VoiceTextPair,
-} from "./VoiceTextPairComponent";
-import { Cron } from "../Cron";
-import { ComponentCommands } from "../Constants/ComponentCommands";
+} from 'discord.js';
+import {ComponentNames} from '../Constants/ComponentNames';
+import {VoiceTextPairComponent, VoiceTextPair} from './VoiceTextPairComponent';
+import {Cron} from '../Cron';
+import {ComponentCommands} from '../Constants/ComponentCommands';
 
 const setHoursCommand = new SlashCommandBuilder();
 setHoursCommand.setName(ComponentCommands.SET_HOURS);
-setHoursCommand.setDescription("Sets the hours for a vc text pair");
-setHoursCommand.addChannelOption((input) =>
+setHoursCommand.setDescription('Sets the hours for a vc text pair');
+setHoursCommand.addChannelOption(input =>
   input
-    .setName("voicechannel")
-    .setDescription("The voice channel")
+    .setName('voicechannel')
+    .setDescription('The voice channel')
     .addChannelTypes(ChannelType.GuildVoice)
     .setRequired(true),
 );
-setHoursCommand.addChannelOption((input) =>
+setHoursCommand.addChannelOption(input =>
   input
-    .setName("textchannel")
-    .setDescription("The text channel")
+    .setName('textchannel')
+    .setDescription('The text channel')
     .addChannelTypes(ChannelType.GuildText)
     .setRequired(true),
 );
-setHoursCommand.addIntegerOption((input) =>
-  input.setName("hours").setDescription("The hours to set").setRequired(true),
+setHoursCommand.addIntegerOption(input =>
+  input.setName('hours').setDescription('The hours to set').setRequired(true),
 );
 setHoursCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
@@ -71,7 +68,7 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
     for (const pair of vcChannelPairs) {
       this.consecutiveHours.set(pair, 0);
     }
-    Cron.getInstance().schedule("0 0 0-23 * * *", () => {
+    Cron.getInstance().schedule('0 0 0-23 * * *', () => {
       void this.vcRemindersJob();
     });
 
@@ -127,9 +124,9 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
     }
     if (interaction.commandName === ComponentCommands.SET_HOURS) {
       await this.setHoursCmd(
-        interaction.options.getChannel("voicechannel", true),
-        interaction.options.getChannel("textchannel", true),
-        interaction.options.getInteger("hours", true),
+        interaction.options.getChannel('voicechannel', true),
+        interaction.options.getChannel('textchannel', true),
+        interaction.options.getInteger('hours', true),
         interaction,
       );
     }
@@ -162,13 +159,14 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
       }
     }
     await interaction.reply({
-      content: `Could not find the desired vc text pair. Please make sure its set.`,
+      content:
+        'Could not find the desired vc text pair. Please make sure its set.',
       ephemeral: true,
     });
   }
 
   async vcRemindersJob() {
-    logger.info("Running VC Reminder job", { guildId: this.djmtGuild.guildId });
+    logger.info('Running VC Reminder job', {guildId: this.djmtGuild.guildId});
     const vcChannelPairs: VoiceTextPair[] = (
       this.djmtGuild.getComponent(
         ComponentNames.VOICE_TEXT_PAIR,
@@ -183,27 +181,27 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
         pair.textChannel.id,
       ) as TextChannel;
       if (!voiceChannel || !textChannel) {
-        logger.error("[VCRemindersJob] Could not find channels", {
+        logger.error('[VCRemindersJob] Could not find channels', {
           voiceChannelId: pair.voiceChannel.id,
-          textChannelId: pair.textChannel.id
+          textChannelId: pair.textChannel.id,
         });
         return;
       }
       // If someone is in the channel during the check and they are not a bot, add an hour
       if (
         voiceChannel.members.size > 0 &&
-        !voiceChannel.members.every((member) => member.user.bot)
+        !voiceChannel.members.every(member => member.user.bot)
       ) {
         const hoursSoFar = this.consecutiveHours.get(pair) ?? 0;
         const hoursMsg = `${
-          hoursSoFar > 0 ? `(${hoursSoFar} consecutive hours)` : ""
+          hoursSoFar > 0 ? `(${hoursSoFar} consecutive hours)` : ''
         }`;
         const finalMsg = `Don't forget to save your work and stay hydrated! ${hoursMsg}`;
         await textChannel.send(finalMsg);
-        logger.info("Sent VC reminder", {
+        logger.info('Sent VC reminder', {
           guildId: this.djmtGuild.guildId,
           channelName: textChannel.name,
-          message: finalMsg
+          message: finalMsg,
         });
         this.consecutiveHours.set(pair, hoursSoFar + 1);
       } else {
