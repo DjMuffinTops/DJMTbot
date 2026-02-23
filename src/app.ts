@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { DJMTbot } from "./DJMTbot";
 import express, { Request, Response } from "express";
 import { logger } from './Logger';
