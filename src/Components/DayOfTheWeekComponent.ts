@@ -1,5 +1,6 @@
 import { Component } from "../Component";
 import { Cron } from "../Cron";
+import { logger } from "../Logger";
 import {
   ChannelType,
   ChatInputCommandInteraction,
@@ -152,25 +153,26 @@ export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> 
   async dotwJob() {
     const date = new Date();
     const today: DayOfTheWeek = dayOfTheWeekConstants[date.getDay()];
-    console.log(
-      `[${this.djmtGuild.guildId}] Running Day of the Week Job: ${
-        today.day
-      } ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`,
-    );
+    logger.info("Running Day of the Week job", {
+      guildId: this.djmtGuild.guildId,
+      day: today.day,
+      date: date.toLocaleDateString(),
+      time: date.toLocaleTimeString()
+    });
     for (const channelId of this.dotwChannels) {
       const channel = this.djmtGuild.getGuildChannel(channelId) as TextChannel;
       if (!channel) {
-        console.error(`[DOTW Job]: ${channelId} could not be found.`);
+        logger.error("DOTW Job: Channel could not be found", { channelId });
       } else {
         // Determine which dotw post to send
         const randomMessage =
           today.messages[Math.floor(today.messages.length * Math.random())];
         await channel.send(randomMessage);
-        console.log(
-          `[${this.djmtGuild.guildId}] Sent: ${date.toLocaleTimeString()} ${
-            randomMessage ? randomMessage : ""
-          }`,
-        );
+        logger.info("DOTW message sent", {
+          guildId: this.djmtGuild.guildId,
+          time: date.toLocaleTimeString(),
+          message: randomMessage || ""
+        });
       }
     }
   }
@@ -182,9 +184,7 @@ export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> 
           channelId,
         ) as TextChannel;
         if (!channel) {
-          console.error(
-            `[PleasantEveningJob]: Could not find channel ${channelId}`,
-          );
+          logger.error("PleasantEveningJob: Could not find channel", { channelId });
         } else {
           // Determine which dotw post to send
           const msg =

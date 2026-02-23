@@ -8,6 +8,7 @@ import {
   Role,
 } from "discord.js";
 import { DJMTbot } from "./DJMTbot";
+import { logger } from './Logger';
 
 export const MEDIA_LINK_REGEX: RegExp = /(https?:\/\/[^\s]+)/; // not great but should work for all but weird edge cases
 
@@ -72,7 +73,7 @@ export async function channelIdToChannel(
   if (!id.match("[0-9]+")) {
     throw new Error("channelId must be numerical");
   }
-  console.log(id);
+  logger.debug("HelperFunctions id", { id });
   return await DJMTbot.getInstance().client.channels.fetch(id);
 }
 

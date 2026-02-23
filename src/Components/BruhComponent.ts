@@ -16,6 +16,7 @@ import {
   PermissionFlagsBits,
 } from "discord.js";
 import { Component } from "../Component";
+import { logger } from '../Logger';
 import { ComponentCommands } from "../Constants/ComponentCommands";
 import { isInteractionAdmin } from "../HelperFunctions";
 import { ComponentNames } from "../Constants/ComponentNames";
@@ -220,7 +221,6 @@ export class BruhComponent extends Component<BruhComponentSave> {
           // If theres an embed, its probably a floof bot star embed
           if (randomMsg.embeds && randomMsg.embeds.length > 0) {
             const embed = randomMsg.embeds[0];
-            // console.log(embed);
             if (embed.fields) {
               embed.fields.forEach((field: { name?: string; value?: string }) => {
                 if (field.name === "Message") {
@@ -287,13 +287,9 @@ export class BruhComponent extends Component<BruhComponentSave> {
           }
           // GET RID OF ANY PINGS FROM THE CONTENT
           msgContent = msgContent.split("@").join("[at]");
-          // let matches = msgContent.match(/^<@!?(\d+)>$/);
-          // console.log(msgContent);
-          // console.log(matches);
-          // console.log(`size: ${messagesArray.length} | index: ${randomIndex}`);
           const reply = `${randomMsg.url}\n${msgContent}`;
           await interaction.reply({ content: reply, files: attachmentList });
-          console.log(`[${this.djmtGuild.guildId}] Bruh returned ${reply}`);
+          logger.info("Bruh returned reply", { guildId: this.djmtGuild.guildId, reply });
         } else {
           await interaction.reply({
             content: "Could not find random message.",
@@ -307,7 +303,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
         });
       }
     } catch (e) {
-      console.error(`[${this.djmtGuild.guildId}] ${String(e)}`);
+      logger.error("BruhComponent sendBruh error", { guildId: this.djmtGuild.guildId, error: e });
       await interaction.reply({
         content: "there was a bruh bug... bruhhhhhhh",
         ephemeral: true,
@@ -330,7 +326,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
     try {
       await this.sendBruh(interaction);
     } catch (e) {
-      console.error(`[${this.djmtGuild.guildId}] ${String(e)}`);
+      logger.error("BruhComponent error", { guildId: this.djmtGuild.guildId, error: e });
       await interaction.reply({
         content: "there was a bruh bug... bruhhhhhhh",
         ephemeral: true,
@@ -378,8 +374,6 @@ export class BruhComponent extends Component<BruhComponentSave> {
         });
       }
     }
-    console.log(
-      `[${this.djmtGuild.guildId}] Bruh cache size: ${this.messageCache.length}`,
-    );
+    logger.info("Bruh cache ready", { guildId: this.djmtGuild.guildId, cacheSize: this.messageCache.length });
   }
 }

@@ -12,3 +12,4 @@ json/guilds/
 !.yarn/sdks
 !.yarn/versions
 ignore/
+logs/

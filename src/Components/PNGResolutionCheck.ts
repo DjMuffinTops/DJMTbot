@@ -1,4 +1,5 @@
 import { Component } from "../Component";
+import { logger } from "../Logger";
 import {
   ChannelType,
   ChatInputCommandInteraction,
@@ -98,7 +99,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
         if (value) {
           const channel = this.djmtGuild.getGuildChannel(value.channel) as TextChannel;
           if (!channel) {
-            console.error(`[PNGResolutionCheck]: could not load ${JSON.stringify(value)}`);
+            logger.error("[PNGResolutionCheck] Could not load value", { value });
             continue;
           }
           const newValue: PNGResolutionEntry = {
@@ -108,7 +109,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
           };
           newMap.set(key, newValue);
         } else {
-          console.log("[PNGResolutionCheck]: No loaded value found");
+          logger.warn("[PNGResolutionCheck] No loaded value found");
         }
       }
       this.channelsMap = newMap;
@@ -192,7 +193,11 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
           try {
             image = await probe(attachment.url);
           } catch (e) {
-            console.error(e);
+            logger.error("PNGResolutionCheck probe error", {
+              guildId: this.djmtGuild.guildId,
+              attachmentUrl: attachment.url,
+              error: e
+            });
             return;
           }
           // Verify the image properties
@@ -202,7 +207,10 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
               image.width === entry.width &&
               image.height === entry.height
             ) {
-              console.log(`[PNGResolutionCheck]: ${message.id} verified`);
+              logger.debug("[PNGResolutionCheck] Image verified", {
+                guildId: this.djmtGuild.guildId,
+                messageId: message.id
+              });
               await message.react("✅");
               return;
             }
@@ -221,10 +229,11 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
             try {
               await message.delete();
             } catch (e) {
-              console.error(
-                "Error deleting message for PNG resolution check: ",
-                e,
-              );
+              logger.error("Error deleting message for PNG resolution check", {
+                guildId: this.djmtGuild.guildId,
+                messageId: message.id,
+                error: e
+              });
             }
             if (message.channel.isSendable()) {
               const warningMsg: Message = await message.channel.send(msg);

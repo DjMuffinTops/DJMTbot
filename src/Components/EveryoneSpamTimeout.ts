@@ -10,6 +10,7 @@ import {
 } from "discord.js";
 import { ComponentNames } from "../Constants/ComponentNames";
 import { Component } from "../Component";
+import { logger } from "../Logger";
 import {
   getCensoredMessageReplyOptions,
   getGuildMembersRoles,
@@ -91,11 +92,11 @@ export class EveryoneSpamTimeout extends Component<EveryoneSpamTimeoutSave> {
     try {
       await this.handleEveryoneSpam(message);
     } catch (error) {
-      console.error(
-        `[${this.djmtGuild.guildId}] Error in EveryoneSpamTimeout.onMessageCreate for member ${String(
-          message.member?.user.username,
-        )}: ${String(error)}`,
-      );
+      logger.error("Error in EveryoneSpamTimeout.onMessageCreate", {
+        guildId: this.djmtGuild.guildId,
+        username: message.member?.user.username,
+        error
+      });
     }
     return Promise.resolve(undefined);
   }
@@ -121,11 +122,10 @@ export class EveryoneSpamTimeout extends Component<EveryoneSpamTimeoutSave> {
     try {
       void this.handleEveryoneSpam(newMessage);
     } catch (error) {
-      console.error(
-        `[${this.djmtGuild.guildId}] Error in EveryoneSpamTimeout.onMessageUpdate: ${String(
-          error,
-        )}`,
-      );
+      logger.error("Error in EveryoneSpamTimeout.onMessageUpdate", {
+        guildId: this.djmtGuild.guildId,
+        error
+      });
     }
     return Promise.resolve();
   }

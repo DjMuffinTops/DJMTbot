@@ -11,6 +11,7 @@ import Discord, {
 import { promises as FileSystem } from "fs";
 import { DJMTGuild } from "./DJMTGuild";
 import { Cron } from "./Cron";
+import { logger } from './Logger';
 import dotenv from "dotenv";
 // Here we load the guildConfigs.json file that contains our token and our prefix values.
 dotenv.config();
@@ -39,8 +40,8 @@ export class DJMTbot {
     });
     this.guilds = new Map<string, DJMTGuild>();
     void this.initGuildInstancesFromFiles()
-      .then(() => console.log(`${this.guilds.size} DJMT Guilds Initialized`))
-      .catch((err) => console.error("Failed initializing guild instances:", err));
+      .then(() => logger.info(`${this.guilds.size} DJMT Guilds Initialized`))
+      .catch((err: unknown) => logger.error("Failed initializing guild instances", { error: err }));
   }
 
   public static getInstance(): DJMTbot {
@@ -76,8 +77,8 @@ export class DJMTbot {
         for (const id of Array.from(this.guilds.keys())) {
           await this.guilds.get(id)?.onReady();
         }
-        console.log("DJMTbot is ready!");
-      })().catch((err) => console.error("ClientReady handler error:", err));
+        logger.info("DJMTbot is ready!");
+      })().catch((err: unknown) => logger.error("ClientReady handler error", { error: err }));
     });
 
     this.client.on(Events.GuildMemberAdd, (member: GuildMember) => {
@@ -86,9 +87,9 @@ export class DJMTbot {
         if (guild) {
           await guild.onGuildMemberAdd(member);
         } else {
-          console.log("member does not have an associated guild instance:", member);
+          logger.warn("Member does not have an associated guild instance", { memberId: member.id });
         }
-      })().catch((err) => console.error("GuildMemberAdd handler error:", err));
+      })().catch((err: unknown) => logger.error("GuildMemberAdd handler error", { error: err }));
     });
 
     this.client.on(Events.MessageCreate, (message: Message) => {
@@ -99,9 +100,9 @@ export class DJMTbot {
         if (guild) {
           await guild.onMessageCreate(args, message);
         } else {
-          console.log("Message does not have an associated guild instance:", message);
+          logger.warn("Message does not have an associated guild instance", { messageId: message.id });
         }
-      })().catch((err) => console.error("MessageCreate handler error:", err));
+      })().catch((err: unknown) => logger.error("MessageCreate handler error", { error: err }));
     });
 
     this.client.on(Events.MessageUpdate, (oldMessage, newMessage) => {
@@ -113,9 +114,9 @@ export class DJMTbot {
             newMessage as Message,
           );
         } else {
-          console.log("NewMessage does not have an associated guild instance:", newMessage);
+          logger.warn("NewMessage does not have an associated guild instance", { messageId: newMessage.id });
         }
-      })().catch((err) => console.error("MessageUpdate handler error:", err));
+      })().catch((err: unknown) => logger.error("MessageUpdate handler error", { error: err }));
     });
 
     this.client.on(Events.VoiceStateUpdate, (oldState: VoiceState, newState: VoiceState) => {
@@ -127,9 +128,9 @@ export class DJMTbot {
             newState,
           );
         } else {
-          console.log("newState does not have an associated guild instance:", newState);
+          logger.warn("newState does not have an associated guild instance", { guildId: newState.guild?.id });
         }
-      })().catch((err) => console.error("VoiceStateUpdate handler error:", err));
+      })().catch((err: unknown) => logger.error("VoiceStateUpdate handler error", { error: err }));
     });
 
     this.client.on(Events.MessageReactionAdd, (messageReaction, user) => {
@@ -140,9 +141,9 @@ export class DJMTbot {
           try {
             await messageReaction.fetch();
           } catch (error) {
-            console.error(
-              "Something went wrong when fetching the message: ",
-              error,
+            logger.error(
+              "Something went wrong when fetching the message",
+              { error },
             );
             return;
           }
@@ -151,9 +152,9 @@ export class DJMTbot {
         if (!messageReaction.partial && guild) {
           await guild.onMessageReactionAdd(messageReaction, user as User);
         } else {
-          console.log("Reaction does not have an associated guild instance:", messageReaction);
+          logger.warn("Reaction does not have an associated guild instance", { messageId: messageReaction.message.id });
         }
-      })().catch((err) => console.error("MessageReactionAdd handler error:", err));
+      })().catch((err: unknown) => logger.error("MessageReactionAdd handler error", { error: err }));
     });
 
     this.client.on(Events.MessageReactionRemove, (messageReaction, user) => {
@@ -164,9 +165,9 @@ export class DJMTbot {
           try {
             await messageReaction.fetch();
           } catch (error) {
-            console.error(
-              "Something went wrong when fetching the message: ",
-              error,
+            logger.error(
+              "Something went wrong when fetching the message",
+              { error },
             );
             return;
           }
@@ -175,9 +176,9 @@ export class DJMTbot {
         if (!messageReaction.partial && guild) {
           await guild.onMessageReactionRemove(messageReaction, user as User);
         } else {
-          console.log("Reaction does not have an associated guild instance:", messageReaction);
+          logger.warn("Reaction does not have an associated guild instance", { messageId: messageReaction.message.id });
         }
-      })().catch((err) => console.error("MessageReactionRemove handler error:", err));
+      })().catch((err: unknown) => logger.error("MessageReactionRemove handler error", { error: err }));
     });
 
     this.client.on(Events.InteractionCreate, (interaction) => {
@@ -186,19 +187,17 @@ export class DJMTbot {
         if (guild) {
           await guild.onInteractionCreate(interaction);
         } else {
-          console.log("Interaction does not have an associated guild instance:", interaction);
+          logger.warn("Interaction does not have an associated guild instance", { guildId: interaction.guild?.id });
         }
-      })().catch((err) => console.error("InteractionCreate handler error:", err));
+      })().catch((err: unknown) => logger.error("InteractionCreate handler error", { error: err }));
     });
 
     this.client.on(Events.GuildCreate, (guild) => {
-      console.log(
-        `New guild joined: ${guild.name} (id: ${guild.id}). This guild has ${guild.memberCount} members!`,
-      );
+      logger.info("New guild joined", { guildName: guild.name, guildId: guild.id, memberCount: guild.memberCount });
     });
 
     this.client.on(Events.GuildDelete, (guild) => {
-      console.log(`I have been removed from: ${guild.name} (id: ${guild.id})`);
+      logger.info("Removed from guild", { guildName: guild.name, guildId: guild.id });
     });
 
     await this.client.login(process.env.TOKEN);
