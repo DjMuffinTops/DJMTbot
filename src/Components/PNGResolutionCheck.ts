@@ -6,6 +6,7 @@ import {
   GuildMember,
   Interaction,
   Message,
+  MessageFlags,
   MessageReaction,
   PermissionFlagsBits,
   SlashCommandBuilder,
@@ -256,7 +257,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
     if (this.channelsMap.size <= 0) {
       await interaction.reply({
         content: 'No PNG Resolution Checking Channels have been set!',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } else {
       let msg = '';
@@ -265,7 +266,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
       });
       await interaction.reply({
         content: `PNG Resolution Checking Channels:\n${msg}`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }
@@ -283,7 +284,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
     } else {
       res = await this.addPNGRCChannel({channel: channel, width, height});
     }
-    await interaction.reply({content: res, ephemeral: true});
+    await interaction.reply({content: res, flags: MessageFlags.Ephemeral});
   }
 
   /**

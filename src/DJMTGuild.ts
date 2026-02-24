@@ -14,36 +14,15 @@ import {
   Routes,
 } from 'discord.js';
 
-import {JSONStringifyReplacer, JSONStringifyReviver} from './HelperFunctions';
-
 import {DJMTbot} from './DJMTbot';
 import {logger} from './Logger';
 import {ComponentNames} from './Constants/ComponentNames';
+// JSONStringifyReplacer/Reviver: Custom JSON serialization for handling special types (dates, etc.)
+import {JSONStringifyReplacer} from './HelperFunctions';
 import {Component} from './Component';
+import {GuildChannelManager} from './GuildChannelManager';
+import {GuildConfigManager, GuildConfig} from './GuildConfigManager';
 import * as components from './Components'; // All components are imported from here!
-import {promises as FileSystem} from 'fs';
-import defaultConfigJson from '../json/defaultConfig.json';
-
-interface DefaultConfig {
-  debugMode?: boolean;
-  prefix?: string;
-  debugChannelId?: string;
-  modAlertsChannelId?: string;
-  modLoggingChannelId?: string;
-  componentData?: Record<string, unknown>;
-}
-
-const defaultConfig = defaultConfigJson as DefaultConfig;
-
-// The structure of a Guild's save data JSON.
-export interface GuildConfig {
-  debugMode: boolean;
-  prefix: string;
-  debugChannelId?: string;
-  modAlertsChannelId?: string;
-  modLoggingChannelId?: string;
-  componentData?: Record<string, unknown>;
-}
 
 /**
  * Represents a single discord server (referred to as a Guild by discord js api). Each guild instance
@@ -54,20 +33,19 @@ export class DJMTGuild {
   guild: Guild | undefined;
   isReady: boolean = false;
   readonly guildId: string;
-  // Config
-  private _debugMode: boolean = !!defaultConfig.debugMode;
-  private _prefix: string = 'djmt!';
-  private _debugChannelId: string = defaultConfig.debugChannelId || '';
-  private _modAlertsChannelId: string = defaultConfig.modAlertsChannelId || '';
-  private _modLoggingChannelId: string =
-    defaultConfig.modLoggingChannelId || '';
-  private componentData: Record<string, unknown> =
-    defaultConfig.componentData || {};
+  private channelManager: GuildChannelManager;
+
+  // Configuration manager for all guild settings
+  private configManager: GuildConfigManager;
   private components: Map<ComponentNames, Component<unknown>>;
+
+  // ============ Constructor ============
 
   constructor(guildId: string) {
     this.guildId = guildId;
+    this.configManager = new GuildConfigManager(guildId);
     this.components = new Map<ComponentNames, Component<unknown>>();
+    this.channelManager = new GuildChannelManager(undefined);
     try {
       void this.initializeComponents()
         .then(() => {
@@ -80,6 +58,8 @@ export class DJMTGuild {
       logger.error('DJMTGuild constructor error', {guildId, error: e});
     }
   }
+
+  // ============ Initialization ============
 
   /**
    * Initializes each component class exported in the /Components index.ts file for this guild.
@@ -146,135 +126,136 @@ export class DJMTGuild {
   }
 
   /**
+   * Retrieves all component instances for this guild.
+   * @returns Array of all component instances
+   * @private
+   */
+  private getAllComponents(): Component<unknown>[] {
+    return Array.from(this.components.values());
+  }
+
+  /**
+   * Builds the guild configuration JSON string for file output.
+   * Delegates to configManager to get the JSON representation.
+   * @returns The serialized JSON string of the guild config
+   * @private
+   */
+  private buildGuildConfigJSON(): string {
+    return JSON.stringify(
+      this.configManager.getSaveData(),
+      JSONStringifyReplacer,
+      '\t',
+    );
+  }
+
+  /**
+   * Dispatches a component event to all components in this guild.
+   * Handles the isReady check and iteration over all components.
+   * @param methodName The name of the method to call on each component
+   * @param args The arguments to pass to the method
+   * @param requireReady If true, only dispatch if isReady is true. Default: true.
+   * @private
+   */
+  private async dispatchComponentEvent<Args extends unknown[]>(
+    methodName: string,
+    args: Args,
+    requireReady = true,
+  ): Promise<void> {
+    if (requireReady && !this.isReady) return;
+
+    for (const component of this.getAllComponents()) {
+      const method = component[methodName as keyof Component<unknown>];
+      if (typeof method === 'function') {
+        await (method as (...methodArgs: Args) => Promise<void>).apply(
+          component,
+          args,
+        );
+      }
+    }
+  }
+
+  /**
    * Gets a component from this guild's components map. You will need to cast the return Component
    * to access it's properties. Expects the component's assigned ComponnetNames enum value.
    * @param name The ComponentNames (enum) name of the component to return.
    */
+  // ============ Component Access ============
+
   getComponent(name: ComponentNames): Component<unknown> | undefined {
     return this.components.get(name);
   }
 
   /**
    * Returns the guild data that will be saved to JSON.
+   * Delegates to configManager for the actual data retrieval.
    */
+  // ============ Configuration Management ============
+
   getSaveData(): GuildConfig {
-    return {
-      debugMode: this._debugMode,
-      prefix: this._prefix,
-      debugChannelId: this._debugChannelId,
-      modAlertsChannelId: this._modAlertsChannelId,
-      modLoggingChannelId: this._modLoggingChannelId,
-      componentData: this.componentData,
-    };
+    return this.configManager.getSaveData();
   }
 
   /**
-   * Loads data from this guild's respective JSON file. Set's the guilds fields and then passes
-   * component data to each respective component through the component afterLoadJJSON function.
+   * Loads data from this guild's respective JSON file.
+   * Delegates to configManager for configuration load, then distributes component data.
    */
   async loadJSON(): Promise<void> {
-    const fileName = `./json/guilds/${this.guildId}.json`;
-    let gConfig: GuildConfig | undefined;
-    try {
-      const buffer = await FileSystem.readFile(fileName);
-      const parsed = JSON.parse(buffer.toString(), JSONStringifyReviver) as
-        | Record<string, unknown>
-        | undefined;
-      gConfig = parsed
-        ? (parsed[this.guildId] as GuildConfig | undefined)
-        : undefined;
-    } catch (e) {
-      logger.warn('Could not load JSON, resetting to defaults', {
-        guildId: this.guildId,
-        error: e,
-      });
-      await this.resetJSON();
-      return;
-    }
+    await this.configManager.loadJSON();
 
-    if (gConfig && gConfig.componentData) {
-      this._debugMode = !!gConfig.debugMode;
-      this._prefix = gConfig.prefix || this._prefix;
-      this._debugChannelId = gConfig.debugChannelId || this._debugChannelId;
-      this._modAlertsChannelId =
-        gConfig.modAlertsChannelId || this._modAlertsChannelId;
-      this._modLoggingChannelId =
-        gConfig.modLoggingChannelId || this._modLoggingChannelId;
-      this.componentData = gConfig.componentData || this.componentData;
-      for (const component of Array.from(this.components.values())) {
-        // Send component data to their respective components.
-        await component.afterLoadJSON(this.componentData[component.name]);
-      }
-    } else {
-      logger.info(
-        'Guild file read but gConfig contents not found. Resetting file',
-        {guildId: this.guildId},
-      );
-      await this.resetJSON();
+    // Get component data and pass to each component
+    const componentData = this.configManager.getAllComponentData();
+    for (const component of this.getAllComponents()) {
+      await component.afterLoadJSON(componentData[component.name]);
     }
   }
 
   /**
    * Saves data for this guild to a JSON file.
+   * Updates component data from all components, delegates to configManager for persistence.
    */
   async saveJSON(): Promise<void> {
-    const filename = `./json/guilds/${this.guildId}.json`;
-    // Build the componentData object by getting each component's save data
-    for (const component of Array.from(this.components.values())) {
-      this.componentData[component.name] = await component.getSaveData();
+    // Build the componentData by getting each component's save data
+    const componentData = this.configManager.getAllComponentData();
+    for (const component of this.getAllComponents()) {
+      componentData[component.name] = await component.getSaveData();
     }
-    // Write getSaveData() content to file
-    await FileSystem.writeFile(
-      filename,
-      JSON.stringify(
-        {[this.guildId]: this.getSaveData()},
-        JSONStringifyReplacer,
-        '\t',
-      ),
-    );
-    logger.info('Guild config saved', {filename});
-    if (this.debugMode) {
-      const foundChannel = this.getDebugChannel();
-      if (foundChannel) {
-        const attachment = new AttachmentBuilder(
-          Buffer.from(
-            JSON.stringify(
-              {[this.guildId]: this.getSaveData()},
-              JSONStringifyReplacer,
-              '\t',
-            ),
-          ),
-          {name: 'config.txt'},
-        );
-        await foundChannel.send({files: [attachment]});
-      }
-    }
-  }
+    this.configManager.setAllComponentData(componentData);
 
-  private getDebugChannel(): TextChannel | undefined {
-    return this.getGuildChannel(this.debugChannelId) as TextChannel;
+    // Set callback for debug channel attachment
+    this.configManager.setOnConfigSaved(async () => {
+      if (this.configManager.debugMode) {
+        const debugChannel = this.getDebugChannel();
+        if (debugChannel) {
+          const attachment = new AttachmentBuilder(
+            Buffer.from(this.buildGuildConfigJSON()),
+            {name: 'config.txt'},
+          );
+          await debugChannel.send({files: [attachment]});
+        }
+      }
+    });
+
+    // Delegate to configManager for actual saving
+    await this.configManager.saveJSON();
   }
 
   /**
-   * Resets the guild's data to default and reset's the saved JSON
+   * Resets the guild's data to default and saves the reset config.
+   * Delegates to configManager for the reset logic.
    */
-  async resetJSON() {
-    this._debugMode = !!defaultConfig.debugMode;
-    this._prefix = defaultConfig.prefix || 'djmt!';
-    this._debugChannelId = defaultConfig.debugChannelId || '';
-    this.componentData = defaultConfig.componentData || {};
+  async resetJSON(): Promise<void> {
+    await this.configManager.resetJSON();
     logger.info('Reset config to default settings', {guildId: this.guildId});
-    if (this.debugChannelId) {
+    if (this.configManager.debugChannelId) {
       const debugChannel = this.getDebugChannel();
       if (debugChannel) {
         await debugChannel.send("Reset this guild's config");
       }
     }
-    await this.saveJSON();
     await this.loadJSON();
   }
 
-  // Events
+  // ============ Event Handlers ============
 
   /**
    * Relay's the discord client's 'ready' event to all components
@@ -284,6 +265,7 @@ export class DJMTGuild {
       this.guild = await DJMTbot.getInstance().client.guilds.fetch(
         this.guildId,
       );
+      this.channelManager.setGuild(this.guild);
     } catch (e) {
       logger.error('DJMTGuild error', {guildId: this.guildId, error: e});
     }
@@ -296,9 +278,8 @@ export class DJMTGuild {
     }
     await this.loadJSON();
     logger.info('Loaded JSON', {guildId: this.guild.id});
-    for (const component of Array.from(this.components.values())) {
-      await component.onReady();
-    }
+    // Dispatch onReady to all components (execute regardless of isReady state)
+    await this.dispatchComponentEvent('onReady', [], false);
     logger.info('Guild fetched and ready', {
       guildId: this.guild.id,
       guildName: this.guild.name,
@@ -316,11 +297,7 @@ export class DJMTGuild {
    * @param member The added guild member
    */
   async onGuildMemberAdd(member: GuildMember): Promise<void> {
-    if (this.isReady) {
-      for (const component of Array.from(this.components.values())) {
-        await component.onGuildMemberAdd(member);
-      }
-    }
+    await this.dispatchComponentEvent('onGuildMemberAdd', [member]);
   }
 
   /**
@@ -339,13 +316,13 @@ export class DJMTGuild {
       ) {
         await message.channel.send('Type / to see my slash commands!');
       }
-      for (const component of Array.from(this.components.values())) {
+      for (const component of this.getAllComponents()) {
         await component.onMessageCreate(args, message); // All messages go through here
 
         // Additionally, messages will go through here if the msg starts with our guild prefix
-        if (message.content.indexOf(this._prefix) === 0) {
+        if (message.content.indexOf(this.prefix) === 0) {
           // set args to be everything after the prefix, separated by spaces
-          args = message.content.slice(this._prefix.length).trim().split(/ +/g);
+          args = message.content.slice(this.prefix.length).trim().split(/ +/g);
           await component.onMessageCreateWithGuildPrefix(args, message);
         }
       }
@@ -361,11 +338,10 @@ export class DJMTGuild {
     oldMessage: Message,
     newMessage: Message,
   ): Promise<void> {
-    if (this.isReady) {
-      for (const component of Array.from(this.components.values())) {
-        await component.onMessageUpdate(oldMessage, newMessage);
-      }
-    }
+    await this.dispatchComponentEvent('onMessageUpdate', [
+      oldMessage,
+      newMessage,
+    ]);
   }
 
   /**
@@ -377,11 +353,10 @@ export class DJMTGuild {
     oldState: VoiceState,
     newState: VoiceState,
   ): Promise<void> {
-    if (this.isReady) {
-      for (const component of Array.from(this.components.values())) {
-        await component.onVoiceStateUpdate(oldState, newState);
-      }
-    }
+    await this.dispatchComponentEvent('onVoiceStateUpdate', [
+      oldState,
+      newState,
+    ]);
   }
 
   /**
@@ -393,11 +368,10 @@ export class DJMTGuild {
     messageReaction: MessageReaction,
     user: User,
   ): Promise<void> {
-    if (this.isReady) {
-      for (const component of Array.from(this.components.values())) {
-        await component.onMessageReactionAdd(messageReaction, user);
-      }
-    }
+    await this.dispatchComponentEvent('onMessageReactionAdd', [
+      messageReaction,
+      user,
+    ]);
   }
 
   /**
@@ -409,11 +383,10 @@ export class DJMTGuild {
     messageReaction: MessageReaction,
     user: User,
   ): Promise<void> {
-    if (this.isReady) {
-      for (const component of Array.from(this.components.values())) {
-        await component.onMessageReactionRemove(messageReaction, user);
-      }
-    }
+    await this.dispatchComponentEvent('onMessageReactionRemove', [
+      messageReaction,
+      user,
+    ]);
   }
 
   /**
@@ -421,68 +394,116 @@ export class DJMTGuild {
    * @param interaction the interaction
    */
   async onInteractionCreate(interaction: Interaction): Promise<void> {
-    if (this.isReady) {
-      for (const component of Array.from(this.components.values())) {
-        await component.onInteractionCreate(interaction);
-      }
-    }
+    await this.dispatchComponentEvent('onInteractionCreate', [interaction]);
   }
 
+  private getDebugChannel(): TextChannel | undefined {
+    return this.channelManager.getDebugChannel(this.debugChannelId);
+  }
+
+  /**
+   * Retrieves a channel from the guild by its ID.
+   * Public method for components that need to access channels.
+   * @param channelId The ID of the channel to retrieve
+   * @returns The channel if found, undefined otherwise
+   */
   getGuildChannel(channelId: string): GuildBasedChannel | undefined {
-    return this.guild?.channels.cache.find(channel => channel.id === channelId);
+    return this.channelManager.getGuildChannel(channelId);
   }
 
   getModAlertsChannel(): TextChannel | undefined {
-    return this.getGuildChannel(this.modAlertsChannelId) as TextChannel;
+    return this.channelManager.getModAlertsChannel(this.modAlertsChannelId);
   }
 
   getModLoggingChannel(): TextChannel | undefined {
-    return this.getGuildChannel(this.modLoggingChannelId) as TextChannel;
+    return this.channelManager.getModLoggingChannel(this.modLoggingChannelId);
   }
 
   // Getters / Setters
+  /**
+   * Gets the debug mode setting for this guild.
+   * Delegates to configManager.
+   */
+  // ============ Configuration Property Accessors ============
+
   get debugMode(): boolean {
-    return this._debugMode;
+    return this.configManager.debugMode;
   }
 
+  /**
+   * Sets the debug mode setting and auto-saves to JSON.
+   * Delegates to configManager.
+   * @param value The new debug mode value
+   */
   set debugMode(value: boolean) {
-    this._debugMode = value;
-    void this.saveJSON();
+    this.configManager.debugMode = value;
   }
 
+  /**
+   * Gets the command prefix for this guild.
+   * Delegates to configManager.
+   */
   get prefix(): string {
-    return this._prefix;
+    return this.configManager.prefix;
   }
 
+  /**
+   * Sets the command prefix and auto-saves to JSON.
+   * Delegates to configManager.
+   * @param value The new prefix value
+   */
   set prefix(value: string) {
-    this._prefix = value;
-    void this.saveJSON();
+    this.configManager.prefix = value;
   }
 
+  /**
+   * Gets the debug channel ID for this guild.
+   * Delegates to configManager.
+   */
   get debugChannelId(): string {
-    return this._debugChannelId;
+    return this.configManager.debugChannelId;
   }
 
-  set debugChannelId(value: string) {
-    this._debugChannelId = value;
-    void this.saveJSON();
+  /**
+   * Sets the debug channel ID with validation and auto-saves to JSON.
+   * Delegates to configManager.
+   * @param value The new debug channel ID, or undefined to unset
+   */
+  set debugChannelId(value: string | undefined) {
+    this.configManager.debugChannelId = value;
   }
 
+  /**
+   * Gets the mod alerts channel ID for this guild.
+   * Delegates to configManager.
+   */
   get modAlertsChannelId(): string {
-    return this._modAlertsChannelId;
+    return this.configManager.modAlertsChannelId;
   }
 
-  set modAlertsChannelId(value: string) {
-    this._modAlertsChannelId = value;
-    void this.saveJSON();
+  /**
+   * Sets the mod alerts channel ID with validation and auto-saves to JSON.
+   * Delegates to configManager.
+   * @param value The new mod alerts channel ID, or undefined to unset
+   */
+  set modAlertsChannelId(value: string | undefined) {
+    this.configManager.modAlertsChannelId = value;
   }
 
+  /**
+   * Gets the mod logging channel ID for this guild.
+   * Delegates to configManager.
+   */
   get modLoggingChannelId(): string {
-    return this._modLoggingChannelId;
+    return this.configManager.modLoggingChannelId;
   }
 
-  set modLoggingChannelId(value: string) {
-    this._modLoggingChannelId = value;
-    void this.saveJSON();
+  /**
+   * Sets the mod logging channel ID with validation and auto-saves to JSON.
+   * Delegates to configManager.
+   * @param value The new mod logging channel ID, or undefined to unset
+   */
+  set modLoggingChannelId(value: string | undefined) {
+    this.configManager.modLoggingChannelId = value;
   }
 }

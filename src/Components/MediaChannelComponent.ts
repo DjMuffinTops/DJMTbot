@@ -6,6 +6,7 @@ import {
   GuildMember,
   Interaction,
   Message,
+  MessageFlags,
   MessageReaction,
   PermissionFlagsBits,
   SlashCommandBuilder,
@@ -152,7 +153,7 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
     if (!channel) {
       await interaction.reply({
         content: `Invalid channel provided: ${String(channel)}`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
     const chid = channel.id;
@@ -167,13 +168,13 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
     if (exists) {
       await interaction.reply({
         content: `Removed ${channel.toString()} as a media channel.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } else {
       this.channelsArray.push(channel);
       await interaction.reply({
         content: `Successfully added ${channel.toString()} as a media channel.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
     await this.djmtGuild.saveJSON();
@@ -190,7 +191,7 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
     if (this.channelsArray.length === 0) {
       await interaction.reply({
         content: 'There are no set media channels.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -198,7 +199,7 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
     for (const c of this.channelsArray) {
       m += `<#${c.id}>\n`;
     }
-    await interaction.reply({content: m, ephemeral: true});
+    await interaction.reply({content: m, flags: MessageFlags.Ephemeral});
   }
 
   /**

@@ -53,11 +53,47 @@ export class DJMTbot {
     return DJMTbot.instance;
   }
 
+  /**
+   * Parses the GUILD_IDS environment variable to get a set of allowed guild IDs.
+   *
+   * Supports two formats:
+   * - Comma-separated: `GUILD_IDS=123,456,789`
+   * - JSON array: `GUILD_IDS="[\"123\",\"456\",\"789\"]"`
+   *
+   * @returns A Set of allowed guild IDs, or null if GUILD_IDS env var is not set
+   *          (null means all guilds are allowed)
+   */
+  private getAllowedGuildIds(): Set<string> | null {
+    const guildIdsEnv = process.env.GUILD_IDS;
+    if (!guildIdsEnv) {
+      return null; // No restriction, use all guilds
+    }
+
+    try {
+      // Try parsing as JSON array first
+      const parsed = JSON.parse(guildIdsEnv);
+      if (Array.isArray(parsed)) {
+        return new Set(parsed.map(id => String(id)));
+      }
+    } catch {
+      // Not JSON, treat as comma-separated string
+    }
+
+    // Parse as comma-separated string
+    const ids = guildIdsEnv
+      .split(',')
+      .map(id => id.trim())
+      .filter(id => id);
+    return new Set(ids);
+  }
+
   private async initGuildInstancesFromFiles(): Promise<void> {
+    const allowedIds = this.getAllowedGuildIds();
     const filenames = await FileSystem.readdir('./json/guilds');
-    const guildIds = filenames.map(filename =>
-      filename.substr(0, filename.indexOf('.')),
-    );
+    const guildIds = filenames
+      .map(filename => filename.substr(0, filename.indexOf('.')))
+      .filter(id => !allowedIds || allowedIds.has(id));
+
     for (const id of guildIds) {
       const guild = new DJMTGuild(id);
       this.guilds.set(id, guild);
@@ -67,9 +103,17 @@ export class DJMTbot {
   async run() {
     this.client.on(Events.ClientReady, () => {
       void (async () => {
+        const allowedIds = this.getAllowedGuildIds();
+
         // Make guild instances for guilds we didnt have a file for
         for (const cachedGuild of [...this.client.guilds.cache.values()]) {
           const guildId = cachedGuild.id;
+
+          // Skip if guild is not in allowed list
+          if (allowedIds && !allowedIds.has(guildId)) {
+            continue;
+          }
+
           if (!this.guilds.get(guildId)) {
             const guild = new DJMTGuild(guildId);
             this.guilds.set(guildId, guild);

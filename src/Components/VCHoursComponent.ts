@@ -6,6 +6,7 @@ import {
   GuildMember,
   Interaction,
   Message,
+  MessageFlags,
   MessageReaction,
   PermissionFlagsBits,
   SlashCommandBuilder,
@@ -153,7 +154,7 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
           content: `${pair.textChannel.name} <=> ${
             pair.voiceChannel.name
           } set to ${this.consecutiveHours.get(pair)}`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
         return;
       }
@@ -161,7 +162,7 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
     await interaction.reply({
       content:
         'Could not find the desired vc text pair. Please make sure its set.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 

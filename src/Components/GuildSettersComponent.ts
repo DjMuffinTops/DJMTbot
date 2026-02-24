@@ -5,6 +5,7 @@ import {
   GuildMember,
   Interaction,
   Message,
+  MessageFlags,
   MessageReaction,
   PermissionFlagsBits,
   SlashCommandBuilder,
@@ -178,7 +179,7 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
     // await updateConfig(gConfig, message);
     await interaction.reply({
       content: `Dev Mode ${this.djmtGuild.debugMode ? 'enabled' : 'disabled'}.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -187,16 +188,16 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
     interaction: ChatInputCommandInteraction,
   ) {
     if (this.djmtGuild.debugChannelId === debugChannel.id) {
-      this.djmtGuild.debugChannelId = '';
+      this.djmtGuild.debugChannelId = undefined;
       await interaction.reply({
         content: `${debugChannel.toString()} is no longer set as the debugChannel`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } else {
       this.djmtGuild.debugChannelId = debugChannel.id;
       await interaction.reply({
         content: `${debugChannel.toString()} is now set as the debugChannel channel`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }
@@ -209,7 +210,7 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
     this.djmtGuild.prefix = newPrefix ?? defaultPrefix;
     await interaction.reply({
       content: `Set my prefix to \`\`${this.djmtGuild.prefix}\`\``,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -218,16 +219,16 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
     interaction: ChatInputCommandInteraction,
   ) {
     if (this.djmtGuild.modAlertsChannelId === modAlertsChannel.id) {
-      this.djmtGuild.modAlertsChannelId = '';
+      this.djmtGuild.modAlertsChannelId = undefined;
       await interaction.reply({
         content: `${modAlertsChannel.toString()} is no longer set as the mod alerts channel`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } else {
       this.djmtGuild.modAlertsChannelId = modAlertsChannel.id;
       await interaction.reply({
         content: `${modAlertsChannel.toString()} is now set as the mod alerts channel`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }
@@ -237,16 +238,16 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
     interaction: ChatInputCommandInteraction,
   ) {
     if (this.djmtGuild.modLoggingChannelId === modLoggingChannel.id) {
-      this.djmtGuild.modLoggingChannelId = '';
+      this.djmtGuild.modLoggingChannelId = undefined;
       await interaction.reply({
         content: `${modLoggingChannel.toString()} is no longer set as the mod logging channel`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } else {
       this.djmtGuild.modLoggingChannelId = modLoggingChannel.id;
       await interaction.reply({
         content: `${modLoggingChannel.toString()} is now set as the mod logging channel`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }

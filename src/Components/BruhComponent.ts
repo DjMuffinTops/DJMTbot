@@ -2,6 +2,7 @@ import {
   GuildMember,
   Message,
   AttachmentBuilder,
+  MessageFlags,
   MessageReaction,
   TextChannel,
   User,
@@ -135,7 +136,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
       }
       await this.printBruhInfo(interaction);
     } else if (interaction.commandName === ComponentCommands.BRUH_RECACHE) {
-      await interaction.deferReply({ephemeral: true});
+      await interaction.deferReply({flags: MessageFlags.Ephemeral});
       // Admin only
       if (!isInteractionAdmin(interaction)) {
         await interaction.reply(
@@ -172,7 +173,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
       // await updateConfig(gConfig, message);
       await interaction.reply({
         content: `Removed <#${bruhChannel.id}> from the bruh channels list!`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } else {
       // Push the channelId to the bruhChannels list
@@ -180,7 +181,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
       await this.djmtGuild.saveJSON();
       await interaction.reply({
         content: `Added <#${bruhChannel.id}> to the bruh channels list!`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }
@@ -193,12 +194,12 @@ export class BruhComponent extends Component<BruhComponentSave> {
       });
       await interaction.reply({
         content: `Bruh Channel: ${channelString}`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } else {
       await interaction.reply({
         content: 'No Bruh Channels have been set!',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }
@@ -294,13 +295,13 @@ export class BruhComponent extends Component<BruhComponentSave> {
         } else {
           await interaction.reply({
             content: 'Could not find random message.',
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
       } else {
         await interaction.reply({
           content: 'No Bruh Channels have been set!',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
     } catch (e) {
@@ -310,7 +311,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
       });
       await interaction.reply({
         content: 'there was a bruh bug... bruhhhhhhh',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }
@@ -319,7 +320,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
     if (this.onCooldown) {
       await interaction.reply({
         content: 'Please wait, the bruh command is on cooldown.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -336,7 +337,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
       });
       await interaction.reply({
         content: 'there was a bruh bug... bruhhhhhhh',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }
@@ -372,12 +373,12 @@ export class BruhComponent extends Component<BruhComponentSave> {
       if (interaction.replied || interaction.deferred) {
         await interaction.followUp({
           content: `Bruh cache is ready with ${this.messageCache.length} bruhs`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       } else {
         await interaction.reply({
           content: `Bruh cache is ready with ${this.messageCache.length} bruhs`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
     }
