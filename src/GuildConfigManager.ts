@@ -1,4 +1,5 @@
 import {promises as FileSystem} from 'fs';
+import * as jsonDiff from 'json-diff';
 import defaultConfigJson from '../json/defaultConfig.json';
 import {GUILD_CONFIG_PATH, DEFAULT_PREFIX} from './Constants/GuildConstants';
 import {JSONStringifyReplacer, JSONStringifyReviver} from './HelperFunctions';
@@ -38,6 +39,9 @@ export class GuildConfigManager {
 
   // Callback for persistence after config changes
   private onConfigSaved: (() => Promise<void>) | null = null;
+
+  // Track last saved JSON for diff logging
+  private lastSavedJson: string = '';
 
   /**
    * Creates a new GuildConfigManager for a specific guild.
@@ -172,6 +176,8 @@ export class GuildConfigManager {
 
       // Update propertyStorage with loaded values
       this.initializePropertyStorage();
+      // Capture current state for diff tracking
+      this.lastSavedJson = this.buildConfigJSON();
     } else {
       logger.info(
         'Guild file read but gConfig contents not found. Resetting file',
@@ -187,11 +193,35 @@ export class GuildConfigManager {
    * Saves configuration to this guild's JSON file.
    * Writes the config in the new flat structure (without [guildId] wrapper).
    * Invokes the onConfigSaved callback after successful save.
+   * Logs a diff of changes with each save.
    */
   async saveJSON(): Promise<void> {
     const filename = GUILD_CONFIG_PATH(this.guildId);
-    await FileSystem.writeFile(filename, this.buildConfigJSON());
-    logger.info('Guild config saved', {filename});
+    const newJson = this.buildConfigJSON();
+
+    let diff: ReturnType<typeof jsonDiff.diff> | undefined;
+    if (this.lastSavedJson !== newJson) {
+      try {
+        const oldConfig = this.lastSavedJson
+          ? JSON.parse(this.lastSavedJson, JSONStringifyReviver)
+          : {};
+        const newConfig = JSON.parse(newJson, JSONStringifyReviver);
+        diff = jsonDiff.diff(oldConfig, newConfig);
+      } catch (e) {
+        logger.warn('Failed to generate config diff', {
+          guildId: this.guildId,
+          error: e,
+        });
+      }
+    }
+
+    await FileSystem.writeFile(filename, newJson);
+    this.lastSavedJson = newJson;
+    logger.info('Guild config saved', {
+      filename,
+      guildId: this.guildId,
+      ...(diff ? {changes: diff} : {}),
+    });
     if (this.onConfigSaved) {
       await this.onConfigSaved();
     }
