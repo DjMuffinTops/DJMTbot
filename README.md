@@ -4,12 +4,19 @@ A bot running Discord.js w/ Typescript, designed for the Pokemon Workshop Discor
 ## Install Node.js
 To use discord.js, you'll need to [install Node.js here](https://nodejs.org)
 
-## Install Yarn
-[Install it here!](https://classic.yarnpkg.com/en/docs/install)
+## Install pnpm (recommended)
+If you use Corepack (bundled with recent Node releases) enable it and prepare pnpm:
+```powershell
+corepack enable pnpm
+```
+Or install pnpm globally:
+```powershell
+npm install -g pnpm
+```
 
 ## Install Dependencies
 ```
-yarn 
+pnpm install
 ```
 
 ## Get a Discord Bot Token 
@@ -30,7 +37,7 @@ If you accidentally expose your token publicly, RESET THE TOKEN through the disc
 
 ## Start the Bot
 ```
-yarn start
+pnpm start
 ```
 
 ## Creating New Features (Components)
