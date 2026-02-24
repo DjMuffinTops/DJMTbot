@@ -4,6 +4,7 @@ import {
   GuildMember,
   Message,
   EmbedBuilder,
+  MessageFlags,
   MessageReaction,
   TextChannel,
   User,
@@ -248,12 +249,12 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
       }
       await interaction.reply({
         content: `Auto React Channels:\n${msg}`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } else {
       await interaction.reply({
         content: 'No Auto React Channels have been set!',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }
@@ -272,7 +273,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
       await interaction.reply({
         content:
           'The given emote could not be found, make sure this bot in is the server the emote is from!',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -281,7 +282,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
     if (!foundChannel) {
       await interaction.reply({
         content: 'The given channel is invalid!',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -298,14 +299,14 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
         await this.djmtGuild.saveJSON();
         await interaction.reply({
           content: `Removed ${channel.toString()} from the auto react list for ${rawEmote}`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       } else {
         arr?.push(channelId);
         await this.djmtGuild.saveJSON();
         await interaction.reply({
           content: `Added ${channel.toString()} to the auto react list for ${rawEmote}!`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
     } else {
@@ -313,7 +314,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
       await this.djmtGuild.saveJSON();
       await interaction.reply({
         content: `Added ${channel.toString()} to the auto react list for ${rawEmote}!`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }
@@ -333,12 +334,12 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
       });
       await interaction.reply({
         content: `React Channels:\n${msg}`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } else {
       await interaction.reply({
         content: 'No React Channel Pairs have been set!',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }
@@ -359,14 +360,14 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
     if (!foundEmote || !foundTextChannel) {
       await interaction.reply({
         content: 'The given channel or emote is invalid!',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
     if (foundTextChannel.type !== ChannelType.GuildText) {
       await interaction.reply({
         content: 'The given channel is not a Text Channel',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -381,14 +382,14 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
       await this.djmtGuild.saveJSON();
       await interaction.reply({
         content: `Removed [${rawEmote}, ${val?.channelId}, ${val?.threshold}] from React Channels list!`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     } else if (this.emoteReactBoardMap.has(rawEmote)) {
       await interaction.reply({
         content:
           'A pair for this emote already exists! Remove that pair first.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } else {
       const reactBoardMapValue: ReactBoardMapValue = {
@@ -401,7 +402,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
       await this.djmtGuild.saveJSON();
       await interaction.reply({
         content: `Added ${rawEmote} => <#${channelId}> to the React Channels list (threshold ${threshold})!`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }
@@ -511,12 +512,12 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
       });
       await interaction.reply({
         content: `Star Channels: ${channelString}`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } else {
       await interaction.reply({
         content: 'No Star Channels have been set!',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }
@@ -530,7 +531,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
     if (!foundChannel) {
       await interaction.reply({
         content: 'The given channel is invalid!',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -539,7 +540,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
       await this.djmtGuild.saveJSON();
       await interaction.reply({
         content: `Removed ${channel.toString()} from the star channels list!`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } else {
       if (!this.starChannels) {
@@ -549,7 +550,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
       await this.djmtGuild.saveJSON();
       await interaction.reply({
         content: `Added ${channel.toString()} to the star channels list!`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }

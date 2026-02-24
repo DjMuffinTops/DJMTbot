@@ -6,6 +6,7 @@ import {
   GuildMember,
   Interaction,
   Message,
+  MessageFlags,
   MessageReaction,
   PermissionFlagsBits,
   SlashCommandBuilder,
@@ -175,7 +176,7 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
       if (!isInteractionAdmin(interaction)) {
         await interaction.reply({
           content: 'This command requires administrator permissions.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
         return;
       }
@@ -185,7 +186,7 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
       if (!isInteractionAdmin(interaction)) {
         await interaction.reply({
           content: 'This command requires administrator permissions.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
         return;
       }
@@ -288,7 +289,7 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
     if (!namePrefix) {
       await interaction.reply({
         content: 'Prefix must not be empty!',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -298,7 +299,7 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
       await this.djmtGuild.saveJSON();
       await interaction.reply({
         content: `Removed ${textChannel.toString()} from Auto Thread Channels`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } else {
       this.channelsMap.set(textChannel.id, {
@@ -308,7 +309,7 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
       await this.djmtGuild.saveJSON();
       await interaction.reply({
         content: `Added ${textChannel.toString()} to Auto Thread Channels!`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }
@@ -317,7 +318,7 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
     if (this.channelsMap.size <= 0) {
       await interaction.reply({
         content: 'No Auto Thread Channels have been set!',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } else {
       let msg = '';
@@ -326,7 +327,7 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
       });
       await interaction.reply({
         content: `Auto Thread Channels:\n${msg}`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }

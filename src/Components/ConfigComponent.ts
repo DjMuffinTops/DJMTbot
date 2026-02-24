@@ -3,6 +3,7 @@ import {
   GuildMember,
   Message,
   AttachmentBuilder,
+  MessageFlags,
   MessageReaction,
   User,
   VoiceState,
@@ -103,7 +104,7 @@ export class ConfigComponent extends Component<ConfigComponentSave> {
     if (!isInteractionAdmin(interaction)) {
       await interaction.reply({
         content: 'This command requires administrator permissions.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -117,7 +118,10 @@ export class ConfigComponent extends Component<ConfigComponentSave> {
         DateTime.DATETIME_FULL_WITH_SECONDS,
       )}.txt`,
     });
-    await interaction.reply({files: [attachment], ephemeral: true});
+    await interaction.reply({
+      files: [attachment],
+      flags: MessageFlags.Ephemeral,
+    });
   }
 
   async resetConfig(interaction: ChatInputCommandInteraction) {
@@ -125,14 +129,14 @@ export class ConfigComponent extends Component<ConfigComponentSave> {
     if (!isInteractionAdmin(interaction)) {
       await interaction.reply({
         content: 'This command requires administrator permissions.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
     await this.djmtGuild.resetJSON();
     await interaction.reply({
       content: 'Reset my guild config to default settings.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 }

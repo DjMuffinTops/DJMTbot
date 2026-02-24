@@ -31,9 +31,9 @@ export class GuildConfigManager {
   // Backward-compatible underscore-prefixed fields
   private _debugMode: boolean;
   private _prefix: string;
-  private _debugChannelId: string;
-  private _modAlertsChannelId: string;
-  private _modLoggingChannelId: string;
+  private _debugChannelId: string | undefined;
+  private _modAlertsChannelId: string | undefined;
+  private _modLoggingChannelId: string | undefined;
   private componentData: ComponentDataMap;
 
   // Callback for persistence after config changes
@@ -54,13 +54,13 @@ export class GuildConfigManager {
     >;
     this._debugMode = !!defaultConfig.debugMode;
     this._prefix = defaultConfig.prefix || DEFAULT_PREFIX;
-    this._debugChannelId = defaultConfig.debugChannelId || '';
+    this._debugChannelId = defaultConfig.debugChannelId || undefined;
     this._modAlertsChannelId =
       ((defaultConfig as Record<string, unknown>)
-        .modAlertsChannelId as string) || '';
+        .modAlertsChannelId as string) || undefined;
     this._modLoggingChannelId =
       ((defaultConfig as Record<string, unknown>)
-        .modLoggingChannelId as string) || '';
+        .modLoggingChannelId as string) || undefined;
     this.componentData =
       (defaultConfig.componentData as ComponentDataMap) || {};
 
@@ -206,13 +206,13 @@ export class GuildConfigManager {
     >;
     this._debugMode = !!defaultConfig.debugMode;
     this._prefix = defaultConfig.prefix || DEFAULT_PREFIX;
-    this._debugChannelId = defaultConfig.debugChannelId || '';
+    this._debugChannelId = defaultConfig.debugChannelId || undefined;
     this._modAlertsChannelId =
       ((defaultConfig as Record<string, unknown>)
-        .modAlertsChannelId as string) || '';
+        .modAlertsChannelId as string) || undefined;
     this._modLoggingChannelId =
       ((defaultConfig as Record<string, unknown>)
-        .modLoggingChannelId as string) || '';
+        .modLoggingChannelId as string) || undefined;
     this.componentData =
       (defaultConfig.componentData as ComponentDataMap) || {};
     this.initializePropertyStorage();
@@ -298,16 +298,18 @@ export class GuildConfigManager {
   get debugChannelId(): string {
     return (
       (this.propertyStorage.get('debugChannelId') as string) ??
-      this._debugChannelId
+      this._debugChannelId ??
+      ''
     );
   }
 
   /**
    * Sets the debug channel ID with validation and auto-saves to JSON.
+   * Pass undefined to unset the channel.
    */
-  set debugChannelId(value: string) {
-    if (this.isValidChannelId(value)) {
-      this.propertyStorage.set('debugChannelId', value);
+  set debugChannelId(value: string | undefined) {
+    if (value === undefined || this.isValidChannelId(value)) {
+      this.propertyStorage.set('debugChannelId', value ?? '');
       this._debugChannelId = value;
       void this.saveJSON();
     } else {
@@ -324,16 +326,18 @@ export class GuildConfigManager {
   get modAlertsChannelId(): string {
     return (
       (this.propertyStorage.get('modAlertsChannelId') as string) ??
-      this._modAlertsChannelId
+      this._modAlertsChannelId ??
+      ''
     );
   }
 
   /**
    * Sets the mod alerts channel ID with validation and auto-saves to JSON.
+   * Pass undefined to unset the channel.
    */
-  set modAlertsChannelId(value: string) {
-    if (this.isValidChannelId(value)) {
-      this.propertyStorage.set('modAlertsChannelId', value);
+  set modAlertsChannelId(value: string | undefined) {
+    if (value === undefined || this.isValidChannelId(value)) {
+      this.propertyStorage.set('modAlertsChannelId', value ?? '');
       this._modAlertsChannelId = value;
       void this.saveJSON();
     } else {
@@ -350,16 +354,18 @@ export class GuildConfigManager {
   get modLoggingChannelId(): string {
     return (
       (this.propertyStorage.get('modLoggingChannelId') as string) ??
-      this._modLoggingChannelId
+      this._modLoggingChannelId ??
+      ''
     );
   }
 
   /**
    * Sets the mod logging channel ID with validation and auto-saves to JSON.
+   * Pass undefined to unset the channel.
    */
-  set modLoggingChannelId(value: string) {
-    if (this.isValidChannelId(value)) {
-      this.propertyStorage.set('modLoggingChannelId', value);
+  set modLoggingChannelId(value: string | undefined) {
+    if (value === undefined || this.isValidChannelId(value)) {
+      this.propertyStorage.set('modLoggingChannelId', value ?? '');
       this._modLoggingChannelId = value;
       void this.saveJSON();
     } else {

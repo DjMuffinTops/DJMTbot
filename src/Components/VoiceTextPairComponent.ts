@@ -5,6 +5,7 @@ import {
   GuildMember,
   Interaction,
   Message,
+  MessageFlags,
   MessageReaction,
   PermissionFlagsBits,
   SlashCommandBuilder,
@@ -168,12 +169,12 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
       });
       await interaction.reply({
         content: `VC Channels: ${channelString}`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } else {
       await interaction.reply({
         content: 'No VC Channel Pairs have been set!',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }
@@ -186,12 +187,12 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
     if (success) {
       await interaction.reply({
         content: `Added ${[voiceChannel.toString(), textChannel.toString()].join(' ')} to the VC Channels list!`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } else {
       await interaction.reply({
         content: `Removed ${[voiceChannel.toString(), textChannel.toString()].join(' ')} from VC Channels list!`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }

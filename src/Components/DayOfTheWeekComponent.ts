@@ -7,6 +7,7 @@ import {
   GuildMember,
   Interaction,
   Message,
+  MessageFlags,
   MessageReaction,
   PermissionFlagsBits,
   SlashCommandBuilder,
@@ -203,14 +204,14 @@ export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> 
       await this.djmtGuild.saveJSON();
       await interaction.reply({
         content: `Removed <#${channel.id}> as the Day of the Week Channel!`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } else {
       this.dotwChannels = [channel.id];
       await this.djmtGuild.saveJSON();
       await interaction.reply({
         content: `Set <#${channel.id}> as the Day of the Week Channel!`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }
@@ -223,12 +224,12 @@ export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> 
       });
       await interaction.reply({
         content: `Day of the Week Channel: ${channelString}`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } else {
       await interaction.reply({
         content: 'No Day of the Week Channel has been set!',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }

@@ -5,6 +5,7 @@ import {
   GuildMember,
   Interaction,
   Message,
+  MessageFlags,
   MessageReaction,
   PermissionFlagsBits,
   SlashCommandBuilder,
@@ -150,7 +151,7 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
       if (interaction) {
         await interaction.reply({
           content: 'No Dynamic Banner images in queue to rotate to.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
     } else {
@@ -170,7 +171,7 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
           if (interaction) {
             await interaction.reply({
               content: `Changed server banner to ${nextUrl} successfully!`,
-              ephemeral: true,
+              flags: MessageFlags.Ephemeral,
             });
           }
         } catch (e) {
@@ -182,7 +183,7 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
           if (interaction) {
             await interaction.reply({
               content: `Failed to change server banner to ${nextUrl}: ${String(e)}`,
-              ephemeral: true,
+              flags: MessageFlags.Ephemeral,
             });
           }
         }
@@ -196,11 +197,11 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
       this.imageUrls.forEach(url => {
         msg += `\n${url}`;
       });
-      await interaction.reply({content: msg, ephemeral: true});
+      await interaction.reply({content: msg, flags: MessageFlags.Ephemeral});
     } else {
       await interaction.reply({
         content: 'No Dynamic Banner Images in the queue',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }
@@ -220,22 +221,25 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
       await this.removeImageUrl(imageUrl);
       await interaction.reply({
         content: `Removed ${imageUrl} from Dynamic Banner queue`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } else {
       try {
         await this.addImageUrl(imageUrl);
         await interaction.reply({
           content: `Added ${imageUrl} to Dynamic Banner queue`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       } catch (e) {
         if (e instanceof Error) {
-          await interaction.reply({content: e.message, ephemeral: true});
+          await interaction.reply({
+            content: e.message,
+            flags: MessageFlags.Ephemeral,
+          });
         } else {
           await interaction.reply({
             content: JSON.stringify(e),
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
       }

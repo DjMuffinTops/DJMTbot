@@ -467,9 +467,9 @@ export class DJMTGuild {
   /**
    * Sets the debug channel ID with validation and auto-saves to JSON.
    * Delegates to configManager.
-   * @param value The new debug channel ID
+   * @param value The new debug channel ID, or undefined to unset
    */
-  set debugChannelId(value: string) {
+  set debugChannelId(value: string | undefined) {
     this.configManager.debugChannelId = value;
   }
 
@@ -484,9 +484,9 @@ export class DJMTGuild {
   /**
    * Sets the mod alerts channel ID with validation and auto-saves to JSON.
    * Delegates to configManager.
-   * @param value The new mod alerts channel ID
+   * @param value The new mod alerts channel ID, or undefined to unset
    */
-  set modAlertsChannelId(value: string) {
+  set modAlertsChannelId(value: string | undefined) {
     this.configManager.modAlertsChannelId = value;
   }
 
@@ -501,9 +501,9 @@ export class DJMTGuild {
   /**
    * Sets the mod logging channel ID with validation and auto-saves to JSON.
    * Delegates to configManager.
-   * @param value The new mod logging channel ID
+   * @param value The new mod logging channel ID, or undefined to unset
    */
-  set modLoggingChannelId(value: string) {
+  set modLoggingChannelId(value: string | undefined) {
     this.configManager.modLoggingChannelId = value;
   }
 }

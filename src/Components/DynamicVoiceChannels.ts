@@ -6,6 +6,7 @@ import {
   GuildMember,
   Interaction,
   Message,
+  MessageFlags,
   MessageReaction,
   SlashCommandBuilder,
   User,
@@ -329,7 +330,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
       voiceChannel,
       maxChildren,
     );
-    await interaction.reply({content: res, ephemeral: true});
+    await interaction.reply({content: res, flags: MessageFlags.Ephemeral});
   }
 
   private async printDyanamicVoiceChannels(
@@ -347,12 +348,12 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
       });
       await interaction.reply({
         content: `Dynamic Voice Channels:\n${channelString}`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } else {
       await interaction.reply({
         content: 'No Dynamic Voice Channels have been set!',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }
