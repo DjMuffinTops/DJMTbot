@@ -1,5 +1,5 @@
-import { Component } from "../Component";
-import { logger } from "../Logger";
+import {Component} from '../Component';
+import {logger} from '../Logger';
 import {
   ChatInputCommandInteraction,
   GuildMember,
@@ -11,14 +11,14 @@ import {
   SlashCommandBuilder,
   User,
   VoiceState,
-} from "discord.js";
-import { ComponentNames } from "../Constants/ComponentNames";
-import { DateTime } from "luxon";
+} from 'discord.js';
+import {ComponentNames} from '../Constants/ComponentNames';
+import {DateTime} from 'luxon';
 import {
   MEDIA_LINK_REGEX,
   getCensoredMessageReplyOptions,
-} from "../HelperFunctions";
-import { ComponentCommands } from "../Constants/ComponentCommands";
+} from '../HelperFunctions';
+import {ComponentCommands} from '../Constants/ComponentCommands';
 
 const NEW_USER_THRESHOLD_IN_DAYS_DEFAULT = 60;
 const NEW_USER_BAN_THRESHOLD_IN_DAYS_DEFAULT = 7;
@@ -28,7 +28,7 @@ toggleNewUserMediaLockCommand.setName(
   ComponentCommands.TOGGLE_NEW_USER_MEDIA_LOCK,
 );
 toggleNewUserMediaLockCommand.setDescription(
-  "Toggles the new user media lock feature.",
+  'Toggles the new user media lock feature.',
 );
 toggleNewUserMediaLockCommand.setDefaultMemberPermissions(
   PermissionFlagsBits.Administrator,
@@ -36,7 +36,7 @@ toggleNewUserMediaLockCommand.setDefaultMemberPermissions(
 
 const toggleNewUserBanCommand = new SlashCommandBuilder();
 toggleNewUserBanCommand.setName(ComponentCommands.TOGGLE_NEW_USER_BAN);
-toggleNewUserBanCommand.setDescription("Toggles the new user ban feature.");
+toggleNewUserBanCommand.setDescription('Toggles the new user ban feature.');
 toggleNewUserBanCommand.setDefaultMemberPermissions(
   PermissionFlagsBits.Administrator,
 );
@@ -46,13 +46,13 @@ setNewUserThresholdInDaysCommand.setName(
   ComponentCommands.SET_NEW_USER_MEDIA_LOCK_THRESHOLD_IN_DAYS,
 );
 setNewUserThresholdInDaysCommand.setDescription(
-  "Sets the number of days a user must have been registered to not be considered for the media lock.",
+  'Sets the number of days a user must have been registered to not be considered for the media lock.',
 );
-setNewUserThresholdInDaysCommand.addIntegerOption((option) =>
+setNewUserThresholdInDaysCommand.addIntegerOption(option =>
   option
-    .setName("days")
+    .setName('days')
     .setDescription(
-      "The number of days a user must have been registered to not be considered for the media lock.",
+      'The number of days a user must have been registered to not be considered for the media lock.',
     )
     .setRequired(true),
 );
@@ -65,13 +65,13 @@ setNewUserBanThresholdInDaysCommand.setName(
   ComponentCommands.SET_NEW_USER_BAN_THRESHOLD_IN_DAYS,
 );
 setNewUserBanThresholdInDaysCommand.setDescription(
-  "Sets the number of days a user must have been registered to not be considered for the auto ban.",
+  'Sets the number of days a user must have been registered to not be considered for the auto ban.',
 );
-setNewUserBanThresholdInDaysCommand.addIntegerOption((option) =>
+setNewUserBanThresholdInDaysCommand.addIntegerOption(option =>
   option
-    .setName("days")
+    .setName('days')
     .setDescription(
-      "The number of days a user must have been registered to not be considered for the auto ban.",
+      'The number of days a user must have been registered to not be considered for the auto ban.',
     )
     .setRequired(true),
 );
@@ -84,12 +84,12 @@ permitNewUserRestrictionsCommand.setName(
   ComponentCommands.PERMIT_NEW_USER_RESTRICTIONS,
 );
 permitNewUserRestrictionsCommand.setDescription(
-  "Permits a user to by pass all new user restrictions.",
+  'Permits a user to by pass all new user restrictions.',
 );
-permitNewUserRestrictionsCommand.addUserOption((option) =>
+permitNewUserRestrictionsCommand.addUserOption(option =>
   option
-    .setName("user")
-    .setDescription("The user to bypass new user restrictions for")
+    .setName('user')
+    .setDescription('The user to bypass new user restrictions for')
     .setRequired(true),
 );
 permitNewUserRestrictionsCommand.setDefaultMemberPermissions(
@@ -221,10 +221,7 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
     return Promise.resolve();
   }
 
-  onMessageUpdate(
-    _oldMessage: Message,
-    _newMessage: Message,
-  ): Promise<void> {
+  onMessageUpdate(_oldMessage: Message, _newMessage: Message): Promise<void> {
     return Promise.resolve();
   }
 
@@ -250,7 +247,7 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
       interaction.commandName === ComponentCommands.PERMIT_NEW_USER_RESTRICTIONS
     ) {
       await this.permitNewUserMedia(
-        interaction.options.getUser("user", true),
+        interaction.options.getUser('user', true),
         interaction,
       );
     } else if (
@@ -260,7 +257,7 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
       await this.djmtGuild.saveJSON();
       await interaction.reply({
         content: `New user media lock feature is now ${
-          this.newUserMediaLockEnabled ? "active" : "disabled"
+          this.newUserMediaLockEnabled ? 'active' : 'disabled'
         }.`,
       });
     } else if (
@@ -270,14 +267,15 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
       await this.djmtGuild.saveJSON();
       await interaction.reply({
         content: `New user ban feature is now ${
-          this.newUserBanEnabled ? "active" : "disabled"
+          this.newUserBanEnabled ? 'active' : 'disabled'
         }.`,
       });
     } else if (
-      interaction.commandName === ComponentCommands.SET_NEW_USER_MEDIA_LOCK_THRESHOLD_IN_DAYS
+      interaction.commandName ===
+      ComponentCommands.SET_NEW_USER_MEDIA_LOCK_THRESHOLD_IN_DAYS
     ) {
       this.newUserMediaThresholdInDays = interaction.options.getInteger(
-        "days",
+        'days',
         true,
       );
       await this.djmtGuild.saveJSON();
@@ -285,10 +283,11 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
         content: `Set new user threshold in days to ${this.newUserMediaThresholdInDays}.`,
       });
     } else if (
-      interaction.commandName === ComponentCommands.SET_NEW_USER_BAN_THRESHOLD_IN_DAYS
+      interaction.commandName ===
+      ComponentCommands.SET_NEW_USER_BAN_THRESHOLD_IN_DAYS
     ) {
       this.newUserBanThresholdInDays = interaction.options.getInteger(
-        "days",
+        'days',
         true,
       );
       await this.djmtGuild.saveJSON();
@@ -307,7 +306,7 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
     // Use luxon to compare the user's account creation date to the current date
     const creationDateDT = DateTime.fromJSDate(user.createdAt);
     const accountAgeInDays = Math.floor(
-      creationDateDT.diffNow("days").negate().days,
+      creationDateDT.diffNow('days').negate().days,
     );
     if (
       !this.permittedUsers.has(user.id) &&
@@ -332,11 +331,11 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
         try {
           await message.delete();
         } catch (e) {
-          logger.error("Error deleting message for new user lock", {
+          logger.error('Error deleting message for new user lock', {
             guildId: this.djmtGuild.guildId,
             messageId: message.id,
             userId: user.id,
-            error: e
+            error: e,
           });
         }
         // Alert the mod alerts channel of a new user attempting to post media
@@ -388,7 +387,7 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
   private getDurationSinceUserCreation(member: GuildMember) {
     const creationDateDT = DateTime.fromJSDate(member.user.createdAt);
     const differenceDuration = creationDateDT
-      .diffNow(["days", "hours", "minutes", "seconds"])
+      .diffNow(['days', 'hours', 'minutes', 'seconds'])
       .negate();
     return differenceDuration;
   }
@@ -404,7 +403,7 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
     try {
       // Get all administators members in the server
       const adminMembers = member.guild.members.cache.filter(
-        (member) =>
+        member =>
           member.permissions.has(PermissionFlagsBits.Administrator) &&
           !member.user.bot,
       );
@@ -413,14 +412,14 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
         `Hello, <@${
           member.user.id
         }>! Your account is not permitted to join this server due to being a brand new discord account.\nPlease contact admin staff if you would like to request an appeal: ${adminMembers
-          .map((member) => `${member.user.username}: ${member.toString()}`)
-          .join(", ")}`,
+          .map(member => `${member.user.username}: ${member.toString()}`)
+          .join(', ')}`,
       );
     } catch (e) {
-      logger.error("Error DMing new user", {
+      logger.error('Error DMing new user', {
         guildId: this.djmtGuild.guildId,
         userId: member.user.id,
-        error: e
+        error: e,
       });
     }
     try {
@@ -434,10 +433,10 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
         );
       }
     } catch (e) {
-      logger.error("Error banning new user", {
+      logger.error('Error banning new user', {
         guildId: this.djmtGuild.guildId,
         userId: member.user.id,
-        error: e
+        error: e,
       });
       if (modAlertsChannel) {
         void modAlertsChannel.send(

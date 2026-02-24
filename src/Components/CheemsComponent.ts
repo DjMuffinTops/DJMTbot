@@ -1,5 +1,5 @@
-import { Component } from "../Component";
-import { ComponentCommands } from "../Constants/ComponentCommands";
+import {Component} from '../Component';
+import {ComponentCommands} from '../Constants/ComponentCommands';
 import {
   ChatInputCommandInteraction,
   GuildMember,
@@ -9,16 +9,16 @@ import {
   SlashCommandBuilder,
   User,
   VoiceState,
-} from "discord.js";
-import { ComponentNames } from "../Constants/ComponentNames";
+} from 'discord.js';
+import {ComponentNames} from '../Constants/ComponentNames';
 
 const cheemsCommand = new SlashCommandBuilder();
 cheemsCommand.setName(ComponentCommands.CHEEMS);
 cheemsCommand.setDescription("Converts the user's message to cheems speak");
-cheemsCommand.addStringOption((input) =>
+cheemsCommand.addStringOption(input =>
   input
-    .setName("message")
-    .setDescription("The message to convert to cheems speak")
+    .setName('message')
+    .setDescription('The message to convert to cheems speak')
     .setRequired(true),
 );
 
@@ -38,9 +38,7 @@ export class CheemsComponent extends Component<CheemsComponentSave> {
     return Promise.resolve({} as CheemsComponentSave);
   }
 
-  afterLoadJSON(
-    _parsedJSON: CheemsComponentSave | undefined,
-  ): Promise<void> {
+  afterLoadJSON(_parsedJSON: CheemsComponentSave | undefined): Promise<void> {
     return Promise.resolve();
   }
 
@@ -70,10 +68,7 @@ export class CheemsComponent extends Component<CheemsComponentSave> {
     return Promise.resolve();
   }
 
-  onMessageUpdate(
-    _oldMessage: Message,
-    _newMessage: Message,
-  ): Promise<void> {
+  onMessageUpdate(_oldMessage: Message, _newMessage: Message): Promise<void> {
     return Promise.resolve();
   }
 
@@ -90,7 +85,7 @@ export class CheemsComponent extends Component<CheemsComponentSave> {
     }
     if (interaction.commandName === ComponentCommands.CHEEMS) {
       await this.cheemsCmd(
-        interaction.options.getString("message", true),
+        interaction.options.getString('message', true),
         interaction,
       );
     }
@@ -109,14 +104,14 @@ export class CheemsComponent extends Component<CheemsComponentSave> {
   }
 
   async cheemsCmd(message: string, interaction: ChatInputCommandInteraction) {
-    const cheemsChars = ["a", "e", "i", "o", "u", "r"];
-    const CHEEMS_M = "m";
+    const cheemsChars = ['a', 'e', 'i', 'o', 'u', 'r'];
+    const CHEEMS_M = 'm';
     const ADDTIONAL_CHANCE = 0.15;
     const minimumRequired = 1; // The minimum amount of m's to add
-    let result = "";
+    let result = '';
     const indices: number[] = [];
     let index = 0;
-    const words = message.split(" ");
+    const words = message.split(' ');
     // Find all indices where a vowel exists
     for (const word of words) {
       for (let i = 0; i < word.length; i++) {
@@ -135,7 +130,7 @@ export class CheemsComponent extends Component<CheemsComponentSave> {
         }
         index++;
       }
-      result += " ";
+      result += ' ';
       index++;
     }
 
@@ -172,7 +167,7 @@ export class CheemsComponent extends Component<CheemsComponentSave> {
       content:
         result.length > 0
           ? result
-          : "Given message was empty, try typing something this time.",
+          : 'Given message was empty, try typing something this time.',
     });
   }
 }

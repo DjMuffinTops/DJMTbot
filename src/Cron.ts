@@ -1,4 +1,4 @@
-import cron, { ScheduledTask, ScheduleOptions } from "node-cron";
+import cron, {ScheduledTask, ScheduleOptions} from 'node-cron';
 
 export class Cron {
   private static instance: Cron;

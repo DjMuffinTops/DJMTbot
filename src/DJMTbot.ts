@@ -7,12 +7,12 @@ import Discord, {
   User,
   VoiceState,
   Events,
-} from "discord.js";
-import { promises as FileSystem } from "fs";
-import { DJMTGuild } from "./DJMTGuild";
-import { Cron } from "./Cron";
-import { logger } from './Logger';
-import dotenv from "dotenv";
+} from 'discord.js';
+import {promises as FileSystem} from 'fs';
+import {DJMTGuild} from './DJMTGuild';
+import {Cron} from './Cron';
+import {logger} from './Logger';
+import dotenv from 'dotenv';
 // Here we load the guildConfigs.json file that contains our token and our prefix values.
 dotenv.config();
 Cron.getInstance();
@@ -41,7 +41,9 @@ export class DJMTbot {
     this.guilds = new Map<string, DJMTGuild>();
     void this.initGuildInstancesFromFiles()
       .then(() => logger.info(`${this.guilds.size} DJMT Guilds Initialized`))
-      .catch((err: unknown) => logger.error("Failed initializing guild instances", { error: err }));
+      .catch((err: unknown) =>
+        logger.error('Failed initializing guild instances', {error: err}),
+      );
   }
 
   public static getInstance(): DJMTbot {
@@ -52,9 +54,9 @@ export class DJMTbot {
   }
 
   private async initGuildInstancesFromFiles(): Promise<void> {
-    const filenames = await FileSystem.readdir("./json/guilds");
-    const guildIds = filenames.map((filename) =>
-      filename.substr(0, filename.indexOf(".")),
+    const filenames = await FileSystem.readdir('./json/guilds');
+    const guildIds = filenames.map(filename =>
+      filename.substr(0, filename.indexOf('.')),
     );
     for (const id of guildIds) {
       const guild = new DJMTGuild(id);
@@ -73,65 +75,83 @@ export class DJMTbot {
             this.guilds.set(guildId, guild);
           }
         }
-        this.client?.user?.setActivity("@DJMTbot for help!");
+        this.client?.user?.setActivity('@DJMTbot for help!');
         for (const id of Array.from(this.guilds.keys())) {
           await this.guilds.get(id)?.onReady();
         }
-        logger.info("DJMTbot is ready!");
-      })().catch((err: unknown) => logger.error("ClientReady handler error", { error: err }));
+        logger.info('DJMTbot is ready!');
+      })().catch((err: unknown) =>
+        logger.error('ClientReady handler error', {error: err}),
+      );
     });
 
     this.client.on(Events.GuildMemberAdd, (member: GuildMember) => {
       void (async () => {
-        const guild = this.guilds.get(member.guild?.id || "");
+        const guild = this.guilds.get(member.guild?.id || '');
         if (guild) {
           await guild.onGuildMemberAdd(member);
         } else {
-          logger.warn("Member does not have an associated guild instance", { memberId: member.id });
+          logger.warn('Member does not have an associated guild instance', {
+            memberId: member.id,
+          });
         }
-      })().catch((err: unknown) => logger.error("GuildMemberAdd handler error", { error: err }));
+      })().catch((err: unknown) =>
+        logger.error('GuildMemberAdd handler error', {error: err}),
+      );
     });
 
     this.client.on(Events.MessageCreate, (message: Message) => {
       void (async () => {
         if (message.author.bot) return; // Ignore bot messages
         const args: string[] = message.content.trim().split(/ +/g);
-        const guild = this.guilds.get(message.guild?.id || "");
+        const guild = this.guilds.get(message.guild?.id || '');
         if (guild) {
           await guild.onMessageCreate(args, message);
         } else {
-          logger.warn("Message does not have an associated guild instance", { messageId: message.id });
+          logger.warn('Message does not have an associated guild instance', {
+            messageId: message.id,
+          });
         }
-      })().catch((err: unknown) => logger.error("MessageCreate handler error", { error: err }));
+      })().catch((err: unknown) =>
+        logger.error('MessageCreate handler error', {error: err}),
+      );
     });
 
     this.client.on(Events.MessageUpdate, (oldMessage, newMessage) => {
       void (async () => {
-        const guild = this.guilds.get(newMessage.guild?.id || "");
+        const guild = this.guilds.get(newMessage.guild?.id || '');
         if (guild) {
           await guild.onMessageUpdate(
             oldMessage as Message,
             newMessage as Message,
           );
         } else {
-          logger.warn("NewMessage does not have an associated guild instance", { messageId: newMessage.id });
+          logger.warn('NewMessage does not have an associated guild instance', {
+            messageId: newMessage.id,
+          });
         }
-      })().catch((err: unknown) => logger.error("MessageUpdate handler error", { error: err }));
+      })().catch((err: unknown) =>
+        logger.error('MessageUpdate handler error', {error: err}),
+      );
     });
 
-    this.client.on(Events.VoiceStateUpdate, (oldState: VoiceState, newState: VoiceState) => {
-      void (async () => {
-        const guild = this.guilds.get(newState.guild?.id || "");
-        if (guild) {
-          await guild.onVoiceStateUpdate(
-            oldState,
-            newState,
-          );
-        } else {
-          logger.warn("newState does not have an associated guild instance", { guildId: newState.guild?.id });
-        }
-      })().catch((err: unknown) => logger.error("VoiceStateUpdate handler error", { error: err }));
-    });
+    this.client.on(
+      Events.VoiceStateUpdate,
+      (oldState: VoiceState, newState: VoiceState) => {
+        void (async () => {
+          const guild = this.guilds.get(newState.guild?.id || '');
+          if (guild) {
+            await guild.onVoiceStateUpdate(oldState, newState);
+          } else {
+            logger.warn('newState does not have an associated guild instance', {
+              guildId: newState.guild?.id,
+            });
+          }
+        })().catch((err: unknown) =>
+          logger.error('VoiceStateUpdate handler error', {error: err}),
+        );
+      },
+    );
 
     this.client.on(Events.MessageReactionAdd, (messageReaction, user) => {
       void (async () => {
@@ -141,20 +161,23 @@ export class DJMTbot {
           try {
             await messageReaction.fetch();
           } catch (error) {
-            logger.error(
-              "Something went wrong when fetching the message",
-              { error },
-            );
+            logger.error('Something went wrong when fetching the message', {
+              error,
+            });
             return;
           }
         }
-        const guild = this.guilds.get(messageReaction.message.guild?.id || "");
+        const guild = this.guilds.get(messageReaction.message.guild?.id || '');
         if (!messageReaction.partial && guild) {
           await guild.onMessageReactionAdd(messageReaction, user as User);
         } else {
-          logger.warn("Reaction does not have an associated guild instance", { messageId: messageReaction.message.id });
+          logger.warn('Reaction does not have an associated guild instance', {
+            messageId: messageReaction.message.id,
+          });
         }
-      })().catch((err: unknown) => logger.error("MessageReactionAdd handler error", { error: err }));
+      })().catch((err: unknown) =>
+        logger.error('MessageReactionAdd handler error', {error: err}),
+      );
     });
 
     this.client.on(Events.MessageReactionRemove, (messageReaction, user) => {
@@ -165,39 +188,54 @@ export class DJMTbot {
           try {
             await messageReaction.fetch();
           } catch (error) {
-            logger.error(
-              "Something went wrong when fetching the message",
-              { error },
-            );
+            logger.error('Something went wrong when fetching the message', {
+              error,
+            });
             return;
           }
         }
-        const guild = this.guilds.get(messageReaction.message.guild?.id || "");
+        const guild = this.guilds.get(messageReaction.message.guild?.id || '');
         if (!messageReaction.partial && guild) {
           await guild.onMessageReactionRemove(messageReaction, user as User);
         } else {
-          logger.warn("Reaction does not have an associated guild instance", { messageId: messageReaction.message.id });
+          logger.warn('Reaction does not have an associated guild instance', {
+            messageId: messageReaction.message.id,
+          });
         }
-      })().catch((err: unknown) => logger.error("MessageReactionRemove handler error", { error: err }));
+      })().catch((err: unknown) =>
+        logger.error('MessageReactionRemove handler error', {error: err}),
+      );
     });
 
-    this.client.on(Events.InteractionCreate, (interaction) => {
+    this.client.on(Events.InteractionCreate, interaction => {
       void (async () => {
-        const guild = this.guilds.get(interaction.guild?.id || "");
+        const guild = this.guilds.get(interaction.guild?.id || '');
         if (guild) {
           await guild.onInteractionCreate(interaction);
         } else {
-          logger.warn("Interaction does not have an associated guild instance", { guildId: interaction.guild?.id });
+          logger.warn(
+            'Interaction does not have an associated guild instance',
+            {guildId: interaction.guild?.id},
+          );
         }
-      })().catch((err: unknown) => logger.error("InteractionCreate handler error", { error: err }));
+      })().catch((err: unknown) =>
+        logger.error('InteractionCreate handler error', {error: err}),
+      );
     });
 
-    this.client.on(Events.GuildCreate, (guild) => {
-      logger.info("New guild joined", { guildName: guild.name, guildId: guild.id, memberCount: guild.memberCount });
+    this.client.on(Events.GuildCreate, guild => {
+      logger.info('New guild joined', {
+        guildName: guild.name,
+        guildId: guild.id,
+        memberCount: guild.memberCount,
+      });
     });
 
-    this.client.on(Events.GuildDelete, (guild) => {
-      logger.info("Removed from guild", { guildName: guild.name, guildId: guild.id });
+    this.client.on(Events.GuildDelete, guild => {
+      logger.info('Removed from guild', {
+        guildName: guild.name,
+        guildId: guild.id,
+      });
     });
 
     await this.client.login(process.env.TOKEN);

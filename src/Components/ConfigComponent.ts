@@ -1,4 +1,4 @@
-import { Component } from "../Component";
+import {Component} from '../Component';
 import {
   GuildMember,
   Message,
@@ -10,22 +10,22 @@ import {
   SlashCommandBuilder,
   ChatInputCommandInteraction,
   PermissionFlagsBits,
-} from "discord.js";
-import { ComponentCommands } from "../Constants/ComponentCommands";
-import { isInteractionAdmin, JSONStringifyReplacer } from "../HelperFunctions";
-import { ComponentNames } from "../Constants/ComponentNames";
-import { DateTime } from "luxon";
+} from 'discord.js';
+import {ComponentCommands} from '../Constants/ComponentCommands';
+import {isInteractionAdmin, JSONStringifyReplacer} from '../HelperFunctions';
+import {ComponentNames} from '../Constants/ComponentNames';
+import {DateTime} from 'luxon';
 
 const exportConfigCommand = new SlashCommandBuilder();
 exportConfigCommand.setName(ComponentCommands.EXPORT_CONFIG);
-exportConfigCommand.setDescription("Exports the guilds djmtbot config");
+exportConfigCommand.setDescription('Exports the guilds djmtbot config');
 exportConfigCommand.setDefaultMemberPermissions(
   PermissionFlagsBits.Administrator,
 );
 
 const resetConfigCommand = new SlashCommandBuilder();
 resetConfigCommand.setName(ComponentCommands.RESET_CONFIG);
-resetConfigCommand.setDescription("Resets the guilds djmtbot config");
+resetConfigCommand.setDescription('Resets the guilds djmtbot config');
 resetConfigCommand.setDefaultMemberPermissions(
   PermissionFlagsBits.Administrator,
 );
@@ -46,9 +46,7 @@ export class ConfigComponent extends Component<ConfigComponentSave> {
     return Promise.resolve({} as ConfigComponentSave);
   }
 
-  afterLoadJSON(
-    _parsedJSON: ConfigComponentSave | undefined,
-  ): Promise<void> {
+  afterLoadJSON(_parsedJSON: ConfigComponentSave | undefined): Promise<void> {
     return Promise.resolve();
   }
 
@@ -78,10 +76,7 @@ export class ConfigComponent extends Component<ConfigComponentSave> {
     return Promise.resolve();
   }
 
-  onMessageUpdate(
-    _oldMessage: Message,
-    _newMessage: Message,
-  ): Promise<void> {
+  onMessageUpdate(_oldMessage: Message, _newMessage: Message): Promise<void> {
     return Promise.resolve();
   }
 
@@ -107,36 +102,36 @@ export class ConfigComponent extends Component<ConfigComponentSave> {
     // Admin only
     if (!isInteractionAdmin(interaction)) {
       await interaction.reply({
-        content: `This command requires administrator permissions.`,
+        content: 'This command requires administrator permissions.',
         ephemeral: true,
       });
       return;
     }
     const jsonString = `${JSON.stringify(
-      { [this.djmtGuild.guildId]: this.djmtGuild.getSaveData() },
+      {[this.djmtGuild.guildId]: this.djmtGuild.getSaveData()},
       JSONStringifyReplacer,
-      "  ",
+      '  ',
     )}`;
     const attachment = new AttachmentBuilder(Buffer.from(jsonString), {
       name: `config_${this.djmtGuild.guildId}_${DateTime.local().toLocaleString(
         DateTime.DATETIME_FULL_WITH_SECONDS,
       )}.txt`,
     });
-    await interaction.reply({ files: [attachment], ephemeral: true });
+    await interaction.reply({files: [attachment], ephemeral: true});
   }
 
   async resetConfig(interaction: ChatInputCommandInteraction) {
     // Admin only
     if (!isInteractionAdmin(interaction)) {
       await interaction.reply({
-        content: `This command requires administrator permissions.`,
+        content: 'This command requires administrator permissions.',
         ephemeral: true,
       });
       return;
     }
     await this.djmtGuild.resetJSON();
     await interaction.reply({
-      content: `Reset my guild config to default settings.`,
+      content: 'Reset my guild config to default settings.',
       ephemeral: true,
     });
   }

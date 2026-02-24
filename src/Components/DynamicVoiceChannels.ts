@@ -1,5 +1,5 @@
-import { Component } from "../Component";
-import { logger } from "../Logger";
+import {Component} from '../Component';
+import {logger} from '../Logger';
 import {
   ChatInputCommandInteraction,
   ChannelType,
@@ -12,33 +12,33 @@ import {
   VoiceChannel,
   VoiceState,
   PermissionFlagsBits,
-} from "discord.js";
-import { ComponentNames } from "../Constants/ComponentNames";
-import { ComponentCommands } from "../Constants/ComponentCommands";
+} from 'discord.js';
+import {ComponentNames} from '../Constants/ComponentNames';
+import {ComponentCommands} from '../Constants/ComponentCommands';
 
 const printDVCCommand = new SlashCommandBuilder();
 printDVCCommand.setName(ComponentCommands.PRINT_DYNAMIC_VC);
-printDVCCommand.setDescription("Prints bruh information");
+printDVCCommand.setDescription('Prints bruh information');
 printDVCCommand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 const setDVCCommmand = new SlashCommandBuilder();
 setDVCCommmand.setName(ComponentCommands.SET_DYNAMIC_VC);
 setDVCCommmand.setDescription(
-  "Sets a dynamic vc channel. Will create a child vc when occupied.",
+  'Sets a dynamic vc channel. Will create a child vc when occupied.',
 );
-setDVCCommmand.addChannelOption((input) =>
+setDVCCommmand.addChannelOption(input =>
   input
-    .setName("voicechannel")
+    .setName('voicechannel')
     .setDescription(
-      "The channel to add or remove from the dynamic vc channels list",
+      'The channel to add or remove from the dynamic vc channels list',
     )
     .addChannelTypes(ChannelType.GuildVoice)
     .setRequired(true),
 );
-setDVCCommmand.addIntegerOption((input) =>
+setDVCCommmand.addIntegerOption(input =>
   input
-    .setName("maxchildren")
-    .setDescription("The max number of child vcs allowed to be created")
+    .setName('maxchildren')
+    .setDescription('The max number of child vcs allowed to be created')
     .setRequired(true),
 );
 setDVCCommmand.setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
@@ -83,8 +83,11 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
   getSaveData(): Promise<DynamicVoiceChannelsSave> {
     return Promise.resolve({
       markedRootVoiceChannelIds: this.markedVoiceChannels
-        .filter((markedVC) => markedVC.root)
-        .map((rootVC) => ({ channelId: rootVC.id, maxChildren: rootVC.rootsMaxChildren })),
+        .filter(markedVC => markedVC.root)
+        .map(rootVC => ({
+          channelId: rootVC.id,
+          maxChildren: rootVC.rootsMaxChildren,
+        })),
     });
   }
 
@@ -93,7 +96,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
   ): Promise<void> {
     if (_loadedObject) {
       this.markedVoiceChannels = _loadedObject.markedRootVoiceChannelIds
-        .map((rootChannelSave) => {
+        .map(rootChannelSave => {
           const voiceChannel: DynamicVoiceChannel =
             this.djmtGuild.getGuildChannel(
               rootChannelSave.channelId,
@@ -106,7 +109,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
           }
           return voiceChannel;
         })
-        .filter((dynamicChannel) => dynamicChannel);
+        .filter(dynamicChannel => dynamicChannel);
     }
     return Promise.resolve();
   }
@@ -122,14 +125,14 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
       // Iterate through all channels in this guild, and see if any are named after the possible children
       const allGuildChannels = this.djmtGuild.guild?.channels;
       if (!allGuildChannels) {
-        logger.warn("Could not retrieve channels for Dynamic Voice Channels", {
-          guildId: this.djmtGuild.guildId
+        logger.warn('Could not retrieve channels for Dynamic Voice Channels', {
+          guildId: this.djmtGuild.guildId,
         });
         return;
       }
       const allGuildVoiceChannels: VoiceChannel[] = [
         ...allGuildChannels.cache
-          .filter((channel) => channel.type === ChannelType.GuildVoice)
+          .filter(channel => channel.type === ChannelType.GuildVoice)
           .values(),
       ] satisfies VoiceChannel[];
       // Delete Children that mightve been left over first
@@ -149,17 +152,17 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
                 await guildVoiceChannel.delete(
                   `${guildVoiceChannel.name} is empty`,
                 );
-                logger.info("Deleted empty child voice channel", {
-                  guildId: this.djmtGuild.guildId,
-                  channelName: guildVoiceChannel.name,
-                  channelId: guildVoiceChannel.id
-                });
-              } catch (e) {
-                logger.error("Error deleting child voice channel", {
+                logger.info('Deleted empty child voice channel', {
                   guildId: this.djmtGuild.guildId,
                   channelName: guildVoiceChannel.name,
                   channelId: guildVoiceChannel.id,
-                  error: e
+                });
+              } catch (e) {
+                logger.error('Error deleting child voice channel', {
+                  guildId: this.djmtGuild.guildId,
+                  channelName: guildVoiceChannel.name,
+                  channelId: guildVoiceChannel.id,
+                  error: e,
                 });
               }
               continue;
@@ -171,22 +174,22 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
               newRootDynamicChannel.root = false;
               newRootDynamicChannel.parentChannel =
                 this.markedVoiceChannels.find(
-                  (voiceChannel) =>
+                  voiceChannel =>
                     voiceChannel.name ===
                     rootVCInfo.possibleChildrenNames[nameIndex - 1],
                 ) as DynamicVoiceChannel;
               newRootDynamicChannel.childChannel =
                 this.markedVoiceChannels.find(
-                  (voiceChannel) =>
+                  voiceChannel =>
                     voiceChannel.name ===
                     rootVCInfo.possibleChildrenNames[nameIndex + 1],
                 ) as DynamicVoiceChannel;
               newRootDynamicChannel.rootsMaxChildren = rootVC.rootsMaxChildren;
               this.markedVoiceChannels.push(newRootDynamicChannel);
             } catch (e) {
-              logger.error("Error rewiring voice channel on ready", {
+              logger.error('Error rewiring voice channel on ready', {
                 guildId: this.djmtGuild.guildId,
-                error: e
+                error: e,
               });
             }
           }
@@ -219,10 +222,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
     return Promise.resolve();
   }
 
-  onMessageUpdate(
-    _oldMessage: Message,
-    _newMessage: Message,
-  ): Promise<void> {
+  onMessageUpdate(_oldMessage: Message, _newMessage: Message): Promise<void> {
     return Promise.resolve();
   }
 
@@ -240,7 +240,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
     // Whenever Voice Channel State Updates for any marked channel
     if (
       this.markedVoiceChannels.some(
-        (markedVC) =>
+        markedVC =>
           markedVC.id === oldState.channel?.id ||
           markedVC.id === newState.channel?.id,
       )
@@ -257,10 +257,10 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
     if (interaction.commandName === ComponentCommands.SET_DYNAMIC_VC) {
       await this.setRootDynamicVoiceChannel(
         interaction.options.getChannel<ChannelType.GuildVoice>(
-          "voicechannel",
+          'voicechannel',
           true,
         ),
-        interaction.options.getInteger("maxchildren", true),
+        interaction.options.getInteger('maxchildren', true),
         interaction,
       );
     } else if (interaction.commandName === ComponentCommands.PRINT_DYNAMIC_VC) {
@@ -329,17 +329,17 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
       voiceChannel,
       maxChildren,
     );
-    await interaction.reply({ content: res, ephemeral: true });
+    await interaction.reply({content: res, ephemeral: true});
   }
 
   private async printDyanamicVoiceChannels(
     interaction: ChatInputCommandInteraction,
   ) {
     const rootChannels = this.markedVoiceChannels.filter(
-      (markedVC) => markedVC.root,
+      markedVC => markedVC.root,
     );
     if (rootChannels.length > 0) {
-      let channelString = "";
+      let channelString = '';
       rootChannels.forEach((channel: DynamicVoiceChannel) => {
         channelString += `${channel.toString()} => Max Children: ${
           channel.rootsMaxChildren
@@ -351,7 +351,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
       });
     } else {
       await interaction.reply({
-        content: `No Dynamic Voice Channels have been set!`,
+        content: 'No Dynamic Voice Channels have been set!',
         ephemeral: true,
       });
     }
@@ -374,7 +374,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
         await this.addRootDynamicVoiceChannel(voiceChannel, maxChildren);
         return `Added ${voiceChannel.toString()} to the VC Channels list!`;
       } else {
-        return `Adding channel requires an integer for the maximum amount of child channels`;
+        return 'Adding channel requires an integer for the maximum amount of child channels';
       }
     }
   }
@@ -427,7 +427,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
     dvc: DynamicVoiceChannel,
   ): DynamicVoiceChannelNameInfo {
     const rootChannelName: string = dvc.name;
-    const lastSpaceIndex: number = rootChannelName.lastIndexOf(" "); // The number should be right after the last space
+    const lastSpaceIndex: number = rootChannelName.lastIndexOf(' '); // The number should be right after the last space
     let rootChannelCount: number =
       lastSpaceIndex === -1
         ? 1
@@ -462,18 +462,18 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
    * @private
    */
   private async createChildVC(voiceChannel: DynamicVoiceChannel) {
-    logger.info("Attempting to create child voice channel", {
+    logger.info('Attempting to create child voice channel', {
       guildId: this.djmtGuild.guildId,
-      channelName: voiceChannel.name
+      channelName: voiceChannel.name,
     });
     const markedChannelInfo = this.getDynamicVoiceChannelInfo(voiceChannel);
     const nextChannelCount = markedChannelInfo.count + 1;
     const nextChannelName: string = `${markedChannelInfo.nameWithoutCount} ${nextChannelCount}`;
     // Don't create if we're already in the process of making this channel
     if (this.creatingChannel.get(nextChannelName)) {
-      logger.info("Not creating channel, already in progress", {
+      logger.info('Not creating channel, already in progress', {
         guildId: this.djmtGuild.guildId,
-        channelName: nextChannelName
+        channelName: nextChannelName,
       });
       return;
     }
@@ -482,27 +482,29 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
       markedChannelInfo.count >=
       (voiceChannel.rootsMaxChildren || this.GUILD_MAXIMUM_GENERATED_CHANNELS)
     ) {
-      logger.info("Did not generate child channel, at maximum limit", {
+      logger.info('Did not generate child channel, at maximum limit', {
         guildId: this.djmtGuild.guildId,
         count: markedChannelInfo.count,
-        maxChildren: voiceChannel.rootsMaxChildren || this.GUILD_MAXIMUM_GENERATED_CHANNELS
+        maxChildren:
+          voiceChannel.rootsMaxChildren ||
+          this.GUILD_MAXIMUM_GENERATED_CHANNELS,
       });
       return;
     }
     // If one of the marked channels already has the name of our next child. Don't generate a child, fix the child parent connection instead.
     if (
       this.markedVoiceChannels.some(
-        (voiceChannel) => voiceChannel.name === nextChannelName,
+        voiceChannel => voiceChannel.name === nextChannelName,
       )
     ) {
       const foundChannel: DynamicVoiceChannel = this.markedVoiceChannels.find(
-        (voiceChannel) => voiceChannel.name === nextChannelName,
+        voiceChannel => voiceChannel.name === nextChannelName,
       ) as DynamicVoiceChannel;
       voiceChannel.childChannel = foundChannel;
       foundChannel.parentChannel = voiceChannel;
-      logger.info("Did not generate child channel, channel already exists", {
+      logger.info('Did not generate child channel, channel already exists', {
         guildId: this.djmtGuild.guildId,
-        channelName: foundChannel.name
+        channelName: foundChannel.name,
       });
       return;
     }
@@ -510,7 +512,7 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
     this.creatingChannel.set(nextChannelName, true);
     const childVoiceChannel: DynamicVoiceChannel =
       (await this.djmtGuild.guild?.channels.create({
-        name: nextChannelName ?? "Extra",
+        name: nextChannelName ?? 'Extra',
         type: ChannelType.GuildVoice,
         parent: voiceChannel.parent ?? undefined,
         reason: `Dynamic Voice Channel created for ${markedChannelInfo.name}`,
@@ -531,10 +533,10 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
     );
     voiceChannel.childChannel = childVoiceChannel;
     this.markedVoiceChannels.push(childVoiceChannel); // add to the end of the list
-    logger.info("Generated child voice channel", {
+    logger.info('Generated child voice channel', {
       guildId: this.djmtGuild.guildId,
       channelName: childVoiceChannel.name,
-      channelId: childVoiceChannel.id
+      channelId: childVoiceChannel.id,
     });
     this.creatingChannel.set(nextChannelName, false);
   }
@@ -550,9 +552,9 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
     reason?: string,
   ) {
     if (voiceChannel.root) {
-      logger.warn("Attempted to delete root voice channel, skipping", {
+      logger.warn('Attempted to delete root voice channel, skipping', {
         guildId: this.djmtGuild.guildId,
-        channelName: voiceChannel.name
+        channelName: voiceChannel.name,
       });
       return;
     }
@@ -573,17 +575,17 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
     );
     try {
       await voiceChannel.delete(reason);
-      logger.info("Deleted child voice channel", {
-        guildId: this.djmtGuild.guildId,
-        channelName: voiceChannel.name,
-        channelId: voiceChannel.id
-      });
-      } catch (e) {
-      logger.error("Error deleting voice channel", {
+      logger.info('Deleted child voice channel', {
         guildId: this.djmtGuild.guildId,
         channelName: voiceChannel.name,
         channelId: voiceChannel.id,
-        error: e
+      });
+    } catch (e) {
+      logger.error('Error deleting voice channel', {
+        guildId: this.djmtGuild.guildId,
+        channelName: voiceChannel.name,
+        channelId: voiceChannel.id,
+        error: e,
       });
     }
   }

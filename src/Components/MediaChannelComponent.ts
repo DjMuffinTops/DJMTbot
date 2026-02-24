@@ -1,5 +1,5 @@
-import { Component } from "../Component";
-import { logger } from "../Logger";
+import {Component} from '../Component';
+import {logger} from '../Logger';
 import {
   ChannelType,
   ChatInputCommandInteraction,
@@ -12,18 +12,18 @@ import {
   TextChannel,
   User,
   VoiceState,
-} from "discord.js";
-import { ComponentNames } from "../Constants/ComponentNames";
-import { MEDIA_LINK_REGEX } from "../HelperFunctions";
-import { ComponentCommands } from "../Constants/ComponentCommands";
+} from 'discord.js';
+import {ComponentNames} from '../Constants/ComponentNames';
+import {MEDIA_LINK_REGEX} from '../HelperFunctions';
+import {ComponentCommands} from '../Constants/ComponentCommands';
 
 const setMediaChannelCommand = new SlashCommandBuilder();
 setMediaChannelCommand.setName(ComponentCommands.SET_MEDIA_CHANNEL);
-setMediaChannelCommand.setDescription("Sets the media channel");
-setMediaChannelCommand.addChannelOption((input) =>
+setMediaChannelCommand.setDescription('Sets the media channel');
+setMediaChannelCommand.addChannelOption(input =>
   input
-    .setName("channel")
-    .setDescription("The channel to add or remove from the media channels list")
+    .setName('channel')
+    .setDescription('The channel to add or remove from the media channels list')
     .addChannelTypes(ChannelType.GuildText)
     .setRequired(true),
 );
@@ -33,7 +33,7 @@ setMediaChannelCommand.setDefaultMemberPermissions(
 
 const getMediaChannelCommand = new SlashCommandBuilder();
 getMediaChannelCommand.setName(ComponentCommands.PRINT_MEDIA_CHANNEL);
-getMediaChannelCommand.setDescription("Gets the media channel");
+getMediaChannelCommand.setDescription('Gets the media channel');
 getMediaChannelCommand.setDefaultMemberPermissions(
   PermissionFlagsBits.Administrator,
 );
@@ -60,17 +60,17 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
   // may move to constants in future if needed?
 
   getSaveData(): Promise<MediaComponentSave> {
-    return Promise.resolve({ channels: this.channelsArray.map((c) => c.id) });
+    return Promise.resolve({channels: this.channelsArray.map(c => c.id)});
   }
 
-  afterLoadJSON(
-    _loadedObject: MediaComponentSave | undefined,
-  ): Promise<void> {
+  afterLoadJSON(_loadedObject: MediaComponentSave | undefined): Promise<void> {
     if (_loadedObject) {
       for (const c of _loadedObject.channels) {
         const channel = this.djmtGuild.getGuildChannel(c) as TextChannel;
         if (!channel) {
-          logger.error("MediaChannelCheck: could not load channel", { channelId: c });
+          logger.error('MediaChannelCheck: could not load channel', {
+            channelId: c,
+          });
           continue;
         }
         this.channelsArray.push(channel);
@@ -105,10 +105,7 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
     return Promise.resolve();
   }
 
-  onMessageUpdate(
-    _oldMessage: Message,
-    _newMessage: Message,
-  ): Promise<void> {
+  onMessageUpdate(_oldMessage: Message, _newMessage: Message): Promise<void> {
     return Promise.resolve();
   }
 
@@ -118,7 +115,7 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
     }
     if (interaction.commandName === ComponentCommands.SET_MEDIA_CHANNEL) {
       await this.setMediaChannel(
-        interaction.options.getChannel<ChannelType.GuildText>("channel", true),
+        interaction.options.getChannel<ChannelType.GuildText>('channel', true),
         interaction,
       );
     } else if (
@@ -192,16 +189,16 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
   ): Promise<void> {
     if (this.channelsArray.length === 0) {
       await interaction.reply({
-        content: `There are no set media channels.`,
+        content: 'There are no set media channels.',
         ephemeral: true,
       });
       return;
     }
-    let m = "The current set media channels are:\n";
+    let m = 'The current set media channels are:\n';
     for (const c of this.channelsArray) {
       m += `<#${c.id}>\n`;
     }
-    await interaction.reply({ content: m, ephemeral: true });
+    await interaction.reply({content: m, ephemeral: true});
   }
 
   /**
@@ -220,10 +217,10 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
         try {
           await message.delete();
         } catch (e) {
-          logger.error("Error deleting message for media channel check", {
+          logger.error('Error deleting message for media channel check', {
             guildId: this.djmtGuild.guildId,
             messageId: message.id,
-            error: e
+            error: e,
           });
         }
         if (message.channel.isSendable()) {

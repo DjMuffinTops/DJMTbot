@@ -7,23 +7,23 @@ import {
   SlashCommandBuilder,
   User,
   VoiceState,
-} from "discord.js";
-import { ComponentNames } from "../Constants/ComponentNames";
-import { Component } from "../Component";
-import { logger } from "../Logger";
+} from 'discord.js';
+import {ComponentNames} from '../Constants/ComponentNames';
+import {Component} from '../Component';
+import {logger} from '../Logger';
 import {
   getCensoredMessageReplyOptions,
   getGuildMembersRoles,
   isMessageAdmin,
-} from "../HelperFunctions";
-import { ComponentCommands } from "../Constants/ComponentCommands";
+} from '../HelperFunctions';
+import {ComponentCommands} from '../Constants/ComponentCommands';
 
 const toggleEveryoneSpamTimeoutCommand = new SlashCommandBuilder();
 toggleEveryoneSpamTimeoutCommand.setName(
   ComponentCommands.TOGGLE_EVERYONE_SPAM_TIMEOUT,
 );
 toggleEveryoneSpamTimeoutCommand.setDescription(
-  "Toggles the @everyone and @here spam timeout feature",
+  'Toggles the @everyone and @here spam timeout feature',
 );
 toggleEveryoneSpamTimeoutCommand.setDefaultMemberPermissions(
   PermissionFlagsBits.Administrator,
@@ -34,12 +34,12 @@ setEveryoneSpamTimeoutRolesCommand.setName(
   ComponentCommands.SET_EVERYONE_SPAM_TIMEOUT_ROLES,
 );
 setEveryoneSpamTimeoutRolesCommand.setDescription(
-  "Adds or removes roles that are permitted to bypass the @everyone and @here timeout feature",
+  'Adds or removes roles that are permitted to bypass the @everyone and @here timeout feature',
 );
-setEveryoneSpamTimeoutRolesCommand.addRoleOption((input) =>
+setEveryoneSpamTimeoutRolesCommand.addRoleOption(input =>
   input
-    .setName("role")
-    .setDescription("The role to add or remove from the permitted roles list")
+    .setName('role')
+    .setDescription('The role to add or remove from the permitted roles list')
     .setRequired(true),
 );
 setEveryoneSpamTimeoutRolesCommand.setDefaultMemberPermissions(
@@ -51,8 +51,8 @@ interface EveryoneSpamTimeoutSave {
   permittedRoleIds: string[];
 }
 
-const EVERYONE_PING = "@everyone";
-const HERE_PING = "@here";
+const EVERYONE_PING = '@everyone';
+const HERE_PING = '@here';
 const TIMEOUT_DURATION_MS = 28 * 24 * 60 * 60 * 1000; // The maximum timeout duration on discord is 28 days
 
 export class EveryoneSpamTimeout extends Component<EveryoneSpamTimeoutSave> {
@@ -67,7 +67,10 @@ export class EveryoneSpamTimeout extends Component<EveryoneSpamTimeoutSave> {
   // Place SlashCommandBuilder(s) directly into this array for them to be registered.
 
   getSaveData(): Promise<EveryoneSpamTimeoutSave> {
-    return Promise.resolve({ enabled: this.enabled, permittedRoleIds: this.permittedRoleIds });
+    return Promise.resolve({
+      enabled: this.enabled,
+      permittedRoleIds: this.permittedRoleIds,
+    });
   }
 
   afterLoadJSON(
@@ -92,10 +95,10 @@ export class EveryoneSpamTimeout extends Component<EveryoneSpamTimeoutSave> {
     try {
       await this.handleEveryoneSpam(message);
     } catch (error) {
-      logger.error("Error in EveryoneSpamTimeout.onMessageCreate", {
+      logger.error('Error in EveryoneSpamTimeout.onMessageCreate', {
         guildId: this.djmtGuild.guildId,
         username: message.member?.user.username,
-        error
+        error,
       });
     }
     return Promise.resolve(undefined);
@@ -115,16 +118,13 @@ export class EveryoneSpamTimeout extends Component<EveryoneSpamTimeoutSave> {
     return Promise.resolve();
   }
 
-  onMessageUpdate(
-    _oldMessage: Message,
-    newMessage: Message,
-  ): Promise<void> {
+  onMessageUpdate(_oldMessage: Message, newMessage: Message): Promise<void> {
     try {
       void this.handleEveryoneSpam(newMessage);
     } catch (error) {
-      logger.error("Error in EveryoneSpamTimeout.onMessageUpdate", {
+      logger.error('Error in EveryoneSpamTimeout.onMessageUpdate', {
         guildId: this.djmtGuild.guildId,
-        error
+        error,
       });
     }
     return Promise.resolve();
@@ -155,17 +155,17 @@ export class EveryoneSpamTimeout extends Component<EveryoneSpamTimeoutSave> {
       await this.djmtGuild.saveJSON();
       await interaction.reply({
         content: `Everyone spam timeout feature is now ${
-          this.enabled ? "active" : "disabled"
+          this.enabled ? 'active' : 'disabled'
         }.`,
       });
     } else if (
       interaction.commandName ===
       ComponentCommands.SET_EVERYONE_SPAM_TIMEOUT_ROLES
     ) {
-      const role = interaction.options.getRole("role", true);
+      const role = interaction.options.getRole('role', true);
       if (this.permittedRoleIds.includes(role.id)) {
         this.permittedRoleIds = this.permittedRoleIds.filter(
-          (id) => id !== role.id,
+          id => id !== role.id,
         );
         await interaction.reply({
           content: `Role ${role.name} removed from the permitted roles list.`,
@@ -205,7 +205,7 @@ export class EveryoneSpamTimeout extends Component<EveryoneSpamTimeoutSave> {
 
     // Is the guild member part of the permitted roles?
     const memberRoles = getGuildMembersRoles(message.member);
-    const hasPermittedRole = memberRoles.some((role) =>
+    const hasPermittedRole = memberRoles.some(role =>
       this.permittedRoleIds.includes(role.id),
     );
 
@@ -222,12 +222,12 @@ export class EveryoneSpamTimeout extends Component<EveryoneSpamTimeoutSave> {
     // Timeout the user indefinitely
     await message.member.timeout(
       TIMEOUT_DURATION_MS,
-      "Attempting to send @everyone or @here pings",
+      'Attempting to send @everyone or @here pings',
     );
 
     // Send a warning message to the mod alerts channel
     const modAlertsChannel = this.djmtGuild.getModAlertsChannel();
-      if (modAlertsChannel) {
+    if (modAlertsChannel) {
       const msg1 = await modAlertsChannel.send(
         `⚠️ ${String(message.author)} has been timed out for attempting to send the following everyone and/or here pings in <#${message.channel.id}>`,
       );
