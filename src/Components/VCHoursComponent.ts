@@ -1,4 +1,5 @@
 import { Component } from "../Component";
+import { logger } from "../Logger";
 import {
   ChannelType,
   ChatInputCommandInteraction,
@@ -167,7 +168,7 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
   }
 
   async vcRemindersJob() {
-    console.log(`[${this.djmtGuild.guildId}] Running VC Reminder Job`);
+    logger.info("Running VC Reminder job", { guildId: this.djmtGuild.guildId });
     const vcChannelPairs: VoiceTextPair[] = (
       this.djmtGuild.getComponent(
         ComponentNames.VOICE_TEXT_PAIR,
@@ -182,9 +183,10 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
         pair.textChannel.id,
       ) as TextChannel;
       if (!voiceChannel || !textChannel) {
-        console.error(
-          `[VCRemindersJob] Could not find voice channel ${pair.voiceChannel.id} or text channel ${pair.textChannel.id}`,
-        );
+        logger.error("[VCRemindersJob] Could not find channels", {
+          voiceChannelId: pair.voiceChannel.id,
+          textChannelId: pair.textChannel.id
+        });
         return;
       }
       // If someone is in the channel during the check and they are not a bot, add an hour
@@ -198,7 +200,11 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
         }`;
         const finalMsg = `Don't forget to save your work and stay hydrated! ${hoursMsg}`;
         await textChannel.send(finalMsg);
-        console.log(`Sent to ${textChannel.name} :${finalMsg}`);
+        logger.info("Sent VC reminder", {
+          guildId: this.djmtGuild.guildId,
+          channelName: textChannel.name,
+          message: finalMsg
+        });
         this.consecutiveHours.set(pair, hoursSoFar + 1);
       } else {
         this.consecutiveHours.set(pair, 0);

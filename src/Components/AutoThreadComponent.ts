@@ -1,4 +1,5 @@
 import { Component } from "../Component";
+import { logger } from '../Logger';
 import {
   ChannelType,
   ChatInputCommandInteraction,
@@ -101,7 +102,7 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
             value.channel,
           ) as TextChannel;
           if (!channel || channel.type !== ChannelType.GuildText) {
-            console.error(`[AutoThread]: could not load ${JSON.stringify(value)}`);
+            logger.error("[AutoThread] Could not load value", { value });
             continue;
           }
           const newValue: AutoThreadEntry = {
@@ -110,7 +111,7 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
           };
           newMap.set(key, newValue);
         } else {
-          console.log("[AutoThread]: No loaded value found");
+          logger.warn("[AutoThread] No loaded value found");
         }
       }
       this.channelsMap = newMap;
@@ -216,13 +217,9 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
           });
       } catch (e) {
         if (e instanceof Error && e.message === "Unknown Message") {
-          console.log(
-            `[${this.djmtGuild.guildId}] checkAutoThread Unknown message error, message was probably already deleted`,
-          );
+          logger.info("checkAutoThread Unknown message error, message was probably already deleted", { guildId: this.djmtGuild.guildId });
         } else {
-          console.log(
-            `[${this.djmtGuild.guildId}] checkAutoThread error: ${String(e)}`,
-          );
+          logger.info("checkAutoThread error", { guildId: this.djmtGuild.guildId, error: String(e) });
         }
       }
     }

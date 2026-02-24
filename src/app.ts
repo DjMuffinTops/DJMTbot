@@ -1,5 +1,7 @@
+import 'dotenv/config';
 import { DJMTbot } from "./DJMTbot";
 import express, { Request, Response } from "express";
+import { logger } from './Logger';
 const app = express();
 const PORT = 8080;
 
@@ -21,9 +23,9 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 // Literally only doing this so digital ocean can pass health checks ugh
-app.listen(PORT, () => console.log("Server has started at port " + PORT));
+app.listen(PORT, () => logger.info(`Server has started at port ${PORT}`));
 
 DJMTbot.getInstance()
   .run()
-  .then(() => console.log("Bot has been run"))
-  .catch((err) => console.error("Error running bot:", err));
+  .then(() => logger.info("Bot has been run"))
+  .catch((err: unknown) => logger.error("Error running bot", { error: err }));

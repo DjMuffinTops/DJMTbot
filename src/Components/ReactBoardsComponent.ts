@@ -1,4 +1,5 @@
 import { Component } from "../Component";
+import { logger } from "../Logger";
 import {
   GuildMember,
   Message,
@@ -423,11 +424,11 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
             await message.react(foundEmote);
           } catch (e) {
             if (e instanceof Error && e.message === "Unknown Message") {
-              console.log(
-                `[${this.djmtGuild.guildId}] checkAutoReact Unknown message error, message was probably already deleted`,
-              );
+              logger.debug("checkAutoReact Unknown message error, message probably deleted", {
+                guildId: this.djmtGuild.guildId
+              });
             } else {
-              console.log(`[${this.djmtGuild.guildId}] checkAutoReact error:`, e);
+              logger.error("checkAutoReact error", { guildId: this.djmtGuild.guildId, error: e });
             }
           }
         }
@@ -486,10 +487,11 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
         try {
           await destinationChannel.send({ embeds: [embed] });
         } catch (e) {
-          console.error(e);
-          console.error(
-            `[${this.djmtGuild.guildId}] Could not set starboard message for ${message.url}`,
-          );
+          logger.error("Could not send starboard message", {
+            guildId: this.djmtGuild.guildId,
+            messageUrl: message.url,
+            error: e
+          });
         }
         this.emoteReactBoardMap
           ?.get(rawEmoteId)
@@ -557,11 +559,11 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
         await message.react("⭐");
       } catch (e) {
         if (e instanceof Error && e.message === "Unknown Message") {
-          console.log(
-            `[${this.djmtGuild.guildId}] autoStar Unknown message error, message was probably already deleted`,
-          );
+          logger.debug("autoStar Unknown message error, message probably deleted", {
+            guildId: this.djmtGuild.guildId
+          });
         } else {
-          console.log(`[${this.djmtGuild.guildId}] autoStar error:`, e);
+          logger.error("autoStar error", { guildId: this.djmtGuild.guildId, error: e });
         }
       }
     }

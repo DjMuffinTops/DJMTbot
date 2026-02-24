@@ -56,6 +56,6 @@ export default defineConfig([globalIgnores([
             varsIgnorePattern: "^_",
         }],
 
-        "no-console": "off",
+        "no-console": "error",
     },
 }]);

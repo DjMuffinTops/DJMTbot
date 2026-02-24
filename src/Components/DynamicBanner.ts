@@ -1,4 +1,5 @@
 import { Component } from "../Component";
+import { logger } from "../Logger";
 import {
   ChatInputCommandInteraction,
   GuildMember,
@@ -75,7 +76,7 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
   onReady(): Promise<void> {
     // Every X hours, change the banner
     Cron.getInstance().schedule(`0 0 */${this.hourInterval} * * *`, () => {
-      console.log(`[${this.djmtGuild.guildId}] Running Dynamic Banner Job`);
+      logger.info("Running Dynamic Banner job", { guildId: this.djmtGuild.guildId });
       void this.rotateServerBanner();
     });
     return Promise.resolve();
@@ -146,9 +147,7 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
    */
   async rotateServerBanner(interaction?: ChatInputCommandInteraction) {
     if (this.imageUrls.length <= 0) {
-      console.log(
-        `[${this.djmtGuild.guildId}] No Dynamic Banner images in queue to change to.`,
-      );
+      logger.info("No Dynamic Banner images in queue", { guildId: this.djmtGuild.guildId });
       if (interaction) {
         await interaction.reply({
           content: `No Dynamic Banner images in queue to rotate to.`,
@@ -165,9 +164,10 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
           );
           this.imageUrls.push(nextUrl); // Push to the back of the array
           await this.djmtGuild.saveJSON();
-          console.log(
-            `[${this.djmtGuild.guildId}] Changed server banner to ${nextUrl} successfully`,
-          );
+          logger.info("Changed server banner successfully", {
+            guildId: this.djmtGuild.guildId,
+            imageUrl: nextUrl
+          });
           if (interaction) {
             await interaction.reply({
               content: `Changed server banner to ${nextUrl} successfully!`,
@@ -175,11 +175,11 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
             });
           }
         } catch (e) {
-            console.log(
-              `[${this.djmtGuild.guildId}] Failed to change server banner to ${nextUrl}: ${String(
-                e,
-              )}`,
-            );
+            logger.error("Failed to change server banner", {
+              guildId: this.djmtGuild.guildId,
+              imageUrl: nextUrl,
+              error: e
+            });
           if (interaction) {
             await interaction.reply({
               content: `Failed to change server banner to ${nextUrl}: ${String(e)}`,
@@ -254,24 +254,33 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
       image = await probe(imageUrl);
     } catch (e) {
       const originalError = e instanceof Error ? e : new Error(String(e));
-      console.error(originalError);
-      console.error(
-        `[${this.djmtGuild.guildId}] Did not add image url ${imageUrl} is not an image file.`,
-      );
+      logger.error("Failed to add image URL", {
+        guildId: this.djmtGuild.guildId,
+        imageUrl,
+        error: originalError,
+        reason: "not an image file"
+      });
       throw originalError;
     }
     // Image must be a png or jpg
     if (image.type !== "png" && image.type !== "jpg") {
-      console.error(
-        `[${this.djmtGuild.guildId}] Did not add image url ${imageUrl} is not a png or jpg`,
-      );
+      logger.error("Failed to add image URL", {
+        guildId: this.djmtGuild.guildId,
+        imageUrl,
+        imageType: image.type,
+        reason: "not a png or jpg"
+      });
       throw new Error(`Did not add image url ${imageUrl} is not a png or jpg`);
     }
     // Image must be at least 960x540 pixels
     if (!(image.width >= 960 && image.height >= 540)) {
-      console.error(
-        `[${this.djmtGuild.guildId}] Did not add image url ${imageUrl} does not meet the minimum dimensions`,
-      );
+      logger.error("Failed to add image URL", {
+        guildId: this.djmtGuild.guildId,
+        imageUrl,
+        width: image.width,
+        height: image.height,
+        reason: "does not meet minimum dimensions"
+      });
       throw new Error(
         `Did not add image url ${imageUrl} does not meet the minimum dimensions`,
       );
@@ -279,9 +288,10 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
     // Successfully verified image
     this.imageUrls.push(imageUrl);
     await this.djmtGuild.saveJSON();
-    console.log(
-      `[${this.djmtGuild.guildId}] Added image url ${imageUrl} to Dynamic Banner Image Queue`,
-    );
+    logger.info("Added image URL to Dynamic Banner queue", {
+      guildId: this.djmtGuild.guildId,
+      imageUrl
+    });
   }
 
   /**
@@ -291,8 +301,9 @@ export class DynamicBanner extends Component<DynamicBannerSave> {
   async removeImageUrl(imageUrl: string): Promise<void> {
     this.imageUrls = this.imageUrls.filter((url) => url !== imageUrl);
     await this.djmtGuild.saveJSON();
-    console.log(
-      `[${this.djmtGuild.guildId}] Removed image url ${imageUrl} to Dynamic Banner Image Queue`,
-    );
+    logger.info("Removed image URL from Dynamic Banner queue", {
+      guildId: this.djmtGuild.guildId,
+      imageUrl
+    });
   }
 }

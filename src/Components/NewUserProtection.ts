@@ -1,4 +1,5 @@
 import { Component } from "../Component";
+import { logger } from "../Logger";
 import {
   ChatInputCommandInteraction,
   GuildMember,
@@ -331,7 +332,12 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
         try {
           await message.delete();
         } catch (e) {
-          console.error("Error deleting message for new user lock: ", e);
+          logger.error("Error deleting message for new user lock", {
+            guildId: this.djmtGuild.guildId,
+            messageId: message.id,
+            userId: user.id,
+            error: e
+          });
         }
         // Alert the mod alerts channel of a new user attempting to post media
         const modAlertsChannel = this.djmtGuild.getModAlertsChannel();
@@ -411,7 +417,11 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
           .join(", ")}`,
       );
     } catch (e) {
-      console.error("Error DMing new user: ", e);
+      logger.error("Error DMing new user", {
+        guildId: this.djmtGuild.guildId,
+        userId: member.user.id,
+        error: e
+      });
     }
     try {
       await member.ban({
@@ -424,7 +434,11 @@ export class NewUserProtection extends Component<NewUserProtectionSave> {
         );
       }
     } catch (e) {
-      console.error("Error banning new user: ", e);
+      logger.error("Error banning new user", {
+        guildId: this.djmtGuild.guildId,
+        userId: member.user.id,
+        error: e
+      });
       if (modAlertsChannel) {
         void modAlertsChannel.send(
           `⚠️ Error banning new user <@${member.user.id}>: ${String(e)}`,

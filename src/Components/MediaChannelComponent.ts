@@ -1,4 +1,5 @@
 import { Component } from "../Component";
+import { logger } from "../Logger";
 import {
   ChannelType,
   ChatInputCommandInteraction,
@@ -69,7 +70,7 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
       for (const c of _loadedObject.channels) {
         const channel = this.djmtGuild.getGuildChannel(c) as TextChannel;
         if (!channel) {
-          console.error(`[MediaChannelCheck]: could not load ${c}`);
+          logger.error("MediaChannelCheck: could not load channel", { channelId: c });
           continue;
         }
         this.channelsArray.push(channel);
@@ -219,7 +220,11 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
         try {
           await message.delete();
         } catch (e) {
-          console.error("Error deleting message for media channel check: ", e);
+          logger.error("Error deleting message for media channel check", {
+            guildId: this.djmtGuild.guildId,
+            messageId: message.id,
+            error: e
+          });
         }
         if (message.channel.isSendable()) {
           const warningMsg: Message = await message.channel.send(msg);
