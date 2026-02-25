@@ -214,8 +214,6 @@ export class GuildConfigManager {
     const filename = GUILD_CONFIG_PATH(this.guildId);
     const newJson = this.getSaveDataAsJSON();
 
-    
-
     let diff: ReturnType<typeof jsonDiff.diff> | undefined;
     if (this.lastSavedJson !== newJson) {
       try {
@@ -239,7 +237,7 @@ export class GuildConfigManager {
       guildId: this.guildId,
       ...(diff ? {changes: diff} : {}),
     });
-    
+
     // Call onConfigSaved for post-save actions (like debug channel attachment)
     if (this.onConfigSaved) {
       await this.onConfigSaved();
