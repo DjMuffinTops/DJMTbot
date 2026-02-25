@@ -252,7 +252,6 @@ export class DJMTGuild {
    * Delegates to configManager for persistence.
    */
   async saveJSON(): Promise<void> {
-    logger.info('SAVING JSON to file', {guildId: this.guildId});
     // Delegate to configManager for actual saving (which will trigger onBeforeSave)
     await this.configManager.saveJSON();
   }
