@@ -16,6 +16,7 @@ import {
 } from 'discord.js';
 import {ComponentNames} from '../Constants/ComponentNames';
 import {ComponentCommands} from '../Constants/ComponentCommands';
+import {logger} from '../Logger';
 
 const setVcPairCommand = new SlashCommandBuilder();
 setVcPairCommand.setName(ComponentCommands.SET_VC_PAIRS);
@@ -43,14 +44,26 @@ printVcPairCommand.setDefaultMemberPermissions(
   PermissionFlagsBits.Administrator,
 );
 
-// Declare data you want to save in JSON here
-interface VoiceTextPairComponentSave {
-  voiceTextPairs: VoiceTextPair[];
+// Declare data you want to save in JSON here (only IDs)
+interface VoiceTextPairSave {
+  voiceChannelId: string;
+  textChannelId: string;
 }
 
+interface VoiceTextPairComponentSave {
+  voiceTextPairs: VoiceTextPairSave[];
+}
+
+// Runtime interface with full objects
 export interface VoiceTextPair {
   voiceChannel: VoiceChannel;
   textChannel: TextChannel;
+}
+
+// Legacy format for migration (old JSON files)
+interface VoiceTextPairLegacy {
+  voiceChannel: {id: string};
+  textChannel: {id: string};
 }
 
 export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave> {
@@ -59,16 +72,94 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
   commands: SlashCommandBuilder[] = [setVcPairCommand, printVcPairCommand];
 
   getSaveData(): Promise<VoiceTextPairComponentSave> {
+    // Convert full channel objects to just IDs for saving
     return Promise.resolve({
-      voiceTextPairs: this.voiceTextPairs,
+      voiceTextPairs: this.voiceTextPairs.map(pair => ({
+        voiceChannelId: pair.voiceChannel.id,
+        textChannelId: pair.textChannel.id,
+      })),
     });
   }
 
   afterLoadJSON(
     loadedObject: VoiceTextPairComponentSave | undefined,
   ): Promise<void> {
-    if (loadedObject) {
-      this.voiceTextPairs = loadedObject.voiceTextPairs;
+    if (loadedObject && loadedObject.voiceTextPairs) {
+      this.voiceTextPairs = [];
+
+      if (!this.djmtGuild.guild) {
+        logger.error(
+          '[VoiceTextPair] Guild not available when loading voice-text pairs',
+        );
+        return Promise.resolve();
+      }
+
+      for (const pair of loadedObject.voiceTextPairs) {
+        try {
+          let voiceChannel: VoiceChannel;
+          let textChannel: TextChannel;
+
+          // Check if this is the new format (just IDs) or old format (full objects)
+          if ('voiceChannelId' in pair && 'textChannelId' in pair) {
+            // New format: IDs only
+            const voiceCh = this.djmtGuild.guild.channels.cache.get(
+              pair.voiceChannelId,
+            );
+            const textCh = this.djmtGuild.guild.channels.cache.get(
+              pair.textChannelId,
+            );
+
+            if (
+              !voiceCh ||
+              voiceCh.type !== ChannelType.GuildVoice ||
+              !textCh ||
+              textCh.type !== ChannelType.GuildText
+            ) {
+              logger.error(
+                `[VoiceTextPair] Failed to load voice-text pair: voice=${pair.voiceChannelId}, text=${pair.textChannelId}`,
+              );
+              continue;
+            }
+
+            voiceChannel = voiceCh as VoiceChannel;
+            textChannel = textCh as TextChannel;
+          } else {
+            // Old format: full objects
+            const legacyPair = pair as unknown as VoiceTextPairLegacy;
+            const voiceCh = this.djmtGuild.guild.channels.cache.get(
+              legacyPair.voiceChannel.id,
+            );
+            const textCh = this.djmtGuild.guild.channels.cache.get(
+              legacyPair.textChannel.id,
+            );
+
+            if (
+              !voiceCh ||
+              voiceCh.type !== ChannelType.GuildVoice ||
+              !textCh ||
+              textCh.type !== ChannelType.GuildText
+            ) {
+              logger.error(
+                `[VoiceTextPair] Failed to migrate voice-text pair: voice=${legacyPair.voiceChannel.id}, text=${legacyPair.textChannel.id}`,
+              );
+              continue;
+            }
+
+            voiceChannel = voiceCh as VoiceChannel;
+            textChannel = textCh as TextChannel;
+
+            logger.info(
+              `[VoiceTextPair] Migrated voice-text pair from old format: ${voiceChannel.name} <-> ${textChannel.name}`,
+            );
+          }
+
+          this.voiceTextPairs.push({voiceChannel, textChannel});
+        } catch (error) {
+          logger.error(
+            `[VoiceTextPair] Error loading voice-text pair: ${error}`,
+          );
+        }
+      }
     }
     return Promise.resolve();
   }
