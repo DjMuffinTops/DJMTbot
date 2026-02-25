@@ -37,7 +37,8 @@ export class GuildConfigManager {
   private _modLoggingChannelId: string | undefined;
   private componentData: ComponentDataMap;
 
-  // Callback for persistence after config changes
+  // Callbacks for persistence lifecycle
+  private onBeforeSave: (() => Promise<void>) | null = null;
   private onConfigSaved: (() => Promise<void>) | null = null;
 
   // Track last saved JSON for diff logging
@@ -95,6 +96,15 @@ export class GuildConfigManager {
   }
 
   /**
+   * Sets a callback to be invoked before configuration is saved.
+   * Used by DJMTGuild to collect component data before persistence.
+   * @param callback The callback function to invoke
+   */
+  setOnBeforeSave(callback: (() => Promise<void>) | null): void {
+    this.onBeforeSave = callback;
+  }
+
+  /**
    * Sets a callback to be invoked after configuration is saved.
    * Used by DJMTGuild to perform additional actions on config persistence.
    * @param callback The callback function to invoke
@@ -127,7 +137,7 @@ export class GuildConfigManager {
    * @returns The serialized JSON string
    * @private
    */
-  private buildConfigJSON(): string {
+  private getSaveDataAsJSON(): string {
     return JSON.stringify(this.getSaveData(), JSONStringifyReplacer, '\t');
   }
 
@@ -177,7 +187,7 @@ export class GuildConfigManager {
       // Update propertyStorage with loaded values
       this.initializePropertyStorage();
       // Capture current state for diff tracking
-      this.lastSavedJson = this.buildConfigJSON();
+      this.lastSavedJson = this.getSaveDataAsJSON();
     } else {
       logger.info(
         'Guild file read but gConfig contents not found. Resetting file',
@@ -192,12 +202,19 @@ export class GuildConfigManager {
   /**
    * Saves configuration to this guild's JSON file.
    * Writes the config in the new flat structure (without [guildId] wrapper).
-   * Invokes the onConfigSaved callback after successful save.
+   * Invokes onBeforeSave to collect component data, then onConfigSaved after successful save.
    * Logs a diff of changes with each save.
    */
   async saveJSON(): Promise<void> {
+    // Call onBeforeSave to allow component data collection
+    if (this.onBeforeSave) {
+      await this.onBeforeSave();
+    }
+
     const filename = GUILD_CONFIG_PATH(this.guildId);
-    const newJson = this.buildConfigJSON();
+    const newJson = this.getSaveDataAsJSON();
+
+    
 
     let diff: ReturnType<typeof jsonDiff.diff> | undefined;
     if (this.lastSavedJson !== newJson) {
@@ -222,6 +239,8 @@ export class GuildConfigManager {
       guildId: this.guildId,
       ...(diff ? {changes: diff} : {}),
     });
+    
+    // Call onConfigSaved for post-save actions (like debug channel attachment)
     if (this.onConfigSaved) {
       await this.onConfigSaved();
     }

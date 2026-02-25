@@ -46,6 +46,26 @@ export class DJMTGuild {
     this.configManager = new GuildConfigManager(guildId);
     this.components = new Map<ComponentNames, Component<unknown>>();
     this.channelManager = new GuildChannelManager(undefined);
+    
+    // Setup callback to collect component data before any save
+    this.configManager.setOnBeforeSave(async () => {
+      await this.collectComponentData();
+    });
+    
+    // Setup callback to send debug channel attachment after save
+    this.configManager.setOnConfigSaved(async () => {
+      if (this.configManager.debugMode) {
+        const debugChannel = this.getDebugChannel();
+        if (debugChannel) {
+          const attachment = new AttachmentBuilder(
+            Buffer.from(this.buildGuildConfigJSON()),
+            {name: 'config.txt'},
+          );
+          await debugChannel.send({files: [attachment]});
+        }
+      }
+    });
+    
     try {
       void this.initializeComponents()
         .then(() => {
@@ -210,32 +230,27 @@ export class DJMTGuild {
   }
 
   /**
-   * Saves data for this guild to a JSON file.
-   * Updates component data from all components, delegates to configManager for persistence.
+   * Collects component data from all components and updates the config manager.
+   * Called automatically before any save operation via the onBeforeSave callback.
+   * @private
    */
-  async saveJSON(): Promise<void> {
-    // Build the componentData by getting each component's save data
+  private async collectComponentData(): Promise<void> {
     const componentData = this.configManager.getAllComponentData();
     for (const component of this.getAllComponents()) {
       componentData[component.name] = await component.getSaveData();
     }
+    logger.info('Collected component data', {guildId: this.guildId, componentData});
     this.configManager.setAllComponentData(componentData);
+  }
 
-    // Set callback for debug channel attachment
-    this.configManager.setOnConfigSaved(async () => {
-      if (this.configManager.debugMode) {
-        const debugChannel = this.getDebugChannel();
-        if (debugChannel) {
-          const attachment = new AttachmentBuilder(
-            Buffer.from(this.buildGuildConfigJSON()),
-            {name: 'config.txt'},
-          );
-          await debugChannel.send({files: [attachment]});
-        }
-      }
-    });
-
-    // Delegate to configManager for actual saving
+  /**
+   * Saves data for this guild to a JSON file.
+   * Component data is automatically collected via the onBeforeSave callback.
+   * Delegates to configManager for persistence.
+   */
+  async saveJSON(): Promise<void> {
+    logger.info('SAVING JSON to file', {guildId: this.guildId});
+    // Delegate to configManager for actual saving (which will trigger onBeforeSave)
     await this.configManager.saveJSON();
   }
 
