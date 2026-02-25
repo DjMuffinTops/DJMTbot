@@ -46,12 +46,12 @@ export class DJMTGuild {
     this.configManager = new GuildConfigManager(guildId);
     this.components = new Map<ComponentNames, Component<unknown>>();
     this.channelManager = new GuildChannelManager(undefined);
-    
+
     // Setup callback to collect component data before any save
     this.configManager.setOnBeforeSave(async () => {
       await this.collectComponentData();
     });
-    
+
     // Setup callback to send debug channel attachment after save
     this.configManager.setOnConfigSaved(async () => {
       if (this.configManager.debugMode) {
@@ -65,7 +65,7 @@ export class DJMTGuild {
         }
       }
     });
-    
+
     try {
       void this.initializeComponents()
         .then(() => {
@@ -239,7 +239,10 @@ export class DJMTGuild {
     for (const component of this.getAllComponents()) {
       componentData[component.name] = await component.getSaveData();
     }
-    logger.info('Collected component data', {guildId: this.guildId, componentData});
+    logger.info('Collected component data', {
+      guildId: this.guildId,
+      componentData,
+    });
     this.configManager.setAllComponentData(componentData);
   }
 
