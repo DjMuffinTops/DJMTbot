@@ -149,6 +149,18 @@ export class GuildConfigManager {
   async loadJSON(): Promise<void> {
     const fileName = GUILD_CONFIG_PATH(this.guildId);
     let gConfig: GuildConfig | undefined;
+
+    // If the file doesn't exist, create it with default values
+    if (!(await FileSystem.stat(fileName).catch(() => false))) {
+      logger.info(
+        'Guild config file does not exist, creating new one with defaults',
+        {
+          guildId: this.guildId,
+        },
+      );
+      await this.resetJSON();
+    }
+    // Read and parse the existing file, supporting both new and legacy formats
     try {
       const buffer = await FileSystem.readFile(fileName);
       const parsed = JSON.parse(buffer.toString(), JSONStringifyReviver) as

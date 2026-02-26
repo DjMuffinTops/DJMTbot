@@ -95,8 +95,7 @@ export class DJMTbot {
       .filter(id => !allowedIds || allowedIds.has(id));
 
     for (const id of guildIds) {
-      const guild = new DJMTGuild(id);
-      this.guilds.set(id, guild);
+      this.createGuild(id);
     }
   }
 
@@ -114,12 +113,10 @@ export class DJMTbot {
             continue;
           }
 
-          if (!this.guilds.get(guildId)) {
-            const guild = new DJMTGuild(guildId);
-            this.guilds.set(guildId, guild);
-          }
+          this.createGuild(guildId);
         }
         this.client?.user?.setActivity('@DJMTbot for help!');
+        // Ready all guild instances
         for (const id of Array.from(this.guilds.keys())) {
           await this.guilds.get(id)?.onReady();
         }
@@ -268,6 +265,10 @@ export class DJMTbot {
     });
 
     this.client.on(Events.GuildCreate, guild => {
+      const newGuild = this.createGuild(guild.id);
+      if (newGuild) {
+        void newGuild.onReady();
+      }
       logger.info('New guild joined', {
         guildName: guild.name,
         guildId: guild.id,
@@ -283,5 +284,18 @@ export class DJMTbot {
     });
 
     await this.client.login(process.env.TOKEN);
+  }
+
+  /**
+   * Creates a guild instance for the given guild ID if it doesn't already exist.
+   * @param guildId The ID of the guild to create an instance for
+   * @returns The created DJMTGuild instance, or undefined if it already existed
+   */
+  private createGuild(guildId: string) {
+    if (!this.guilds.get(guildId)) {
+      const guild = new DJMTGuild(guildId);
+      this.guilds.set(guildId, guild);
+      return guild;
+    }
   }
 }
