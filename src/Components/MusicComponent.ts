@@ -232,6 +232,11 @@ export class MusicComponent extends Component<MusicComponentSave> {
         textChannel: interaction.channel as GuildTextBasedChannel,
         member: member,
       });
+      logger.info('Playing music', {
+        userId: interaction.member?.user.id,
+        username: interaction.member?.user.username,
+        query: query,
+      });
       await interaction.editReply('🎵 Processing your request...');
     } catch (error) {
       await interaction.editReply(
@@ -272,18 +277,12 @@ export class MusicComponent extends Component<MusicComponentSave> {
     await interaction.deferReply();
 
     try {
-      logger.info('Playing file command', {
-        userId: interaction.member?.user.id,
-        username: interaction.member?.user.username,
-        fileName: attachment.name,
-        fileUrl: attachment.url,
-      });
       // Use the Discord CDN URL to play the file
       await this.distube.play(voiceChannel, attachment.url, {
         textChannel: interaction.channel as GuildTextBasedChannel,
         member: member,
       });
-      logger.info('Successfully started playing file', {
+      logger.info('Playing music from file', {
         userId: interaction.member?.user.id,
         username: interaction.member?.user.username,
         fileName: attachment.name,
