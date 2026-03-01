@@ -65,6 +65,59 @@ Log files rotate daily and are retained for 14 days (max 20MB per file).
 pnpm start
 ```
 
+## Docker Deployment
+
+### Prerequisites
+- [Docker](https://docs.docker.com/get-docker/) installed
+- [Docker Compose](https://docs.docker.com/compose/install/) installed (usually included with Docker Desktop)
+
+### Quick Start with Docker
+
+1. **Create your `.env` file** (see Environment Variables section above)
+
+2. **Build and run with Docker Compose:**
+   ```bash
+    pnpm run docker:up
+   ```
+
+3. **View logs:**
+   ```bash
+    pnpm run docker:logs
+   ```
+
+4. **Stop the bot:**
+   ```bash
+    pnpm run docker:down
+   ```
+
+### Watch Mode (auto rebuild on file changes)
+
+Use watch mode during development to automatically sync source changes and restart quickly:
+
+```bash
+pnpm run docker:watch
+```
+
+This runs a dedicated `djmtbot-dev` service in attached mode (logs stream in the terminal).
+
+- Source, config, and JSON changes use sync + restart (faster than full rebuilds)
+- Dependency changes (`package.json`, `pnpm-lock.yaml`) trigger rebuilds
+
+Press `Ctrl+C` to stop watch mode.
+
+### Docker Configuration
+
+The Docker setup uses a multi-stage build for optimized image size:
+- **Build stage**: Compiles TypeScript code
+- **Production stage**: Runs the compiled JavaScript with production dependencies only
+
+**Features:**
+- Uses Node.js 24.13.1 Alpine (minimal image)
+- Runs as non-root user for security
+- Persistent volumes for JSON configs and logs
+- Resource limits configured in docker-compose.yml
+- Automatic restart on failure
+
 ## Creating New Features (Components)
 Visit [ExampleComponentTemplate.ts](https://github.com/DjMuffinTops/DJMTbot/blob/develop/src/ExampleComponentTemplate.ts) for an example component template. 
 

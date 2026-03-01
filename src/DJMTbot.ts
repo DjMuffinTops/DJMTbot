@@ -154,6 +154,7 @@ export class DJMTbot {
         } else {
           logger.warn('Message does not have an associated guild instance', {
             messageId: message.id,
+            messageContent: message.content,
           });
         }
       })().catch((err: unknown) =>
