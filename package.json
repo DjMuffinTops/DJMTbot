@@ -15,6 +15,10 @@
     "clean": "gts clean",
     "compile": "tsc",
     "fix": "gts fix",
+    "docker:up": "docker compose up -d",
+    "docker:watch": "docker compose --profile dev up --watch djmtbot-dev",
+    "docker:logs": "docker compose logs -f djmtbot",
+    "docker:down": "docker compose down",
     "prepare": "pnpm compile",
     "pretest": "pnpm compile",
     "posttest": "pnpm lint"
