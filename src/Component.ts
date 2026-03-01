@@ -4,6 +4,7 @@ import {
   Message,
   MessageReaction,
   SlashCommandBuilder,
+  SlashCommandOptionsOnlyBuilder,
   User,
   VoiceState,
 } from 'discord.js';
@@ -26,7 +27,7 @@ import {ComponentNames} from './Constants/ComponentNames';
 export abstract class Component<T> {
   abstract name: ComponentNames;
   djmtGuild: DJMTGuild;
-  commands: SlashCommandBuilder[] = [];
+  commands: (SlashCommandBuilder | SlashCommandOptionsOnlyBuilder)[] = [];
 
   public constructor(guild: DJMTGuild) {
     this.djmtGuild = guild;

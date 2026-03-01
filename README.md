@@ -65,6 +65,32 @@ Log files rotate daily and are retained for 14 days (max 20MB per file).
 pnpm start
 ```
 
+## Music Bot Features
+
+DJMTbot includes a full-featured music player powered by [DistTube](https://distube.js.org/):
+
+### Available Commands
+- `/play <query>` - Play a song from URL or search query
+- `/playfile <attachment>` - Play an audio file attachment (mp3, wav, ogg, flac, m4a, webm)
+- `/skip` - Skip the current song
+- `/stop` - Stop playing and clear the queue
+- `/pause` / `/resume` - Control playback
+- `/queue` - View the current queue
+- `/nowplaying` - Show current song information
+- `/volume <0-100>` - Set playback volume
+- `/loop <off/song/queue>` - Set loop mode
+- `/autoplay` - Toggle autoplay mode
+
+### Supported Sources
+With the integrated plugins, the bot can play music from:
+- **Direct Links** - Direct audio file URLs (mp3, wav, ogg, etc.)
+- **Local Files** - Audio files uploaded to Discord
+
+### Requirements
+- FFmpeg (automatically included in Docker container)
+- Bot must be in a voice channel to play music
+- Users must be in a voice channel to use music commands
+
 ## Docker Deployment
 
 ### Prerequisites
@@ -104,19 +130,6 @@ This runs a dedicated `djmtbot-dev` service in attached mode (logs stream in the
 - Dependency changes (`package.json`, `pnpm-lock.yaml`) trigger rebuilds
 
 Press `Ctrl+C` to stop watch mode.
-
-### Docker Configuration
-
-The Docker setup uses a multi-stage build for optimized image size:
-- **Build stage**: Compiles TypeScript code
-- **Production stage**: Runs the compiled JavaScript with production dependencies only
-
-**Features:**
-- Uses Node.js 24.13.1 Alpine (minimal image)
-- Runs as non-root user for security
-- Persistent volumes for JSON configs and logs
-- Resource limits configured in docker-compose.yml
-- Automatic restart on failure
 
 ## Creating New Features (Components)
 Visit [ExampleComponentTemplate.ts](https://github.com/DjMuffinTops/DJMTbot/blob/develop/src/ExampleComponentTemplate.ts) for an example component template. 
