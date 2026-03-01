@@ -25,7 +25,12 @@ To get your own bot token, [create a bot!](https://discordjs.guide/preparations/
 You may also ask me for access to the PW Test server and dev bot token on Discord!
 
 ## Create a .env file in the root directory
-Create a `.env` file in the root directory with the following environment variables:
+Create a `.env` file in the root directory. You can use `.env.example` as a template:
+```bash
+cp .env.example .env
+```
+
+Then fill in the following environment variables:
 
 ## Environment Variables
 
