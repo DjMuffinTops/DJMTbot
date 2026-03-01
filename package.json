@@ -46,6 +46,7 @@
     "luxon": "^3.7.2",
     "node-cron": "^3.0.3",
     "probe-image-size": "^7.2.3",
+    "tar": "^7.5.8",
     "tiny-typed-emitter": "^2.1.0",
     "winston": "^3.19.0",
     "winston-daily-rotate-file": "^5.0.0"
