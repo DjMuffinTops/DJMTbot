@@ -511,7 +511,9 @@ export class MusicComponent extends Component<MusicComponentSave> {
       return;
     }
 
-    const autoplay = this.distube.toggleAutoplay(interaction.guildId!);
+    const autoplay = this.distube
+      .getQueue(interaction.guildId!)
+      ?.toggleAutoplay();
     await interaction.reply(
       `🎵 Autoplay is now ${autoplay ? 'enabled' : 'disabled'}`,
     );
