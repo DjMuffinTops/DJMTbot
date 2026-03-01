@@ -44,6 +44,17 @@ export const ComponentCommands = {
   SET_NEW_USER_BAN_THRESHOLD_IN_DAYS: 'set-new-user-ban-threshold',
   TOGGLE_EVERYONE_SPAM_TIMEOUT: 'toggle-everyone-spam-timeout',
   SET_EVERYONE_SPAM_TIMEOUT_ROLES: 'set-everyone-spam-timeout-roles',
+  PLAY: 'play',
+  PLAYFILE: 'playfile',
+  SKIP: 'skip',
+  STOP: 'stop',
+  PAUSE: 'pause',
+  RESUME: 'resume',
+  QUEUE: 'queue',
+  NOWPLAYING: 'nowplaying',
+  VOLUME: 'volume',
+  LOOP: 'loop',
+  AUTOPLAY: 'autoplay',
 } as const;
 
 export type ComponentCommand =

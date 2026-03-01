@@ -10,6 +10,7 @@ import {
   VoiceState,
   Interaction,
   SlashCommandBuilder,
+  SlashCommandOptionsOnlyBuilder,
   REST,
   Routes,
 } from 'discord.js';
@@ -106,7 +107,10 @@ export class DJMTGuild {
       }
       return new ctor(guild);
     }
-    const guildCommands: SlashCommandBuilder[] = [];
+    const guildCommands: (
+      | SlashCommandBuilder
+      | SlashCommandOptionsOnlyBuilder
+    )[] = [];
     for (const className of Object.keys(components)) {
       const instance = createInstance(className, this);
       guildCommands.push(...instance.commands);
@@ -115,7 +119,6 @@ export class DJMTGuild {
 
     // Construct and prepare an instance of the REST module
     const rest = new REST().setToken(process.env.TOKEN as string);
-    // Deploy your commands!
     try {
       logger.info('Started refreshing application commands', {
         guildId: this.guildId,

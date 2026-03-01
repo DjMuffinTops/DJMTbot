@@ -17,3 +17,4 @@ export {DynamicVoiceChannels} from './DynamicVoiceChannels';
 export {AutoThreadComponent} from './AutoThreadComponent';
 export {NewUserProtection as NewUserMediaLock} from './NewUserProtection';
 export {EveryoneSpamTimeout} from './EveryoneSpamTimeout';
+export {MusicComponent} from './MusicComponent';
