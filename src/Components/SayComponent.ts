@@ -26,6 +26,7 @@ sayCommand.addStringOption(input =>
 type SayComponentSave = Record<string, unknown>;
 export class SayComponent extends Component<SayComponentSave> {
   name: ComponentNames = ComponentNames.SAY;
+  commands: SlashCommandBuilder[] = [sayCommand];
 
   async onMessageCreateWithGuildPrefix(
     _args: string[],
@@ -38,6 +39,7 @@ export class SayComponent extends Component<SayComponentSave> {
     // Split the message by spaces
     const args = sayMessage.split(' ');
     const userId = `<@${interaction.member?.user.id}>`;
+    const channel = interaction.channel;
     const deniedMsgs = [
       `Sorry ${userId}, there's a 5% chance i'll actually say that.`,
       'Reh',
@@ -52,20 +54,28 @@ export class SayComponent extends Component<SayComponentSave> {
         .toUpperCase()
         .substring(0, Math.round(sayMessage.length / 2))}-`,
     ];
-    if (!isInteractionAdmin(interaction) && Math.random() < 0.95) {
-      await interaction.reply({
+    if (
+      channel?.isSendable() &&
+      !isInteractionAdmin(interaction) &&
+      Math.random() < 0.95
+    ) {
+      await channel.send({
         content: deniedMsgs[Math.floor(Math.random() * deniedMsgs.length)],
         allowedMentions: {},
       });
       return;
     }
-    // makes the bot say something and delete the message. As an example, it's open to anyone to use.
-    // To get the "message" itself we join the `args` back into a string with spaces:
-
-    // And we get the bot to say the thing:
+    // Send a message directly to the channel through a message
+    if (channel?.isSendable()) {
+      await channel.send({
+        content: deniedMsgs[Math.floor(Math.random() * deniedMsgs.length)],
+        allowedMentions: {},
+      });
+    }
     await interaction.reply({
-      content: sayMessage.length ? sayMessage : "You didn't say anything! >:(",
+      content: 'Message sent!',
       allowedMentions: {},
+      flags: ['Ephemeral'],
     });
   }
 
