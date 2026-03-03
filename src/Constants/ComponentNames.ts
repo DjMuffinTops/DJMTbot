@@ -22,4 +22,5 @@ export enum ComponentNames {
   EVERYONE_SPAM_TIMEOUT = 'EVERYONE_SPAM_TIMEOUT',
   DOG_FACTS = 'DOG_FACTS',
   CAT_FACTS = 'CAT_FACTS',
+  MUSIC = 'MUSIC',
 }

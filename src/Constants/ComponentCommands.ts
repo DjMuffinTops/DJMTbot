@@ -46,6 +46,17 @@ export const ComponentCommands = {
   SET_EVERYONE_SPAM_TIMEOUT_ROLES: 'set-everyone-spam-timeout-roles',
   DOG_FACT: 'dogfact',
   CAT_FACT: 'catfact',
+  PLAY: 'play',
+  PLAYFILE: 'playfile',
+  SKIP: 'skip',
+  STOP: 'stop',
+  PAUSE: 'pause',
+  RESUME: 'resume',
+  QUEUE: 'queue',
+  NOWPLAYING: 'nowplaying',
+  VOLUME: 'volume',
+  LOOP: 'loop',
+  AUTOPLAY: 'autoplay',
 } as const;
 
 export type ComponentCommand =

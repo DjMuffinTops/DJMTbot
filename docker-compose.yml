@@ -1,0 +1,78 @@
+services:
+  djmtbot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: djmtbot:latest
+    container_name: djmtbot
+    restart: unless-stopped
+    
+    # Environment variables from .env file
+    env_file:
+      - .env
+    
+    # Optional: Mount JSON config for persistence
+    volumes:
+      - ./json:/app/json
+      - ./logs:/app/logs
+    
+    # Resource limits (adjust as needed)
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    
+    # Healthcheck (optional - adjust if you have a health endpoint)
+    # healthcheck:
+    #   test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health')"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 40s
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  djmtbot-dev:
+    profiles:
+      - dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    image: djmtbot:dev
+    container_name: djmtbot-dev
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    command: pnpm start
+
+    volumes:
+      - ./json:/app/json
+      - ./logs:/app/logs
+
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./src
+          target: /app/src
+        - action: sync+restart
+          path: ./tsconfig.json
+          target: /app/tsconfig.json
+        - action: sync+restart
+          path: ./json
+          target: /app/json
+        - action: rebuild
+          path: ./package.json
+        - action: rebuild
+          path: ./pnpm-lock.yaml
