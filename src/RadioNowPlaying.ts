@@ -262,8 +262,8 @@ export function buildRadioNowPlayingEmbed(
   };
 
   addField('Track', nowPlaying.title, false);
-  addField('Artist', nowPlaying.artist);
   addField('Album', nowPlaying.metadataPayload.album);
+  addField('Artist', nowPlaying.artist);
   addField(
     'Track Length',
     formatDurationFromMetadata(
