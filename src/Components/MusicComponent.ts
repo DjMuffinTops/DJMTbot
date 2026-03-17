@@ -113,7 +113,6 @@ type MusicComponentSave = {
 type IcecastSource = {
   listenurl?: string;
   title?: string;
-  song?: string;
   artist?: string;
 };
 
@@ -121,6 +120,77 @@ type IcecastStatusResponse = {
   icestats?: {
     source?: IcecastSource | IcecastSource[];
   };
+};
+
+export type StreamMetadataPayload = {
+  artist: string;
+  albumartist: string;
+  title: string;
+  album: string;
+  pretty: string;
+  year: string;
+  date: string;
+  track: string;
+  tracknumber: string;
+  disc: string;
+  discnumber: string;
+  duration: string;
+  length: string;
+  tracklength: string;
+  track_length: string;
+};
+
+const EMPTY_STREAM_METADATA: StreamMetadataPayload = {
+  artist: '',
+  albumartist: '',
+  title: '',
+  album: '',
+  pretty: '',
+  year: '',
+  date: '',
+  track: '',
+  tracknumber: '',
+  disc: '',
+  discnumber: '',
+  duration: '',
+  length: '',
+  tracklength: '',
+  track_length: '',
+};
+
+export function parseStreamMetadataPayload(
+  rawTitle: string | null | undefined,
+): StreamMetadataPayload {
+  if (!rawTitle) return EMPTY_STREAM_METADATA;
+
+  const params = new URLSearchParams(rawTitle);
+
+  return {
+    artist: params.get('artist') ?? '',
+    albumartist: params.get('albumartist') ?? '',
+    title: params.get('title') ?? '',
+    album: params.get('album') ?? '',
+    pretty: params.get('pretty') ?? '',
+    year: params.get('year') ?? '',
+    date: params.get('date') ?? '',
+    track: params.get('track') ?? '',
+    tracknumber: params.get('tracknumber') ?? '',
+    disc: params.get('disc') ?? '',
+    discnumber: params.get('discnumber') ?? '',
+    duration: params.get('duration') ?? '',
+    length: params.get('length') ?? '',
+    tracklength: params.get('tracklength') ?? '',
+    track_length: params.get('track_length') ?? '',
+  };
+}
+
+type RadioNowPlayingInfo = {
+  title: string | null;
+  artist: string | null;
+  rawTitle: string | null;
+  listenUrl: string | null;
+  mountPath: string | null;
+  metadataPayload: StreamMetadataPayload;
 };
 
 export class MusicComponent extends Component<MusicComponentSave> {
@@ -344,7 +414,6 @@ export class MusicComponent extends Component<MusicComponentSave> {
       });
       return;
     }
-
     await interaction.deferReply();
 
     const playOptions = {
@@ -403,7 +472,37 @@ export class MusicComponent extends Component<MusicComponentSave> {
     }
   }
 
-  private async fetchRadioNowPlaying(): Promise<string | null> {
+  private formatDurationFromMetadata(raw: string): string | null {
+    const value = raw.trim();
+    if (!value) {
+      return null;
+    }
+
+    // If upstream already sends a human-readable value, keep it.
+    if (value.includes(':')) {
+      return value;
+    }
+
+    const totalMs = Number(value);
+    if (!Number.isFinite(totalMs) || totalMs < 0) {
+      return value;
+    }
+
+    const totalSeconds = Math.floor(totalMs / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds
+        .toString()
+        .padStart(2, '0')}`;
+    }
+
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  private async fetchRadioNowPlaying(): Promise<RadioNowPlayingInfo | null> {
     const primaryMount = this.getPathFromUrl(this.radioPrimaryUrl);
     const fallbackMount = this.getPathFromUrl(this.radioFallbackUrl);
 
@@ -411,7 +510,6 @@ export class MusicComponent extends Component<MusicComponentSave> {
       return null;
     }
 
-    const mounts = new Set([primaryMount, fallbackMount]);
     const {body, statusCode} = await request(this.radioStatusUrl, {
       method: 'GET',
     });
@@ -429,32 +527,45 @@ export class MusicComponent extends Component<MusicComponentSave> {
         ? [sourceField]
         : [];
 
-    const selectedSource =
+    const getSourceByMount = (mount: string): IcecastSource | undefined =>
       sources.find(source => {
         if (!source.listenurl) {
           return false;
         }
-        const mountPath = this.getPathFromUrl(source.listenurl);
-        return mountPath ? mounts.has(mountPath) : false;
-      }) ?? sources[0];
+        return this.getPathFromUrl(source.listenurl) === mount;
+      });
+
+    // Prioritize metadata from the OGG mount first, then MP3 fallback.
+    const selectedSource =
+      getSourceByMount(primaryMount) ??
+      getSourceByMount(fallbackMount) ??
+      sources[0];
 
     if (!selectedSource) {
       return null;
     }
 
-    if (selectedSource.artist?.trim() && selectedSource.title?.trim()) {
-      return `${selectedSource.artist.trim()} - ${selectedSource.title.trim()}`;
-    }
+    const rawTitle = selectedSource.title?.trim() || null;
+    const metadataPayload = parseStreamMetadataPayload(rawTitle);
+    const title = metadataPayload.title || rawTitle || null;
+    const artist =
+      metadataPayload.artist || selectedSource.artist?.trim() || null;
+    const listenUrl = selectedSource.listenurl?.trim() || null;
+    const mountPath = listenUrl ? this.getPathFromUrl(listenUrl) : null;
 
-    if (selectedSource.title?.trim()) {
-      return selectedSource.title.trim();
-    }
+    logger.info('Fetched radio now playing metadata', {
+      statusUrl: this.radioStatusUrl,
+      selectedSource,
+    });
 
-    if (selectedSource.song?.trim()) {
-      return selectedSource.song.trim();
-    }
-
-    return null;
+    return {
+      title,
+      artist,
+      rawTitle,
+      listenUrl,
+      mountPath,
+      metadataPayload,
+    };
   }
 
   private async radioNowPlayingCmd(interaction: ChatInputCommandInteraction) {
@@ -470,9 +581,56 @@ export class MusicComponent extends Component<MusicComponentSave> {
         return;
       }
 
-      await interaction.editReply(
-        `📻 DJMuffinTops radio now playing: **${nowPlaying}**`,
+      const fields: {name: string; value: string; inline: boolean}[] = [];
+      const addField = (name: string, value: string | null, inline = true) => {
+        const trimmedValue = value?.trim();
+        if (!trimmedValue) {
+          return;
+        }
+        fields.push({name, value: trimmedValue, inline});
+      };
+
+      addField('Track', nowPlaying.title, false);
+      addField('Album', nowPlaying.metadataPayload.album);
+      addField('Artist', nowPlaying.artist);
+      addField(
+        'Track Length',
+        this.formatDurationFromMetadata(
+          nowPlaying.metadataPayload.duration ||
+            nowPlaying.metadataPayload.tracklength ||
+            nowPlaying.metadataPayload.track_length ||
+            nowPlaying.metadataPayload.length,
+        ),
       );
+      addField('Album Artist', nowPlaying.metadataPayload.albumartist);
+      addField('Year', nowPlaying.metadataPayload.year);
+      addField('Date', nowPlaying.metadataPayload.date);
+      addField(
+        'Disc Number',
+        nowPlaying.metadataPayload.discnumber ||
+          nowPlaying.metadataPayload.disc,
+      );
+      addField(
+        'Track Number',
+        nowPlaying.metadataPayload.tracknumber ||
+          nowPlaying.metadataPayload.track,
+      );
+      addField('Mount', nowPlaying.mountPath);
+
+      const embed = new EmbedBuilder()
+        .setColor('#0099ff')
+        .setTitle('📻 DJMuffinTops Radio')
+        .setFooter({text: `Source: ${this.radioStatusUrl}`});
+
+      if (fields.length > 0) {
+        embed.addFields(fields);
+      }
+
+      if (nowPlaying.listenUrl) {
+        embed.setURL(nowPlaying.listenUrl);
+      }
+
+      await interaction.editReply({embeds: [embed]});
     } catch (error) {
       logger.warn('Failed to fetch radio now playing metadata', {
         userId: interaction.member?.user.id,
