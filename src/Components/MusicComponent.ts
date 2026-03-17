@@ -285,6 +285,12 @@ export class MusicComponent extends Component<MusicComponentSave> {
       });
       await interaction.editReply('🎵 Processing your request...');
     } catch (error) {
+      logger.error('Error playing music', {
+        userId: interaction.member?.user.id,
+        username: interaction.member?.user.username,
+        query: query,
+        error,
+      });
       await interaction.editReply(
         `❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -336,6 +342,12 @@ export class MusicComponent extends Component<MusicComponentSave> {
       });
       await interaction.editReply(`🎵 Playing file: **${attachment.name}**`);
     } catch (error) {
+      logger.error('Error playing music from file', {
+        userId: interaction.member?.user.id,
+        username: interaction.member?.user.username,
+        fileName: attachment.name,
+        error,
+      });
       await interaction.editReply(
         `❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );

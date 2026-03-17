@@ -1,7 +1,7 @@
 import {Client, EmbedBuilder} from 'discord.js';
 import {DisTube, Events as DistubeEvents, Playlist, Queue, Song} from 'distube';
-import {DirectLinkPlugin} from '@distube/direct-link';
 import {FilePlugin} from '@distube/file';
+import {IcecastDirectLinkPlugin} from './Components/plugins/IcecastDirectLinkPlugin';
 import {logger} from './Logger';
 
 export class DisTubeManager {
@@ -12,7 +12,7 @@ export class DisTubeManager {
       emitNewSongOnly: true,
       emitAddSongWhenCreatingQueue: false,
       emitAddListWhenCreatingQueue: false,
-      plugins: [new FilePlugin(), new DirectLinkPlugin()],
+      plugins: [new FilePlugin(), new IcecastDirectLinkPlugin()],
     });
 
     this.setupEvents();
