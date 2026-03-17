@@ -36,6 +36,10 @@ const stopCommand = new SlashCommandBuilder()
   .setName(ComponentCommands.STOP)
   .setDescription('Stop playing and clear the queue');
 
+const leaveCommand = new SlashCommandBuilder()
+  .setName(ComponentCommands.LEAVE)
+  .setDescription('Stop, clear queue, and disconnect from voice channel');
+
 const pauseCommand = new SlashCommandBuilder()
   .setName(ComponentCommands.PAUSE)
   .setDescription('Pause the current song');
@@ -102,6 +106,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
     playFileCommand,
     skipCommand,
     stopCommand,
+    leaveCommand,
     pauseCommand,
     resumeCommand,
     queueCommand,
@@ -186,6 +191,9 @@ export class MusicComponent extends Component<MusicComponentSave> {
         break;
       case ComponentCommands.STOP:
         await this.stopCmd(interaction);
+        break;
+      case ComponentCommands.LEAVE:
+        await this.leaveCmd(interaction);
         break;
       case ComponentCommands.PAUSE:
         await this.pauseCmd(interaction);
@@ -329,6 +337,34 @@ export class MusicComponent extends Component<MusicComponentSave> {
     try {
       await this.distube.stop(interaction.guildId!);
       await interaction.reply('⏹️ Stopped playing and cleared the queue');
+    } catch (error) {
+      await interaction.reply({
+        content: `❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        flags: ['Ephemeral'],
+      });
+    }
+  }
+
+  private async leaveCmd(interaction: ChatInputCommandInteraction) {
+    const guildId = interaction.guildId;
+    if (!guildId) {
+      await interaction.reply({
+        content: '❌ This command can only be used in a server.',
+        flags: ['Ephemeral'],
+      });
+      return;
+    }
+
+    const queue = this.distube.getQueue(guildId);
+
+    try {
+      if (queue) {
+        await this.distube.stop(guildId);
+      }
+      this.distube.voices.leave(guildId);
+      await interaction.reply(
+        '👋 Left the voice channel and cleared the queue',
+      );
     } catch (error) {
       await interaction.reply({
         content: `❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`,

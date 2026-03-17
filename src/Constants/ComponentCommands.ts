@@ -50,6 +50,7 @@ export const ComponentCommands = {
   PLAYFILE: 'playfile',
   SKIP: 'skip',
   STOP: 'stop',
+  LEAVE: 'leave',
   PAUSE: 'pause',
   RESUME: 'resume',
   QUEUE: 'queue',
