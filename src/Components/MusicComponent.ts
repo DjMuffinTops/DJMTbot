@@ -355,7 +355,9 @@ export class MusicComponent extends Component<MusicComponentSave> {
       });
       return;
     }
-    await interaction.deferReply();
+    await interaction.deferReply({
+      flags: silenceMessages ? ['Ephemeral'] : undefined,
+    });
 
     const playOptions = {
       textChannel: interaction.channel as GuildTextBasedChannel,
@@ -378,7 +380,13 @@ export class MusicComponent extends Component<MusicComponentSave> {
         url: this.radioPrimaryUrl,
         silenceMessages,
       });
-      await interaction.deleteReply();
+      if (silenceMessages) {
+        await interaction.editReply(
+          '🎵 Playing radio with now-playing messages silenced.',
+        );
+      } else {
+        await interaction.deleteReply();
+      }
       return;
     } catch (primaryError) {
       logger.warn('Primary radio stream failed, attempting fallback', {
@@ -404,7 +412,13 @@ export class MusicComponent extends Component<MusicComponentSave> {
         url: this.radioFallbackUrl,
         silenceMessages,
       });
-      await interaction.deleteReply();
+      if (silenceMessages) {
+        await interaction.editReply(
+          '🎵 Playing radio with now-playing messages silenced.',
+        );
+      } else {
+        await interaction.deleteReply();
+      }
     } catch (fallbackError) {
       logger.error('Radio stream failed for both primary and fallback URLs', {
         userId: interaction.member?.user.id,
