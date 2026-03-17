@@ -186,9 +186,9 @@ export class MusicComponent extends Component<MusicComponentSave> {
     if (this.volumePreference === null) {
       return;
     }
-
+    const queue = this.distube.getQueue(this.djmtGuild.guildId);
     try {
-      this.distube.setVolume(this.djmtGuild.guildId, this.volumePreference);
+      queue?.setVolume(this.volumePreference);
       logger.info('Applied saved volume setting', {
         guildId: this.djmtGuild.guildId,
         volume: this.volumePreference,
@@ -673,7 +673,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
       return;
     }
 
-    await this.distube.pause(interaction.guildId!);
+    await queue.pause();
     await interaction.reply('⏸️ Paused the current song');
   }
 
@@ -695,7 +695,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
       return;
     }
 
-    await this.distube.resume(interaction.guildId!);
+    await queue.resume();
     await interaction.reply('▶️ Resumed the current song');
   }
 
@@ -821,7 +821,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
       return;
     }
 
-    this.distube.setVolume(guildId, volume);
+    queue.setVolume(volume);
     this.volumePreference = volume;
     await this.djmtGuild.saveJSON();
     await interaction.reply(`🔊 Volume set to ${volume}%`);
@@ -849,7 +849,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
       modeText = 'Queue';
     }
 
-    this.distube.setRepeatMode(interaction.guildId!, repeatMode);
+    queue.setRepeatMode(repeatMode);
     await interaction.reply(`🔁 Loop mode set to: ${modeText}`);
   }
 
