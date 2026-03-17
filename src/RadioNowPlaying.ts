@@ -1,9 +1,11 @@
 import {EmbedBuilder} from 'discord.js';
 import {request} from 'undici';
+import {logger} from './Logger';
 
 export const RADIO_PRIMARY_URL = 'https://radio.djmuffintops.com/RoluFM.ogg';
 export const RADIO_FALLBACK_URL = 'https://radio.djmuffintops.com/RoluFM.mp3';
-export const RADIO_STATUS_URL = 'https://radio.djmuffintops.com/status-json.xsl';
+export const RADIO_STATUS_URL =
+  'https://radio.djmuffintops.com/status-json.xsl';
 
 type IcecastSource = {
   listenurl?: string;
@@ -96,11 +98,29 @@ export function parseStreamMetadataPayload(
   };
 }
 
+function hasAnyMetadataValue(payload: StreamMetadataPayload): boolean {
+  return Object.values(payload).some(value => value.trim().length > 0);
+}
+
+function isQueryStringLike(value: string): boolean {
+  return value.includes('=') && value.includes('&');
+}
+
 export function getPathFromUrl(url: string): string | null {
   try {
     return new URL(url).pathname.toLowerCase();
   } catch {
     return null;
+  }
+}
+
+function stripPortFromUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    parsed.port = '';
+    return `${parsed.protocol}//${parsed.host}${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return url;
   }
 }
 
@@ -197,11 +217,26 @@ export async function fetchRadioNowPlaying(
     return null;
   }
 
+  logger.info('Fetched radio now-playing info', {
+    selectedSource,
+  });
+
   const rawTitle = selectedSource.title?.trim() || null;
   const metadataPayload = parseStreamMetadataPayload(rawTitle);
-  const title = metadataPayload.title || rawTitle || null;
-  const artist = metadataPayload.artist || selectedSource.artist?.trim() || null;
-  const listenUrl = selectedSource.listenurl?.trim() || null;
+  const metadataTitle =
+    metadataPayload.title || metadataPayload.pretty || metadataPayload.track;
+  const rawTitleFallback =
+    rawTitle &&
+    (!isQueryStringLike(rawTitle) || hasAnyMetadataValue(metadataPayload))
+      ? rawTitle
+      : null;
+  const title = metadataTitle || rawTitleFallback || null;
+  const artist =
+    metadataPayload.artist || selectedSource.artist?.trim() || null;
+  // Icecast currently reports an incorrect port in listenurl; drop only the port.
+  const listenUrl = selectedSource.listenurl?.trim()
+    ? stripPortFromUrl(selectedSource.listenurl.trim())
+    : null;
   const mountPath = listenUrl ? getPathFromUrl(listenUrl) : null;
 
   return {
@@ -216,7 +251,6 @@ export async function fetchRadioNowPlaying(
 
 export function buildRadioNowPlayingEmbed(
   nowPlaying: RadioNowPlayingInfo,
-  statusUrl: string,
 ): EmbedBuilder {
   const fields: {name: string; value: string; inline: boolean}[] = [];
   const addField = (name: string, value: string | null, inline = true) => {
@@ -254,8 +288,8 @@ export function buildRadioNowPlayingEmbed(
 
   const embed = new EmbedBuilder()
     .setColor('#0099ff')
-    .setTitle('📻 DJMuffinTops Radio')
-    .setFooter({text: `Source: ${statusUrl}`});
+    .setTitle('📻 DjMuffinTops Radio')
+    .setFooter({text: `${nowPlaying.listenUrl}`});
 
   if (fields.length > 0) {
     embed.addFields(fields);
@@ -281,5 +315,5 @@ export async function buildRadioNowPlayingEmbedForSong(
     return null;
   }
 
-  return buildRadioNowPlayingEmbed(radioNowPlaying, config.statusUrl);
+  return buildRadioNowPlayingEmbed(radioNowPlaying);
 }

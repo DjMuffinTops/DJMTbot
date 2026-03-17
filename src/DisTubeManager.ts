@@ -4,17 +4,15 @@ import {FilePlugin} from '@distube/file';
 import {IcecastDirectLinkPlugin} from './Components/plugins/IcecastDirectLinkPlugin';
 import {logger} from './Logger';
 import {
-  buildRadioNowPlayingEmbedForSong,
   RADIO_FALLBACK_URL,
   RADIO_PRIMARY_URL,
-  RADIO_STATUS_URL,
+  isRadioStreamUrl,
 } from './RadioNowPlaying';
 
 export class DisTubeManager {
   readonly player: DisTube;
   private readonly radioPrimaryUrl = RADIO_PRIMARY_URL;
   private readonly radioFallbackUrl = RADIO_FALLBACK_URL;
-  private readonly radioStatusUrl = RADIO_STATUS_URL;
 
   constructor(client: Client) {
     this.player = new DisTube(client, {
@@ -84,37 +82,26 @@ export class DisTubeManager {
   }
 
   private async sendNowPlayingEmbed(queue: Queue, song: Song): Promise<void> {
-    try {
-      const radioEmbed = await buildRadioNowPlayingEmbedForSong(song.url, {
-        primaryUrl: this.radioPrimaryUrl,
-        fallbackUrl: this.radioFallbackUrl,
-        statusUrl: this.radioStatusUrl,
-      });
-      if (radioEmbed) {
-        await queue.textChannel?.send({embeds: [radioEmbed]});
-        return;
-      }
-    } catch (error) {
-      logger.warn('Failed to fetch radio metadata for PLAY_SONG event', {
-        songUrl: song.url,
-        statusUrl: this.radioStatusUrl,
-        error,
-      });
+    if (
+      isRadioStreamUrl(song.url, this.radioPrimaryUrl, this.radioFallbackUrl)
+    ) {
+      // Radio now-playing embeds are managed by MusicComponent polling.
+      return;
     }
 
-      const embed = new EmbedBuilder()
-        .setColor('#0099ff')
-        .setTitle('🎵 Now Playing')
-        .setDescription(`[${song.name}](${song.url})`)
-        .addFields(
-          {name: 'Duration', value: song.formattedDuration, inline: true},
-          {
-            name: 'Requested by',
-            value: song.user?.toString() ?? 'Unknown',
-            inline: true,
-          },
-        )
-        .setThumbnail(song.thumbnail ?? null);
+    const embed = new EmbedBuilder()
+      .setColor('#0099ff')
+      .setTitle('🎵 Now Playing')
+      .setDescription(`[${song.name}](${song.url})`)
+      .addFields(
+        {name: 'Duration', value: song.formattedDuration, inline: true},
+        {
+          name: 'Requested by',
+          value: song.user?.toString() ?? 'Unknown',
+          inline: true,
+        },
+      )
+      .setThumbnail(song.thumbnail ?? null);
 
     await queue.textChannel?.send({embeds: [embed]});
   }

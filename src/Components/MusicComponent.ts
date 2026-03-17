@@ -17,7 +17,10 @@ import {ComponentNames} from '../Constants/ComponentNames';
 import {DJMTbot} from '../DJMTbot';
 import {logger} from '../Logger';
 import {
+  buildRadioNowPlayingEmbed,
   buildRadioNowPlayingEmbedForSong,
+  fetchRadioNowPlaying,
+  isRadioStreamUrl,
   RADIO_FALLBACK_URL,
   RADIO_PRIMARY_URL,
   RADIO_STATUS_URL,
@@ -36,7 +39,12 @@ const playCommand = new SlashCommandBuilder()
 
 const radioCommand = new SlashCommandBuilder()
   .setName(ComponentCommands.RADIO)
-  .setDescription('Play DJMuffinTops radio');
+  .setDescription('Play DJMuffinTops radio')
+  .addBooleanOption(option =>
+    option
+      .setName('silencemessages')
+      .setDescription('Disable periodic radio now-playing messages'),
+  );
 
 const skipCommand = new SlashCommandBuilder()
   .setName(ComponentCommands.SKIP)
@@ -111,11 +119,22 @@ type MusicComponentSave = {
   volume: number | null;
 };
 
+type RadioPollingState = {
+  lastTrackSignature: string | null;
+  lastNowPlayingMessageId: string | null;
+};
+
 export class MusicComponent extends Component<MusicComponentSave> {
+  private readonly radioNowPlayingPollIntervalMs = 10000;
   private readonly radioPrimaryUrl = RADIO_PRIMARY_URL;
   private readonly radioFallbackUrl = RADIO_FALLBACK_URL;
   private readonly radioStatusUrl = RADIO_STATUS_URL;
   private volumePreference: number | null = null;
+  private radioPollInterval: NodeJS.Timeout | null = null;
+  private radioPollingState: RadioPollingState = {
+    lastTrackSignature: null,
+    lastNowPlayingMessageId: null,
+  };
 
   name: ComponentNames = ComponentNames.MUSIC;
   commands = [
@@ -317,6 +336,17 @@ export class MusicComponent extends Component<MusicComponentSave> {
   private async radioCmd(interaction: ChatInputCommandInteraction) {
     const member = interaction.member as GuildMember;
     const voiceChannel = member?.voice.channel;
+    const guildId = interaction.guildId;
+    const silenceMessages =
+      interaction.options.getBoolean('silencemessages') ?? false;
+
+    if (!guildId) {
+      await interaction.reply({
+        content: '❌ This command can only be used in a server.',
+        flags: ['Ephemeral'],
+      });
+      return;
+    }
 
     if (!voiceChannel) {
       await interaction.reply({
@@ -332,13 +362,21 @@ export class MusicComponent extends Component<MusicComponentSave> {
       member: member,
     };
 
+    this.stopRadioNowPlayingPolling();
+
     try {
       await this.distube.play(voiceChannel, this.radioPrimaryUrl, playOptions);
       this.applySavedVolumePreference();
+      if (!silenceMessages && interaction.channel) {
+        this.startRadioNowPlayingPolling(
+          interaction.channel as GuildTextBasedChannel,
+        );
+      }
       logger.info('Playing radio stream', {
         userId: interaction.member?.user.id,
         username: interaction.member?.user.username,
         url: this.radioPrimaryUrl,
+        silenceMessages,
       });
       await interaction.deleteReply();
       return;
@@ -355,10 +393,16 @@ export class MusicComponent extends Component<MusicComponentSave> {
     try {
       await this.distube.play(voiceChannel, this.radioFallbackUrl, playOptions);
       this.applySavedVolumePreference();
+      if (!silenceMessages && interaction.channel) {
+        this.startRadioNowPlayingPolling(
+          interaction.channel as GuildTextBasedChannel,
+        );
+      }
       logger.info('Playing fallback radio stream', {
         userId: interaction.member?.user.id,
         username: interaction.member?.user.username,
         url: this.radioFallbackUrl,
+        silenceMessages,
       });
       await interaction.deleteReply();
     } catch (fallbackError) {
@@ -372,6 +416,99 @@ export class MusicComponent extends Component<MusicComponentSave> {
       await interaction.editReply(
         `❌ Could not start radio stream. ${fallbackError instanceof Error ? fallbackError.message : 'Unknown error'}`,
       );
+    }
+  }
+
+  private startRadioNowPlayingPolling(
+    textChannel: GuildTextBasedChannel,
+  ): void {
+    this.stopRadioNowPlayingPolling();
+    this.radioPollingState = {
+      lastTrackSignature: null,
+      lastNowPlayingMessageId: null,
+    };
+
+    void this.pollAndSendRadioNowPlaying(textChannel);
+
+    this.radioPollInterval = setInterval(() => {
+      void this.pollAndSendRadioNowPlaying(textChannel);
+    }, this.radioNowPlayingPollIntervalMs);
+  }
+
+  private stopRadioNowPlayingPolling(): void {
+    if (this.radioPollInterval) {
+      clearInterval(this.radioPollInterval);
+      this.radioPollInterval = null;
+    }
+    this.radioPollingState = {
+      lastTrackSignature: null,
+      lastNowPlayingMessageId: null,
+    };
+  }
+
+  private async pollAndSendRadioNowPlaying(
+    textChannel: GuildTextBasedChannel,
+  ): Promise<void> {
+    const queue = this.distube.getQueue(this.djmtGuild.guildId);
+    const currentSong = queue?.songs[0];
+
+    if (
+      !currentSong ||
+      !isRadioStreamUrl(
+        currentSong.url,
+        this.radioPrimaryUrl,
+        this.radioFallbackUrl,
+      )
+    ) {
+      this.stopRadioNowPlayingPolling();
+      return;
+    }
+
+    try {
+      const nowPlaying = await fetchRadioNowPlaying({
+        primaryUrl: this.radioPrimaryUrl,
+        fallbackUrl: this.radioFallbackUrl,
+        statusUrl: this.radioStatusUrl,
+      });
+
+      if (!nowPlaying) {
+        return;
+      }
+
+      const nextSignature = JSON.stringify({
+        title: nowPlaying.title,
+        artist: nowPlaying.artist,
+        rawTitle: nowPlaying.rawTitle,
+        listenUrl: nowPlaying.listenUrl,
+      });
+      const state = this.radioPollingState;
+
+      const previousSignature = state.lastTrackSignature;
+      if (previousSignature === nextSignature) {
+        return;
+      }
+
+      const embed = buildRadioNowPlayingEmbed(nowPlaying);
+      const sentMessage = await textChannel.send({embeds: [embed]});
+
+      const previousMessageId = state.lastNowPlayingMessageId;
+      if (previousMessageId && previousMessageId !== sentMessage.id) {
+        await textChannel.messages
+          .fetch(previousMessageId)
+          .then(message => message.delete())
+          .catch(() => {});
+      }
+
+      this.radioPollingState = {
+        lastTrackSignature: nextSignature,
+        lastNowPlayingMessageId: sentMessage.id,
+      };
+    } catch (error) {
+      logger.warn('Failed polling radio now-playing metadata', {
+        guildId: this.djmtGuild.guildId,
+        statusUrl: this.radioStatusUrl,
+        error,
+      });
     }
   }
 
@@ -465,6 +602,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
 
     try {
       await this.distube.stop(interaction.guildId!);
+      this.stopRadioNowPlayingPolling();
       await interaction.reply('⏹️ Stopped playing and cleared the queue');
     } catch (error) {
       await interaction.reply({
@@ -491,6 +629,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
         await this.distube.stop(guildId);
       }
       this.distube.voices.leave(guildId);
+      this.stopRadioNowPlayingPolling();
       await interaction.reply(
         '👋 Left the voice channel and cleared the queue',
       );
