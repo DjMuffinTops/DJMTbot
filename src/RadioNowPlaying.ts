@@ -217,7 +217,7 @@ export async function fetchRadioNowPlaying(
     return null;
   }
 
-  logger.info('Fetched radio now-playing info', {
+  logger.debug('Fetched radio now-playing info', {
     selectedSource,
   });
 
