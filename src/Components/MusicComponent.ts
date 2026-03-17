@@ -10,13 +10,18 @@ import {
   EmbedBuilder,
   GuildTextBasedChannel,
 } from 'discord.js';
-import {request} from 'undici';
 import {DisTube, Song} from 'distube';
 import {ComponentCommands} from '../Constants/ComponentCommands';
 import {Component} from '../Component';
 import {ComponentNames} from '../Constants/ComponentNames';
 import {DJMTbot} from '../DJMTbot';
 import {logger} from '../Logger';
+import {
+  buildRadioNowPlayingEmbedForSong,
+  RADIO_FALLBACK_URL,
+  RADIO_PRIMARY_URL,
+  RADIO_STATUS_URL,
+} from '../RadioNowPlaying';
 
 // Command builders
 const playCommand = new SlashCommandBuilder()
@@ -32,10 +37,6 @@ const playCommand = new SlashCommandBuilder()
 const radioCommand = new SlashCommandBuilder()
   .setName(ComponentCommands.RADIO)
   .setDescription('Play DJMuffinTops radio');
-
-const radioNowPlayingCommand = new SlashCommandBuilder()
-  .setName(ComponentCommands.RADIO_NOWPLAYING)
-  .setDescription('Show what is currently playing on DJMuffinTops radio');
 
 const skipCommand = new SlashCommandBuilder()
   .setName(ComponentCommands.SKIP)
@@ -110,103 +111,16 @@ type MusicComponentSave = {
   volume: number | null;
 };
 
-type IcecastSource = {
-  listenurl?: string;
-  title?: string;
-  artist?: string;
-};
-
-type IcecastStatusResponse = {
-  icestats?: {
-    source?: IcecastSource | IcecastSource[];
-  };
-};
-
-export type StreamMetadataPayload = {
-  artist: string;
-  albumartist: string;
-  title: string;
-  album: string;
-  pretty: string;
-  year: string;
-  date: string;
-  track: string;
-  tracknumber: string;
-  disc: string;
-  discnumber: string;
-  duration: string;
-  length: string;
-  tracklength: string;
-  track_length: string;
-};
-
-const EMPTY_STREAM_METADATA: StreamMetadataPayload = {
-  artist: '',
-  albumartist: '',
-  title: '',
-  album: '',
-  pretty: '',
-  year: '',
-  date: '',
-  track: '',
-  tracknumber: '',
-  disc: '',
-  discnumber: '',
-  duration: '',
-  length: '',
-  tracklength: '',
-  track_length: '',
-};
-
-export function parseStreamMetadataPayload(
-  rawTitle: string | null | undefined,
-): StreamMetadataPayload {
-  if (!rawTitle) return EMPTY_STREAM_METADATA;
-
-  const params = new URLSearchParams(rawTitle);
-
-  return {
-    artist: params.get('artist') ?? '',
-    albumartist: params.get('albumartist') ?? '',
-    title: params.get('title') ?? '',
-    album: params.get('album') ?? '',
-    pretty: params.get('pretty') ?? '',
-    year: params.get('year') ?? '',
-    date: params.get('date') ?? '',
-    track: params.get('track') ?? '',
-    tracknumber: params.get('tracknumber') ?? '',
-    disc: params.get('disc') ?? '',
-    discnumber: params.get('discnumber') ?? '',
-    duration: params.get('duration') ?? '',
-    length: params.get('length') ?? '',
-    tracklength: params.get('tracklength') ?? '',
-    track_length: params.get('track_length') ?? '',
-  };
-}
-
-type RadioNowPlayingInfo = {
-  title: string | null;
-  artist: string | null;
-  rawTitle: string | null;
-  listenUrl: string | null;
-  mountPath: string | null;
-  metadataPayload: StreamMetadataPayload;
-};
-
 export class MusicComponent extends Component<MusicComponentSave> {
-  private readonly radioPrimaryUrl =
-    'https://radio.djmuffintops.com/RoluFM.ogg';
-  private readonly radioFallbackUrl =
-    'https://radio.djmuffintops.com/RoluFM.mp3';
-  private readonly radioStatusUrl =
-    'https://radio.djmuffintops.com/status-json.xsl';
+  private readonly radioPrimaryUrl = RADIO_PRIMARY_URL;
+  private readonly radioFallbackUrl = RADIO_FALLBACK_URL;
+  private readonly radioStatusUrl = RADIO_STATUS_URL;
   private volumePreference: number | null = null;
 
   name: ComponentNames = ComponentNames.MUSIC;
   commands = [
     playCommand,
     radioCommand,
-    radioNowPlayingCommand,
     playFileCommand,
     skipCommand,
     stopCommand,
@@ -323,9 +237,6 @@ export class MusicComponent extends Component<MusicComponentSave> {
       case ComponentCommands.RADIO:
         await this.radioCmd(interaction);
         break;
-      case ComponentCommands.RADIO_NOWPLAYING:
-        await this.radioNowPlayingCmd(interaction);
-        break;
       case ComponentCommands.PLAYFILE:
         await this.playFileCmd(interaction);
         break;
@@ -429,7 +340,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
         username: interaction.member?.user.username,
         url: this.radioPrimaryUrl,
       });
-      await interaction.editReply('📻 Playing DJMuffinTops radio.');
+      await interaction.deleteReply();
       return;
     } catch (primaryError) {
       logger.warn('Primary radio stream failed, attempting fallback', {
@@ -449,7 +360,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
         username: interaction.member?.user.username,
         url: this.radioFallbackUrl,
       });
-      await interaction.editReply('📻 Playing DJMuffinTops radio.');
+      await interaction.deleteReply();
     } catch (fallbackError) {
       logger.error('Radio stream failed for both primary and fallback URLs', {
         userId: interaction.member?.user.id,
@@ -460,186 +371,6 @@ export class MusicComponent extends Component<MusicComponentSave> {
       });
       await interaction.editReply(
         `❌ Could not start radio stream. ${fallbackError instanceof Error ? fallbackError.message : 'Unknown error'}`,
-      );
-    }
-  }
-
-  private getPathFromUrl(url: string): string | null {
-    try {
-      return new URL(url).pathname.toLowerCase();
-    } catch {
-      return null;
-    }
-  }
-
-  private formatDurationFromMetadata(raw: string): string | null {
-    const value = raw.trim();
-    if (!value) {
-      return null;
-    }
-
-    // If upstream already sends a human-readable value, keep it.
-    if (value.includes(':')) {
-      return value;
-    }
-
-    const totalMs = Number(value);
-    if (!Number.isFinite(totalMs) || totalMs < 0) {
-      return value;
-    }
-
-    const totalSeconds = Math.floor(totalMs / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds
-        .toString()
-        .padStart(2, '0')}`;
-    }
-
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  }
-
-  private async fetchRadioNowPlaying(): Promise<RadioNowPlayingInfo | null> {
-    const primaryMount = this.getPathFromUrl(this.radioPrimaryUrl);
-    const fallbackMount = this.getPathFromUrl(this.radioFallbackUrl);
-
-    if (!primaryMount || !fallbackMount) {
-      return null;
-    }
-
-    const {body, statusCode} = await request(this.radioStatusUrl, {
-      method: 'GET',
-    });
-
-    if (statusCode !== 200) {
-      body.destroy();
-      throw new Error(`Icecast status endpoint returned ${statusCode}`);
-    }
-
-    const response = (await body.json()) as IcecastStatusResponse;
-    const sourceField = response.icestats?.source;
-    const sources = Array.isArray(sourceField)
-      ? sourceField
-      : sourceField
-        ? [sourceField]
-        : [];
-
-    const getSourceByMount = (mount: string): IcecastSource | undefined =>
-      sources.find(source => {
-        if (!source.listenurl) {
-          return false;
-        }
-        return this.getPathFromUrl(source.listenurl) === mount;
-      });
-
-    // Prioritize metadata from the OGG mount first, then MP3 fallback.
-    const selectedSource =
-      getSourceByMount(primaryMount) ??
-      getSourceByMount(fallbackMount) ??
-      sources[0];
-
-    if (!selectedSource) {
-      return null;
-    }
-
-    const rawTitle = selectedSource.title?.trim() || null;
-    const metadataPayload = parseStreamMetadataPayload(rawTitle);
-    const title = metadataPayload.title || rawTitle || null;
-    const artist =
-      metadataPayload.artist || selectedSource.artist?.trim() || null;
-    const listenUrl = selectedSource.listenurl?.trim() || null;
-    const mountPath = listenUrl ? this.getPathFromUrl(listenUrl) : null;
-
-    logger.info('Fetched radio now playing metadata', {
-      statusUrl: this.radioStatusUrl,
-      selectedSource,
-    });
-
-    return {
-      title,
-      artist,
-      rawTitle,
-      listenUrl,
-      mountPath,
-      metadataPayload,
-    };
-  }
-
-  private async radioNowPlayingCmd(interaction: ChatInputCommandInteraction) {
-    await interaction.deferReply();
-
-    try {
-      const nowPlaying = await this.fetchRadioNowPlaying();
-
-      if (!nowPlaying) {
-        await interaction.editReply(
-          '📻 DJMuffinTops radio is online, but track metadata is not currently available.',
-        );
-        return;
-      }
-
-      const fields: {name: string; value: string; inline: boolean}[] = [];
-      const addField = (name: string, value: string | null, inline = true) => {
-        const trimmedValue = value?.trim();
-        if (!trimmedValue) {
-          return;
-        }
-        fields.push({name, value: trimmedValue, inline});
-      };
-
-      addField('Track', nowPlaying.title, false);
-      addField('Album', nowPlaying.metadataPayload.album);
-      addField('Artist', nowPlaying.artist);
-      addField(
-        'Track Length',
-        this.formatDurationFromMetadata(
-          nowPlaying.metadataPayload.duration ||
-            nowPlaying.metadataPayload.tracklength ||
-            nowPlaying.metadataPayload.track_length ||
-            nowPlaying.metadataPayload.length,
-        ),
-      );
-      addField('Album Artist', nowPlaying.metadataPayload.albumartist);
-      addField('Year', nowPlaying.metadataPayload.year);
-      addField('Date', nowPlaying.metadataPayload.date);
-      addField(
-        'Disc Number',
-        nowPlaying.metadataPayload.discnumber ||
-          nowPlaying.metadataPayload.disc,
-      );
-      addField(
-        'Track Number',
-        nowPlaying.metadataPayload.tracknumber ||
-          nowPlaying.metadataPayload.track,
-      );
-      addField('Mount', nowPlaying.mountPath);
-
-      const embed = new EmbedBuilder()
-        .setColor('#0099ff')
-        .setTitle('📻 DJMuffinTops Radio')
-        .setFooter({text: `Source: ${this.radioStatusUrl}`});
-
-      if (fields.length > 0) {
-        embed.addFields(fields);
-      }
-
-      if (nowPlaying.listenUrl) {
-        embed.setURL(nowPlaying.listenUrl);
-      }
-
-      await interaction.editReply({embeds: [embed]});
-    } catch (error) {
-      logger.warn('Failed to fetch radio now playing metadata', {
-        userId: interaction.member?.user.id,
-        username: interaction.member?.user.username,
-        statusUrl: this.radioStatusUrl,
-        error,
-      });
-      await interaction.editReply(
-        '❌ Could not fetch radio now playing info right now. Please try again in a bit.',
       );
     }
   }
@@ -862,7 +593,29 @@ export class MusicComponent extends Component<MusicComponentSave> {
       return;
     }
 
+    await interaction.deferReply();
+
     const song = queue.songs[0];
+
+    try {
+      const radioEmbed = await buildRadioNowPlayingEmbedForSong(song.url, {
+        primaryUrl: this.radioPrimaryUrl,
+        fallbackUrl: this.radioFallbackUrl,
+        statusUrl: this.radioStatusUrl,
+      });
+      if (radioEmbed) {
+        await interaction.editReply({embeds: [radioEmbed]});
+        return;
+      }
+    } catch (error) {
+      logger.warn('Failed to enrich now playing for radio stream', {
+        guildId: interaction.guildId,
+        songUrl: song.url,
+        statusUrl: this.radioStatusUrl,
+        error,
+      });
+    }
+
     const embed = new EmbedBuilder()
       .setColor('#0099ff')
       .setTitle('🎵 Now Playing')
@@ -890,7 +643,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
       )
       .setThumbnail(song.thumbnail ?? null);
 
-    await interaction.reply({embeds: [embed]});
+    await interaction.editReply({embeds: [embed]});
   }
 
   private async volumeCmd(interaction: ChatInputCommandInteraction) {
