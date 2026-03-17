@@ -10,6 +10,7 @@ import {
   EmbedBuilder,
   GuildTextBasedChannel,
 } from 'discord.js';
+import {request} from 'undici';
 import {DisTube, Song} from 'distube';
 import {ComponentCommands} from '../Constants/ComponentCommands';
 import {Component} from '../Component';
@@ -31,6 +32,10 @@ const playCommand = new SlashCommandBuilder()
 const radioCommand = new SlashCommandBuilder()
   .setName(ComponentCommands.RADIO)
   .setDescription('Play DJMuffinTops radio');
+
+const radioNowPlayingCommand = new SlashCommandBuilder()
+  .setName(ComponentCommands.RADIO_NOWPLAYING)
+  .setDescription('Show what is currently playing on DJMuffinTops radio');
 
 const skipCommand = new SlashCommandBuilder()
   .setName(ComponentCommands.SKIP)
@@ -105,17 +110,33 @@ type MusicComponentSave = {
   volume: number | null;
 };
 
+type IcecastSource = {
+  listenurl?: string;
+  title?: string;
+  song?: string;
+  artist?: string;
+};
+
+type IcecastStatusResponse = {
+  icestats?: {
+    source?: IcecastSource | IcecastSource[];
+  };
+};
+
 export class MusicComponent extends Component<MusicComponentSave> {
   private readonly radioPrimaryUrl =
     'https://radio.djmuffintops.com/RoluFM.ogg';
   private readonly radioFallbackUrl =
     'https://radio.djmuffintops.com/RoluFM.mp3';
+  private readonly radioStatusUrl =
+    'https://radio.djmuffintops.com/status-json.xsl';
   private volumePreference: number | null = null;
 
   name: ComponentNames = ComponentNames.MUSIC;
   commands = [
     playCommand,
     radioCommand,
+    radioNowPlayingCommand,
     playFileCommand,
     skipCommand,
     stopCommand,
@@ -231,6 +252,9 @@ export class MusicComponent extends Component<MusicComponentSave> {
         break;
       case ComponentCommands.RADIO:
         await this.radioCmd(interaction);
+        break;
+      case ComponentCommands.RADIO_NOWPLAYING:
+        await this.radioNowPlayingCmd(interaction);
         break;
       case ComponentCommands.PLAYFILE:
         await this.playFileCmd(interaction);
@@ -367,6 +391,97 @@ export class MusicComponent extends Component<MusicComponentSave> {
       });
       await interaction.editReply(
         `❌ Could not start radio stream. ${fallbackError instanceof Error ? fallbackError.message : 'Unknown error'}`,
+      );
+    }
+  }
+
+  private getPathFromUrl(url: string): string | null {
+    try {
+      return new URL(url).pathname.toLowerCase();
+    } catch {
+      return null;
+    }
+  }
+
+  private async fetchRadioNowPlaying(): Promise<string | null> {
+    const primaryMount = this.getPathFromUrl(this.radioPrimaryUrl);
+    const fallbackMount = this.getPathFromUrl(this.radioFallbackUrl);
+
+    if (!primaryMount || !fallbackMount) {
+      return null;
+    }
+
+    const mounts = new Set([primaryMount, fallbackMount]);
+    const {body, statusCode} = await request(this.radioStatusUrl, {
+      method: 'GET',
+    });
+
+    if (statusCode !== 200) {
+      body.destroy();
+      throw new Error(`Icecast status endpoint returned ${statusCode}`);
+    }
+
+    const response = (await body.json()) as IcecastStatusResponse;
+    const sourceField = response.icestats?.source;
+    const sources = Array.isArray(sourceField)
+      ? sourceField
+      : sourceField
+        ? [sourceField]
+        : [];
+
+    const selectedSource =
+      sources.find(source => {
+        if (!source.listenurl) {
+          return false;
+        }
+        const mountPath = this.getPathFromUrl(source.listenurl);
+        return mountPath ? mounts.has(mountPath) : false;
+      }) ?? sources[0];
+
+    if (!selectedSource) {
+      return null;
+    }
+
+    if (selectedSource.artist?.trim() && selectedSource.title?.trim()) {
+      return `${selectedSource.artist.trim()} - ${selectedSource.title.trim()}`;
+    }
+
+    if (selectedSource.title?.trim()) {
+      return selectedSource.title.trim();
+    }
+
+    if (selectedSource.song?.trim()) {
+      return selectedSource.song.trim();
+    }
+
+    return null;
+  }
+
+  private async radioNowPlayingCmd(interaction: ChatInputCommandInteraction) {
+    await interaction.deferReply();
+
+    try {
+      const nowPlaying = await this.fetchRadioNowPlaying();
+
+      if (!nowPlaying) {
+        await interaction.editReply(
+          '📻 DJMuffinTops radio is online, but track metadata is not currently available.',
+        );
+        return;
+      }
+
+      await interaction.editReply(
+        `📻 DJMuffinTops radio now playing: **${nowPlaying}**`,
+      );
+    } catch (error) {
+      logger.warn('Failed to fetch radio now playing metadata', {
+        userId: interaction.member?.user.id,
+        username: interaction.member?.user.username,
+        statusUrl: this.radioStatusUrl,
+        error,
+      });
+      await interaction.editReply(
+        '❌ Could not fetch radio now playing info right now. Please try again in a bit.',
       );
     }
   }
