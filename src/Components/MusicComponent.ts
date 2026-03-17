@@ -100,6 +100,8 @@ const playFileCommand = new SlashCommandBuilder()
 type MusicComponentSave = Record<string, unknown>;
 
 export class MusicComponent extends Component<MusicComponentSave> {
+  private pendingVolume: number | null = null;
+
   name: ComponentNames = ComponentNames.MUSIC;
   commands = [
     playCommand,
@@ -130,6 +132,27 @@ export class MusicComponent extends Component<MusicComponentSave> {
 
   async onReady(): Promise<void> {
     return Promise.resolve();
+  }
+
+  private applyPendingVolume(): void {
+    if (this.pendingVolume === null) {
+      return;
+    }
+
+    try {
+      this.distube.setVolume(this.djmtGuild.guildId, this.pendingVolume);
+      logger.info('Applied deferred volume setting', {
+        guildId: this.djmtGuild.guildId,
+        volume: this.pendingVolume,
+      });
+      this.pendingVolume = null;
+    } catch (error) {
+      logger.warn('Failed to apply deferred volume setting', {
+        guildId: this.djmtGuild.guildId,
+        volume: this.pendingVolume,
+        error,
+      });
+    }
   }
 
   onGuildMemberAdd(_member: GuildMember): Promise<void> {
@@ -226,7 +249,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
     if (!voiceChannel) {
       await interaction.reply({
         content: '❌ You must be in a voice channel to play music!',
-        ephemeral: true,
+        flags: ['Ephemeral'],
       });
       return;
     }
@@ -240,6 +263,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
         textChannel: interaction.channel as GuildTextBasedChannel,
         member: member,
       });
+      this.applyPendingVolume();
       logger.info('Playing music', {
         userId: interaction.member?.user.id,
         username: interaction.member?.user.username,
@@ -260,7 +284,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
     if (!voiceChannel) {
       await interaction.reply({
         content: '❌ You must be in a voice channel to play music!',
-        ephemeral: true,
+        flags: ['Ephemeral'],
       });
       return;
     }
@@ -277,7 +301,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
       await interaction.reply({
         content:
           '❌ Please upload a valid audio file (mp3, wav, ogg, flac, m4a, webm)',
-        ephemeral: true,
+        flags: ['Ephemeral'],
       });
       return;
     }
@@ -290,6 +314,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
         textChannel: interaction.channel as GuildTextBasedChannel,
         member: member,
       });
+      this.applyPendingVolume();
       logger.info('Playing music from file', {
         userId: interaction.member?.user.id,
         username: interaction.member?.user.username,
@@ -459,7 +484,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
     if (!queue) {
       await interaction.reply({
         content: '❌ Nothing is playing!',
-        ephemeral: true,
+        flags: ['Ephemeral'],
       });
       return;
     }
@@ -496,17 +521,28 @@ export class MusicComponent extends Component<MusicComponentSave> {
   }
 
   private async volumeCmd(interaction: ChatInputCommandInteraction) {
-    const queue = this.distube.getQueue(interaction.guildId!);
-    if (!queue) {
+    const guildId = interaction.guildId;
+    if (!guildId) {
       await interaction.reply({
-        content: '❌ Nothing is playing!',
-        ephemeral: true,
+        content: '❌ This command can only be used in a server.',
+        flags: ['Ephemeral'],
       });
       return;
     }
 
     const volume = interaction.options.getInteger('level', true);
-    this.distube.setVolume(interaction.guildId!, volume);
+    const queue = this.distube.getQueue(guildId);
+    if (!queue) {
+      this.pendingVolume = volume;
+      await interaction.reply({
+        content: `🔊 No active queue right now. I will set volume to ${volume}% when music is queued.`,
+        flags: ['Ephemeral'],
+      });
+      return;
+    }
+
+    this.distube.setVolume(guildId, volume);
+    this.pendingVolume = null;
     await interaction.reply(`🔊 Volume set to ${volume}%`);
   }
 
@@ -515,7 +551,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
     if (!queue) {
       await interaction.reply({
         content: '❌ Nothing is playing!',
-        ephemeral: true,
+        flags: ['Ephemeral'],
       });
       return;
     }
@@ -541,7 +577,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
     if (!queue) {
       await interaction.reply({
         content: '❌ Nothing is playing!',
-        ephemeral: true,
+        flags: ['Ephemeral'],
       });
       return;
     }
