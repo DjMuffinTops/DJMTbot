@@ -28,6 +28,10 @@ const playCommand = new SlashCommandBuilder()
       .setRequired(true),
   );
 
+const radioCommand = new SlashCommandBuilder()
+  .setName(ComponentCommands.RADIO)
+  .setDescription('Play DJMuffinTops radio');
+
 const skipCommand = new SlashCommandBuilder()
   .setName(ComponentCommands.SKIP)
   .setDescription('Skip the current song');
@@ -102,11 +106,16 @@ type MusicComponentSave = {
 };
 
 export class MusicComponent extends Component<MusicComponentSave> {
+  private readonly radioPrimaryUrl =
+    'https://radio.djmuffintops.com/RoluFM.ogg';
+  private readonly radioFallbackUrl =
+    'https://radio.djmuffintops.com/RoluFM.mp3';
   private volumePreference: number | null = null;
 
   name: ComponentNames = ComponentNames.MUSIC;
   commands = [
     playCommand,
+    radioCommand,
     playFileCommand,
     skipCommand,
     stopCommand,
@@ -220,6 +229,9 @@ export class MusicComponent extends Component<MusicComponentSave> {
       case ComponentCommands.PLAY:
         await this.playCmd(interaction);
         break;
+      case ComponentCommands.RADIO:
+        await this.radioCmd(interaction);
+        break;
       case ComponentCommands.PLAYFILE:
         await this.playFileCmd(interaction);
         break;
@@ -293,6 +305,68 @@ export class MusicComponent extends Component<MusicComponentSave> {
       });
       await interaction.editReply(
         `❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+  }
+
+  private async radioCmd(interaction: ChatInputCommandInteraction) {
+    const member = interaction.member as GuildMember;
+    const voiceChannel = member?.voice.channel;
+
+    if (!voiceChannel) {
+      await interaction.reply({
+        content: '❌ You must be in a voice channel to play music!',
+        flags: ['Ephemeral'],
+      });
+      return;
+    }
+
+    await interaction.deferReply();
+
+    const playOptions = {
+      textChannel: interaction.channel as GuildTextBasedChannel,
+      member: member,
+    };
+
+    try {
+      await this.distube.play(voiceChannel, this.radioPrimaryUrl, playOptions);
+      this.applySavedVolumePreference();
+      logger.info('Playing radio stream', {
+        userId: interaction.member?.user.id,
+        username: interaction.member?.user.username,
+        url: this.radioPrimaryUrl,
+      });
+      await interaction.editReply('📻 Playing DJMuffinTops radio.');
+      return;
+    } catch (primaryError) {
+      logger.warn('Primary radio stream failed, attempting fallback', {
+        userId: interaction.member?.user.id,
+        username: interaction.member?.user.username,
+        primaryUrl: this.radioPrimaryUrl,
+        fallbackUrl: this.radioFallbackUrl,
+        error: primaryError,
+      });
+    }
+
+    try {
+      await this.distube.play(voiceChannel, this.radioFallbackUrl, playOptions);
+      this.applySavedVolumePreference();
+      logger.info('Playing fallback radio stream', {
+        userId: interaction.member?.user.id,
+        username: interaction.member?.user.username,
+        url: this.radioFallbackUrl,
+      });
+      await interaction.editReply('📻 Playing DJMuffinTops radio.');
+    } catch (fallbackError) {
+      logger.error('Radio stream failed for both primary and fallback URLs', {
+        userId: interaction.member?.user.id,
+        username: interaction.member?.user.username,
+        primaryUrl: this.radioPrimaryUrl,
+        fallbackUrl: this.radioFallbackUrl,
+        error: fallbackError,
+      });
+      await interaction.editReply(
+        `❌ Could not start radio stream. ${fallbackError instanceof Error ? fallbackError.message : 'Unknown error'}`,
       );
     }
   }

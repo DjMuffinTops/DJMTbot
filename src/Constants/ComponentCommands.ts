@@ -47,6 +47,7 @@ export const ComponentCommands = {
   DOG_FACT: 'dogfact',
   CAT_FACT: 'catfact',
   PLAY: 'play',
+  RADIO: 'radio',
   PLAYFILE: 'playfile',
   SKIP: 'skip',
   STOP: 'stop',
