@@ -615,7 +615,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
     }
 
     try {
-      await this.distube.stop(interaction.guildId!);
+      await queue.stop();
       this.stopRadioNowPlayingPolling();
       await interaction.reply('⏹️ Stopped playing and cleared the queue');
     } catch (error) {
@@ -640,7 +640,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
 
     try {
       if (queue) {
-        await this.distube.stop(guildId);
+        await queue.stop();
       }
       this.distube.voices.leave(guildId);
       this.stopRadioNowPlayingPolling();
