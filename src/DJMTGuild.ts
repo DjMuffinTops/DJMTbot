@@ -242,7 +242,7 @@ export class DJMTGuild {
     for (const component of this.getAllComponents()) {
       componentData[component.name] = await component.getSaveData();
     }
-    logger.info('Collected component data', {
+    logger.debug('Collected component data', {
       guildId: this.guildId,
       componentData,
     });
