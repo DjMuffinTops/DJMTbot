@@ -206,7 +206,7 @@ export class DJMTbot {
           this.createGuild(guildId);
         }
         this.client?.user?.setActivity('@DJMTbot for help!');
-        // Ready all guild instances
+        // Call onReady for all guild instances
         for (const id of Array.from(this.guilds.keys())) {
           await this.guilds.get(id)?.onReady();
         }

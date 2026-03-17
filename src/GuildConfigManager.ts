@@ -151,7 +151,18 @@ export class GuildConfigManager {
     let gConfig: GuildConfig | undefined;
 
     // If the file doesn't exist, create it with default values
-    if (!(await FileSystem.stat(fileName).catch(() => false))) {
+    let fileExists = true;
+    try {
+      await FileSystem.stat(fileName);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        fileExists = false;
+      } else {
+        throw error;
+      }
+    }
+
+    if (!fileExists) {
       logger.info(
         'Guild config file does not exist, creating new one with defaults',
         {
