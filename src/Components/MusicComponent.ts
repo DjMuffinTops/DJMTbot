@@ -97,10 +97,12 @@ const playFileCommand = new SlashCommandBuilder()
       .setRequired(true),
   );
 
-type MusicComponentSave = Record<string, unknown>;
+type MusicComponentSave = {
+  volume: number | null;
+};
 
 export class MusicComponent extends Component<MusicComponentSave> {
-  private pendingVolume: number | null = null;
+  private volumePreference: number | null = null;
 
   name: ComponentNames = ComponentNames.MUSIC;
   commands = [
@@ -123,10 +125,23 @@ export class MusicComponent extends Component<MusicComponentSave> {
   }
 
   getSaveData(): Promise<MusicComponentSave> {
-    return Promise.resolve({} as MusicComponentSave);
+    return Promise.resolve({
+      volume: this.volumePreference,
+    });
   }
 
-  afterLoadJSON(_loadedObject: MusicComponentSave | undefined): Promise<void> {
+  afterLoadJSON(loadedObject: MusicComponentSave | undefined): Promise<void> {
+    if (
+      loadedObject &&
+      typeof loadedObject.volume === 'number' &&
+      loadedObject.volume >= 0 &&
+      loadedObject.volume <= 100
+    ) {
+      this.volumePreference = loadedObject.volume;
+    } else {
+      this.volumePreference = null;
+    }
+
     return Promise.resolve();
   }
 
@@ -134,22 +149,21 @@ export class MusicComponent extends Component<MusicComponentSave> {
     return Promise.resolve();
   }
 
-  private applyPendingVolume(): void {
-    if (this.pendingVolume === null) {
+  private applySavedVolumePreference(): void {
+    if (this.volumePreference === null) {
       return;
     }
 
     try {
-      this.distube.setVolume(this.djmtGuild.guildId, this.pendingVolume);
-      logger.info('Applied deferred volume setting', {
+      this.distube.setVolume(this.djmtGuild.guildId, this.volumePreference);
+      logger.info('Applied saved volume setting', {
         guildId: this.djmtGuild.guildId,
-        volume: this.pendingVolume,
+        volume: this.volumePreference,
       });
-      this.pendingVolume = null;
     } catch (error) {
-      logger.warn('Failed to apply deferred volume setting', {
+      logger.warn('Failed to apply saved volume setting', {
         guildId: this.djmtGuild.guildId,
-        volume: this.pendingVolume,
+        volume: this.volumePreference,
         error,
       });
     }
@@ -263,7 +277,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
         textChannel: interaction.channel as GuildTextBasedChannel,
         member: member,
       });
-      this.applyPendingVolume();
+      this.applySavedVolumePreference();
       logger.info('Playing music', {
         userId: interaction.member?.user.id,
         username: interaction.member?.user.username,
@@ -314,7 +328,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
         textChannel: interaction.channel as GuildTextBasedChannel,
         member: member,
       });
-      this.applyPendingVolume();
+      this.applySavedVolumePreference();
       logger.info('Playing music from file', {
         userId: interaction.member?.user.id,
         username: interaction.member?.user.username,
@@ -533,16 +547,18 @@ export class MusicComponent extends Component<MusicComponentSave> {
     const volume = interaction.options.getInteger('level', true);
     const queue = this.distube.getQueue(guildId);
     if (!queue) {
-      this.pendingVolume = volume;
+      this.volumePreference = volume;
+      await this.djmtGuild.saveJSON();
       await interaction.reply({
-        content: `🔊 No active queue right now. I will set volume to ${volume}% when music is queued.`,
+        content: `🔊 Saved volume at ${volume}%. I will apply it when music is queued.`,
         flags: ['Ephemeral'],
       });
       return;
     }
 
     this.distube.setVolume(guildId, volume);
-    this.pendingVolume = null;
+    this.volumePreference = volume;
+    await this.djmtGuild.saveJSON();
     await interaction.reply(`🔊 Volume set to ${volume}%`);
   }
 
