@@ -7,14 +7,12 @@ import Discord, {
   User,
   VoiceState,
   Events,
-  EmbedBuilder,
 } from 'discord.js';
-import {DisTube, Events as DistubeEvents, Queue, Song, Playlist} from 'distube';
-import {FilePlugin} from '@distube/file';
-import {DirectLinkPlugin} from '@distube/direct-link';
+import {DisTube} from 'distube';
 import {promises as FileSystem} from 'fs';
 import {DJMTGuild} from './DJMTGuild';
 import {Cron} from './Cron';
+import {DisTubeManager} from './DisTubeManager';
 import {logger} from './Logger';
 import dotenv from 'dotenv';
 // Here we load the guildConfigs.json file that contains our token and our prefix values.
@@ -25,6 +23,7 @@ export class DJMTbot {
   private static instance: DJMTbot;
   client: Client;
   distube: DisTube;
+  private readonly disTubeManager: DisTubeManager;
   guilds: Map<string, DJMTGuild>;
   private constructor() {
     this.client = new Discord.Client({
@@ -43,17 +42,8 @@ export class DJMTbot {
       ],
       partials: [Partials.Message, Partials.Channel, Partials.Reaction],
     });
-    // Initialize DistTube music player with plugins:
-    // - FilePlugin: Plays audio files uploaded to Discord
-    // - DirectLinkPlugin: Plays direct audio file URLs (mp3, wav, ogg, etc.)
-    // DistTube also supports YouTube and SoundCloud natively
-    this.distube = new DisTube(this.client, {
-      emitNewSongOnly: true,
-      emitAddSongWhenCreatingQueue: false,
-      emitAddListWhenCreatingQueue: false,
-      plugins: [new FilePlugin(), new DirectLinkPlugin()],
-    });
-    this.setupDistubeEvents();
+    this.disTubeManager = new DisTubeManager(this.client);
+    this.distube = this.disTubeManager.player;
     this.guilds = new Map<string, DJMTGuild>();
     void this.initGuildInstancesFromFiles()
       .then(() => logger.info(`${this.guilds.size} DJMT Guilds Initialized`))
@@ -67,80 +57,6 @@ export class DJMTbot {
       DJMTbot.instance = new DJMTbot();
     }
     return DJMTbot.instance;
-  }
-
-  /**
-   * Sets up DisTube event handlers for music playback
-   * @private
-   */
-  private setupDistubeEvents(): void {
-    this.distube.on(DistubeEvents.PLAY_SONG, (queue: Queue, song: Song) => {
-      const embed = new EmbedBuilder()
-        .setColor('#0099ff')
-        .setTitle('🎵 Now Playing')
-        .setDescription(`[${song.name}](${song.url})`)
-        .addFields(
-          {name: 'Duration', value: song.formattedDuration, inline: true},
-          {
-            name: 'Requested by',
-            value: song.user?.toString() ?? 'Unknown',
-            inline: true,
-          },
-        )
-        .setThumbnail(song.thumbnail ?? null);
-
-      queue.textChannel?.send({embeds: [embed]}).catch(() => {});
-    });
-
-    this.distube.on(DistubeEvents.ADD_SONG, (queue: Queue, song: Song) => {
-      const embed = new EmbedBuilder()
-        .setColor('#00ff00')
-        .setTitle('➕ Added to Queue')
-        .setDescription(`[${song.name}](${song.url})`)
-        .addFields(
-          {name: 'Duration', value: song.formattedDuration, inline: true},
-          {
-            name: 'Position in queue',
-            value: `${queue.songs.length}`,
-            inline: true,
-          },
-        )
-        .setThumbnail(song.thumbnail ?? null);
-
-      queue.textChannel?.send({embeds: [embed]}).catch(() => {});
-    });
-
-    this.distube.on(
-      DistubeEvents.ADD_LIST,
-      (queue: Queue, playlist: Playlist) => {
-        const embed = new EmbedBuilder()
-          .setColor('#00ff00')
-          .setTitle('📝 Added Playlist to Queue')
-          .setDescription(`[${playlist.name}](${playlist.url ?? 'N/A'})`)
-          .addFields({
-            name: 'Songs',
-            value: `${playlist.songs.length}`,
-            inline: true,
-          });
-
-        queue.textChannel?.send({embeds: [embed]}).catch(() => {});
-      },
-    );
-
-    this.distube.on(DistubeEvents.ERROR, (error: Error) => {
-      logger.error('DisTube Error', {error});
-      throw error;
-    });
-
-    this.distube.on(DistubeEvents.FINISH, (queue: Queue) => {
-      queue.textChannel?.send('✅ Queue finished!').catch(() => {});
-    });
-
-    this.distube.on(DistubeEvents.DISCONNECT, (queue: Queue) => {
-      queue.textChannel
-        ?.send('👋 Disconnected from voice channel')
-        .catch(() => {});
-    });
   }
 
   /**
