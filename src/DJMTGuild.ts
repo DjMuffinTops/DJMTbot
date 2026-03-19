@@ -494,6 +494,23 @@ export class DJMTGuild {
   }
 
   /**
+   * Gets the radio voice channel ID for this guild.
+   * Delegates to configManager.
+   */
+  get radioVoiceChannelId(): string {
+    return this.configManager.radioVoiceChannelId;
+  }
+
+  /**
+   * Sets the radio voice channel ID with validation and auto-saves to JSON.
+   * Delegates to configManager.
+   * @param value The new radio voice channel ID, or undefined to unset
+   */
+  set radioVoiceChannelId(value: string | undefined) {
+    this.configManager.radioVoiceChannelId = value;
+  }
+
+  /**
    * Gets the mod alerts channel ID for this guild.
    * Delegates to configManager.
    */

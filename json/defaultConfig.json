@@ -2,5 +2,6 @@
 	"debugMode": false,
 	"prefix": "djmt!",
 	"debugChannelId": "",
+	"radioVoiceChannelId": "",
 	"componentData": {}
 }

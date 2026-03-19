@@ -15,6 +15,7 @@ export interface GuildConfig {
   debugMode: boolean;
   prefix: string;
   debugChannelId?: string;
+  radioVoiceChannelId?: string;
   modAlertsChannelId?: string;
   modLoggingChannelId?: string;
   componentData?: ComponentDataMap;
@@ -33,6 +34,7 @@ export class GuildConfigManager {
   private _debugMode: boolean;
   private _prefix: string;
   private _debugChannelId: string | undefined;
+  private _radioVoiceChannelId: string | undefined;
   private _modAlertsChannelId: string | undefined;
   private _modLoggingChannelId: string | undefined;
   private componentData: ComponentDataMap;
@@ -60,6 +62,9 @@ export class GuildConfigManager {
     this._debugMode = !!defaultConfig.debugMode;
     this._prefix = defaultConfig.prefix || DEFAULT_PREFIX;
     this._debugChannelId = defaultConfig.debugChannelId || undefined;
+    this._radioVoiceChannelId =
+      ((defaultConfig as Record<string, unknown>)
+        .radioVoiceChannelId as string) || undefined;
     this._modAlertsChannelId =
       ((defaultConfig as Record<string, unknown>)
         .modAlertsChannelId as string) || undefined;
@@ -81,6 +86,7 @@ export class GuildConfigManager {
     this.propertyStorage.set('debugMode', this._debugMode);
     this.propertyStorage.set('prefix', this._prefix);
     this.propertyStorage.set('debugChannelId', this._debugChannelId);
+    this.propertyStorage.set('radioVoiceChannelId', this._radioVoiceChannelId);
     this.propertyStorage.set('modAlertsChannelId', this._modAlertsChannelId);
     this.propertyStorage.set('modLoggingChannelId', this._modLoggingChannelId);
   }
@@ -125,6 +131,7 @@ export class GuildConfigManager {
       debugMode: this._debugMode,
       prefix: this._prefix,
       debugChannelId: this._debugChannelId,
+      radioVoiceChannelId: this._radioVoiceChannelId,
       modAlertsChannelId: this._modAlertsChannelId,
       modLoggingChannelId: this._modLoggingChannelId,
       componentData: this.componentData,
@@ -201,6 +208,8 @@ export class GuildConfigManager {
       this._debugMode = !!gConfig.debugMode;
       this._prefix = gConfig.prefix || this._prefix;
       this._debugChannelId = gConfig.debugChannelId || this._debugChannelId;
+      this._radioVoiceChannelId =
+        gConfig.radioVoiceChannelId || this._radioVoiceChannelId;
       this._modAlertsChannelId =
         gConfig.modAlertsChannelId || this._modAlertsChannelId;
       this._modLoggingChannelId =
@@ -277,6 +286,9 @@ export class GuildConfigManager {
     this._debugMode = !!defaultConfig.debugMode;
     this._prefix = defaultConfig.prefix || DEFAULT_PREFIX;
     this._debugChannelId = defaultConfig.debugChannelId || undefined;
+    this._radioVoiceChannelId =
+      ((defaultConfig as Record<string, unknown>)
+        .radioVoiceChannelId as string) || undefined;
     this._modAlertsChannelId =
       ((defaultConfig as Record<string, unknown>)
         .modAlertsChannelId as string) || undefined;
@@ -384,6 +396,34 @@ export class GuildConfigManager {
       void this.saveJSON();
     } else {
       logger.warn('Invalid debugChannelId provided', {
+        channelId: value,
+        guildId: this.guildId,
+      });
+    }
+  }
+
+  /**
+   * Gets the radio voice channel ID.
+   */
+  get radioVoiceChannelId(): string {
+    return (
+      (this.propertyStorage.get('radioVoiceChannelId') as string) ??
+      this._radioVoiceChannelId ??
+      ''
+    );
+  }
+
+  /**
+   * Sets the radio voice channel ID with validation and auto-saves to JSON.
+   * Pass undefined to unset the channel.
+   */
+  set radioVoiceChannelId(value: string | undefined) {
+    if (value === undefined || this.isValidChannelId(value)) {
+      this.propertyStorage.set('radioVoiceChannelId', value ?? '');
+      this._radioVoiceChannelId = value;
+      void this.saveJSON();
+    } else {
+      logger.warn('Invalid radioVoiceChannelId provided', {
         channelId: value,
         guildId: this.guildId,
       });

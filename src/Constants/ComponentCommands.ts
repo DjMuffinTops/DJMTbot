@@ -37,6 +37,7 @@ export const ComponentCommands = {
   PRINT_AUTO_THREAD: 'printautothread',
   SET_MOD_ALERTS_CHANNEL: 'setmodalertschannel',
   SET_MOD_LOGGING_CHANNEL: 'setmodloggingchannel',
+  SET_RADIO_VOICE_CHANNEL: 'setradiovoicechannel',
   PERMIT_NEW_USER_RESTRICTIONS: 'permit-new-user-restrictions',
   TOGGLE_NEW_USER_MEDIA_LOCK: 'toggle-new-user-media-lock',
   TOGGLE_NEW_USER_BAN: 'toggle-new-user-ban',
