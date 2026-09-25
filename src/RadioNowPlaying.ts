@@ -2,21 +2,32 @@ import {EmbedBuilder} from 'discord.js';
 import {request} from 'undici';
 import {logger} from './Logger';
 
-export const RADIO_PRIMARY_URL = 'https://radio.djmuffintops.com/RoluFM.ogg';
-export const RADIO_FALLBACK_URL = 'https://radio.djmuffintops.com/RoluFM.mp3';
+export const RADIO_PRIMARY_URL =
+  'https://radio.djmuffintops.com/listen/radio/radio.mp3';
+// Keep a fallback URL for the existing playback retry logic. AzuraCast's MP3
+// endpoint is the canonical public stream URL for this station.
+export const RADIO_FALLBACK_URL = RADIO_PRIMARY_URL;
 export const RADIO_STATUS_URL =
-  'https://radio.djmuffintops.com/status-json.xsl';
+  'https://radio.djmuffintops.com/api/nowplaying/radio';
 
-type IcecastSource = {
-  listenurl?: string;
+type AzuraCastSong = {
+  id?: string | number;
   title?: string;
   artist?: string;
+  album?: string;
+  album_id?: string | number;
+  art?: string;
+  custom_fields?: Record<string, string>;
 };
 
-type IcecastStatusResponse = {
-  icestats?: {
-    source?: IcecastSource | IcecastSource[];
+type AzuraCastNowPlayingResponse = {
+  station?: {name?: string; listen_url?: string};
+  now_playing?: {
+    song?: AzuraCastSong;
+    elapsed?: number;
+    duration?: number;
   };
+  is_online?: boolean;
 };
 
 export type StreamMetadataPayload = {
@@ -98,29 +109,11 @@ export function parseStreamMetadataPayload(
   };
 }
 
-function hasAnyMetadataValue(payload: StreamMetadataPayload): boolean {
-  return Object.values(payload).some(value => value.trim().length > 0);
-}
-
-function isQueryStringLike(value: string): boolean {
-  return value.includes('=') && value.includes('&');
-}
-
 export function getPathFromUrl(url: string): string | null {
   try {
     return new URL(url).pathname.toLowerCase();
   } catch {
     return null;
-  }
-}
-
-function stripPortFromUrl(url: string): string {
-  try {
-    const parsed = new URL(url);
-    parsed.port = '';
-    return `${parsed.protocol}//${parsed.host}${parsed.pathname}${parsed.search}${parsed.hash}`;
-  } catch {
-    return url;
   }
 }
 
@@ -176,73 +169,45 @@ export function isRadioStreamUrl(
 export async function fetchRadioNowPlaying(
   config: RadioNowPlayingConfig,
 ): Promise<RadioNowPlayingInfo | null> {
-  const primaryMount = getPathFromUrl(config.primaryUrl);
-  const fallbackMount = getPathFromUrl(config.fallbackUrl);
-
-  if (!primaryMount || !fallbackMount) {
-    return null;
-  }
-
   const {body, statusCode} = await request(config.statusUrl, {
     method: 'GET',
   });
 
   if (statusCode !== 200) {
     body.destroy();
-    throw new Error(`Icecast status endpoint returned ${statusCode}`);
+    throw new Error(`AzuraCast now-playing endpoint returned ${statusCode}`);
   }
 
-  const response = (await body.json()) as IcecastStatusResponse;
-  const sourceField = response.icestats?.source;
-  const sources = Array.isArray(sourceField)
-    ? sourceField
-    : sourceField
-      ? [sourceField]
-      : [];
-
-  const getSourceByMount = (mount: string): IcecastSource | undefined =>
-    sources.find(source => {
-      if (!source.listenurl) {
-        return false;
-      }
-      return getPathFromUrl(source.listenurl) === mount;
-    });
-
-  const selectedSource =
-    getSourceByMount(primaryMount) ??
-    getSourceByMount(fallbackMount) ??
-    sources[0];
-
-  if (!selectedSource) {
+  const response = (await body.json()) as AzuraCastNowPlayingResponse;
+  const song = response.now_playing?.song;
+  if (!song) {
     return null;
   }
 
   logger.debug('Fetched radio now-playing info', {
-    selectedSource,
+    response,
   });
 
-  const rawTitle = selectedSource.title?.trim() || null;
-  const metadataPayload = parseStreamMetadataPayload(rawTitle);
-  const metadataTitle =
-    metadataPayload.title || metadataPayload.pretty || metadataPayload.track;
-  const rawTitleFallback =
-    rawTitle &&
-    (!isQueryStringLike(rawTitle) || hasAnyMetadataValue(metadataPayload))
-      ? rawTitle
-      : null;
-  const title = metadataTitle || rawTitleFallback || null;
-  const artist =
-    metadataPayload.artist || selectedSource.artist?.trim() || null;
-  // Icecast currently reports an incorrect port in listenurl; drop only the port.
-  const listenUrl = selectedSource.listenurl?.trim()
-    ? stripPortFromUrl(selectedSource.listenurl.trim())
-    : null;
+  const title = song.title?.trim() || null;
+  const artist = song.artist?.trim() || null;
+  const metadataPayload: StreamMetadataPayload = {
+    ...EMPTY_STREAM_METADATA,
+    title: title ?? '',
+    artist: artist ?? '',
+    album: song.album?.trim() ?? '',
+    // AzuraCast reports duration in seconds; the embed formatter accepts ms.
+    duration:
+      typeof response.now_playing?.duration === 'number'
+        ? (response.now_playing.duration * 1000).toString()
+        : '',
+  };
+  const listenUrl = config.primaryUrl;
   const mountPath = listenUrl ? getPathFromUrl(listenUrl) : null;
 
   return {
     title,
     artist,
-    rawTitle,
+    rawTitle: title,
     listenUrl,
     mountPath,
     metadataPayload,
