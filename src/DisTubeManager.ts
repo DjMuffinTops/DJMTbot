@@ -1,6 +1,7 @@
 import {Client, EmbedBuilder} from 'discord.js';
 import {DisTube, Events as DistubeEvents, Playlist, Queue, Song} from 'distube';
 import {FilePlugin} from '@distube/file';
+import {YtDlpPlugin} from './Components/plugins/YtDlpPlugin';
 import {IcecastDirectLinkPlugin} from './Components/plugins/IcecastDirectLinkPlugin';
 import {logger} from './Logger';
 import {
@@ -19,7 +20,11 @@ export class DisTubeManager {
       emitNewSongOnly: true,
       emitAddSongWhenCreatingQueue: false,
       emitAddListWhenCreatingQueue: false,
-      plugins: [new FilePlugin(), new IcecastDirectLinkPlugin()],
+      plugins: [
+        new FilePlugin(),
+        new IcecastDirectLinkPlugin(),
+        new YtDlpPlugin(),
+      ],
     });
 
     this.setupEvents();
@@ -66,8 +71,14 @@ export class DisTubeManager {
     );
 
     this.player.on(DistubeEvents.ERROR, (error: Error) => {
-      logger.error('DisTube Error', {error});
-      throw error;
+      logger.error('DisTube Error', {
+        error: {
+          name: error.name,
+          message: error.message,
+          errorCode: (error as Error & {errorCode?: string}).errorCode,
+          stack: error.stack,
+        },
+      });
     });
 
     this.player.on(DistubeEvents.FINISH, (queue: Queue) => {

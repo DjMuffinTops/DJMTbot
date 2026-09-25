@@ -1,8 +1,55 @@
 # DJMTbot
 A bot running Discord.js w/ Typescript, designed for the Pokemon Workshop Discord Server
 
+## Docker Quick Start
+
+Docker is the recommended way to run DJMTbot in production.
+
+1. Install [Docker](https://docs.docker.com/get-docker/) and Docker Compose.
+2. Create a `.env` file in the repository root using the environment table below.
+3. Start the bot:
+   ```bash
+   pnpm run docker:up
+   ```
+4. Follow the logs:
+   ```bash
+   pnpm run docker:logs
+   ```
+5. Stop the bot:
+   ```bash
+   pnpm run docker:down
+   ```
+
+After changing source code or dependencies, rebuild the production image before
+starting it again:
+
+```bash
+pnpm run docker:rebuild
+pnpm run docker:up
+```
+
+Docker persists guild configuration in `json/` and application logs in `logs/`.
+
+### Development Watch Mode
+
+Use watch mode during development to automatically sync source changes and restart quickly:
+
+```bash
+pnpm run docker:watch
+```
+
+This runs a dedicated `djmtbot-dev` service in attached mode. Source, config,
+and JSON changes use sync and restart; dependency changes require
+`pnpm run docker:rebuild:dev`. Press `Ctrl+C` to stop watch mode.
+
+<details>
+<summary>Legacy bare-metal setup (old way to run DJMTbot)</summary>
+
+The Docker setup above is the recommended way to run DJMTbot. The following
+steps are kept for local development or older deployments.
+
 ## Install Node.js
-To use discord.js, you'll need to [install Node.js here](https://nodejs.org)
+To use discord.js, you'll need to [install Node.js here](https://nodejs.org). The project requires Node.js `>=24.13.1`.
 
 ## Install pnpm (recommended)
 If you use Corepack (bundled with recent Node releases) enable it and prepare pnpm:
@@ -19,35 +66,42 @@ npm install -g pnpm
 pnpm install
 ```
 
+## Start the Bot
+```
+pnpm start
+```
+
+`pnpm start` compiles TypeScript and starts the compiled application. The HTTP
+health endpoint listens on port `8080` and returns status information at `/`.
+
+</details>
+
 ## Get a Discord Bot Token 
 To get your own bot token, [create a bot!](https://discordjs.guide/preparations/setting-up-a-bot-application.html#setting-up-a-bot-application)
 
 You may also ask me for access to the PW Test server and dev bot token on Discord!
 
-## Create a .env file in the root directory
-Create a `.env` file in the root directory. You can use `.env.example` as a template:
-```bash
-cp .env.example .env
-```
+## Configure environment variables
 
-Then fill in the following environment variables:
+Create a `.env` file in the repository root. Do not commit it.
 
 ## Environment Variables
 
-| Environment Variable | Description | Example Value |
-|---------------------|-------------|---------------|
-| `TOKEN` | **Required.** Your Discord bot token from the [Discord Developer Portal](https://discord.com/developers/applications) | `TOKEN=YOUR_TOKEN_HERE` |
-| `APPLICATION_ID` | **Required.** Your Discord bot application ID | `APPLICATION_ID=123456789012345678` |
-| `LOG_LEVEL` | Log verbosity level. Options: `error`, `warn`, `info`, `debug`. Default: `info` | `LOG_LEVEL=debug` |
-| `PRETTY_LOGS` | Controls console log formatting. Set to `true` for pretty-printed metadata (indented multiline JSON). Default: inline compact JSON format | `PRETTY_LOGS=true` |
-| `GUILD_IDS` | Optional comma-separated or JSON array of guild IDs to restrict which guilds the bot creates instances for. If not set, the bot loads all guilds. | `GUILD_IDS=123,456,789` or `GUILD_IDS="[\"123\",\"456\",\"789\"]"` |
+| Variable | Required | Description | Example |
+|---|---:|---|---|
+| `TOKEN` | Yes | Discord bot token from the [Developer Portal](https://discord.com/developers/applications). | `TOKEN=your-token` |
+| `APPLICATION_ID` | Yes | Discord application/client ID. | `APPLICATION_ID=123456789012345678` |
+| `GUILD_IDS` | No | Comma-separated or JSON array of guild IDs to restrict which guilds the bot creates instances for. If omitted, all guilds are loaded. | `GUILD_IDS=123,456` |
+| `LOG_LEVEL` | No | Winston log level: `error`, `warn`, `info`, or `debug`. Defaults to `info`. | `LOG_LEVEL=debug` |
+| `PRETTY_LOGS` | No | Set to `true` to print metadata as indented JSON. Defaults to compact inline metadata. | `PRETTY_LOGS=true` |
 
 **Example `.env` file:**
 ```env
 TOKEN=YOUR_DISCORD_BOT_TOKEN_HERE
 APPLICATION_ID=YOUR_APPLICATION_ID_HERE
+GUILD_IDS=123456789012345678
 LOG_LEVEL=info
-PRETTY_LOGS=true
+PRETTY_LOGS=false
 ```
 
 **⚠️ SECURITY WARNING:** DO NOT COMMIT YOUR `.env` FILE TO GIT!  
@@ -60,17 +114,30 @@ Logs are automatically written to the `logs/` directory:
 
 Log files rotate daily and are retained for 14 days (max 20MB per file).
 
-## Start the Bot
-```
-pnpm start
-```
+## Development commands
+
+| Command | Purpose |
+|---|---|
+| `pnpm compile` | Type-check and compile TypeScript to `dist/`. |
+| `pnpm build` | Build using the TypeScript build configuration. |
+| `pnpm lint` | Run the repository lint checks. |
+| `pnpm lint:fix` | Automatically fix supported lint and formatting issues. |
+| `pnpm pretest` | Compile TypeScript before a test run. |
+| `pnpm posttest` | Run lint after a test run. |
+| `pnpm docker:dev` | Start the development Docker profile. |
+| `pnpm docker:watch` | Run the development profile with source watch mode. |
+| `pnpm docker:logs` | Follow production container logs. |
+| `pnpm docker:down` | Stop Docker services. |
+
+After dependency installation, Git hooks are configured automatically. The
+pre-push hook runs `pnpm lint` and blocks pushes when linting fails.
 
 ## Music Bot Features
 
 DJMTbot includes a full-featured music player powered by [DistTube](https://distube.js.org/):
 
 ### Available Commands
-- `/play <query>` - Play a song from URL or search query
+- `/play <url>` - Play a song from a direct YouTube or audio URL
 - `/playfile <attachment>` - Play an audio file attachment (mp3, wav, ogg, flac, m4a, webm)
 - `/skip` - Skip the current song
 - `/stop` - Stop playing and clear the queue
@@ -81,55 +148,19 @@ DJMTbot includes a full-featured music player powered by [DistTube](https://dist
 - `/loop <off/song/queue>` - Set loop mode
 - `/autoplay` - Toggle autoplay mode
 
+Radio administration also supports adding, removing, listing, and selecting
+configured stations. Administrative commands are restricted to members with
+the Administrator permission.
+
 ### Supported Sources
 With the integrated plugins, the bot can play music from:
+- **YouTube URLs** - Resolved with `yt-dlp` and streamed without saving the media to disk
 - **Direct Links** - Direct audio file URLs (mp3, wav, ogg, etc.)
 - **Local Files** - Audio files uploaded to Discord
 
 ### Requirements
-- FFmpeg (automatically included in Docker container)
 - Bot must be in a voice channel to play music
 - Users must be in a voice channel to use music commands
-
-## Docker Deployment
-
-### Prerequisites
-- [Docker](https://docs.docker.com/get-docker/) installed
-- [Docker Compose](https://docs.docker.com/compose/install/) installed (usually included with Docker Desktop)
-
-### Quick Start with Docker
-
-1. **Create your `.env` file** (see Environment Variables section above)
-
-2. **Build and run with Docker Compose:**
-   ```bash
-    pnpm run docker:up
-   ```
-
-3. **View logs:**
-   ```bash
-    pnpm run docker:logs
-   ```
-
-4. **Stop the bot:**
-   ```bash
-    pnpm run docker:down
-   ```
-
-### Watch Mode (auto rebuild on file changes)
-
-Use watch mode during development to automatically sync source changes and restart quickly:
-
-```bash
-pnpm run docker:watch
-```
-
-This runs a dedicated `djmtbot-dev` service in attached mode (logs stream in the terminal).
-
-- Source, config, and JSON changes use sync + restart (faster than full rebuilds)
-- Dependency changes (`package.json`, `pnpm-lock.yaml`) trigger rebuilds
-
-Press `Ctrl+C` to stop watch mode.
 
 ## Creating New Features (Components)
 Visit [ExampleComponentTemplate.ts](https://github.com/DjMuffinTops/DJMTbot/blob/develop/src/ExampleComponentTemplate.ts) for an example component template. 
@@ -205,5 +236,3 @@ Please branch off of the `develop` branch, and make Pull Requests to the `develo
 If you require more events, functions, or changes in anywhere, please make an issue for it!
 
 ## Feel free to to contact me on discord for any help! DjMuffinTops#6590
-
-
