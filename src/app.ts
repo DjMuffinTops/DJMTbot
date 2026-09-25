@@ -28,4 +28,11 @@ app.listen(PORT, () => logger.info(`Server has started at port ${PORT}`));
 DJMTbot.getInstance()
   .run()
   .then(() => logger.info('Bot has been run'))
-  .catch((err: unknown) => logger.error('Error running bot', {error: err}));
+  .catch((err: unknown) =>
+    logger.error('Error running bot', {
+      error:
+        err instanceof Error
+          ? {name: err.name, message: err.message, stack: err.stack}
+          : err,
+    }),
+  );
