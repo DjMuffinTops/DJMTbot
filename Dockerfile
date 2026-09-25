@@ -44,23 +44,26 @@ RUN apk add --no-cache ffmpeg
 # Set working directory
 WORKDIR /app
 
+# Create the non-root runtime user before copying application files so Docker
+# can assign ownership during COPY instead of recursively chowning node_modules.
+RUN addgroup -g 1001 -S djmtbot && \
+    adduser -S djmtbot -u 1001
+
 # Copy package files
-COPY package.json pnpm-lock.yaml ./
+COPY --chown=djmtbot:djmtbot package.json pnpm-lock.yaml ./
 
 # Copy node_modules with compiled native bindings from builder stage
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder --chown=djmtbot:djmtbot /app/node_modules ./node_modules
 
 # Copy compiled JavaScript from builder stage
-COPY --from=builder /app/dist ./dist
+COPY --from=builder --chown=djmtbot:djmtbot /app/dist ./dist
 
 # Copy JSON configuration files
-COPY json ./json
+COPY --chown=djmtbot:djmtbot json ./json
 
-# Create a non-root user for security
-RUN addgroup -g 1001 -S djmtbot && \
-    adduser -S djmtbot -u 1001 && \
-    mkdir -p /app/logs && \
-    chown -R djmtbot:djmtbot /app
+# Create the bind-mount target with the runtime user's ownership. Bind mounts
+# still use host permissions, but this handles non-mounted image usage.
+RUN mkdir -p /app/logs && chown djmtbot:djmtbot /app/logs
 
 # Switch to non-root user
 USER djmtbot
