@@ -15,6 +15,7 @@ import {
 } from 'discord.js';
 import {ComponentNames} from '../Constants/ComponentNames';
 import {ComponentCommands} from '../Constants/ComponentCommands';
+import {MusicComponent} from './MusicComponent';
 
 const setDebugCommand = new SlashCommandBuilder();
 setDebugCommand.setName(ComponentCommands.SET_DEBUG_CHANNEL);
@@ -73,8 +74,31 @@ setModLoggingChannelCommand.setDefaultMemberPermissions(
   PermissionFlagsBits.Administrator,
 );
 
+const setRadioVoiceChannelCommand = new SlashCommandBuilder();
+setRadioVoiceChannelCommand.setName(ComponentCommands.SET_RADIO_VOICE_CHANNEL);
+setRadioVoiceChannelCommand.setDescription(
+  'Sets the radio voice channel used for now-playing status updates',
+);
+setRadioVoiceChannelCommand.addChannelOption(input =>
+  input
+    .setName('channel')
+    .setDescription(
+      'The voice channel to add or remove for radio status updates',
+    )
+    .addChannelTypes(ChannelType.GuildVoice)
+    .setRequired(true),
+);
+setRadioVoiceChannelCommand.setDefaultMemberPermissions(
+  PermissionFlagsBits.Administrator,
+);
+
 // Declare data you want to save in JSON here
 type DebugComponentSave = Record<string, unknown>;
+
+type SetRadioVoiceChannelParams = {
+  radioVoiceChannel: TextBasedChannel;
+  interaction: ChatInputCommandInteraction;
+};
 
 export class GuildSettersComponent extends Component<DebugComponentSave> {
   name: ComponentNames = ComponentNames.DEBUG;
@@ -84,6 +108,7 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
     setPrefixCommand,
     setModAlertsChannelCommand,
     setModLoggingChannelCommand,
+    setRadioVoiceChannelCommand,
   ];
 
   getSaveData(): Promise<DebugComponentSave> {
@@ -154,6 +179,17 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
         interaction.options.getChannel<ChannelType.GuildText>('channel', true),
         interaction,
       );
+    } else if (
+      interaction.commandName === ComponentCommands.SET_RADIO_VOICE_CHANNEL
+    ) {
+      await this.setRadioVoiceChannel({
+        radioVoiceChannel:
+          interaction.options.getChannel<ChannelType.GuildVoice>(
+            'channel',
+            true,
+          ),
+        interaction,
+      });
     }
     return Promise.resolve(undefined);
   }
@@ -247,6 +283,33 @@ export class GuildSettersComponent extends Component<DebugComponentSave> {
       this.djmtGuild.modLoggingChannelId = modLoggingChannel.id;
       await interaction.reply({
         content: `${modLoggingChannel.toString()} is now set as the mod logging channel`,
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+  }
+
+  /**
+   * Sets or unsets the configured radio voice channel for now-playing status updates.
+   * Setting starts polling; unsetting stops polling only when radio is not active.
+   */
+  async setRadioVoiceChannel(params: SetRadioVoiceChannelParams) {
+    const {radioVoiceChannel, interaction} = params;
+    const musicComponent = this.djmtGuild.getComponent(ComponentNames.MUSIC) as
+      | MusicComponent
+      | undefined;
+
+    if (this.djmtGuild.radioVoiceChannelId === radioVoiceChannel.id) {
+      this.djmtGuild.radioVoiceChannelId = undefined;
+      musicComponent?.stopPollingIfRadioInactive();
+      await interaction.reply({
+        content: `${radioVoiceChannel.toString()} is no longer set as the radio voice channel`,
+        flags: MessageFlags.Ephemeral,
+      });
+    } else {
+      this.djmtGuild.radioVoiceChannelId = radioVoiceChannel.id;
+      musicComponent?.ensureRadioVoicePolling();
+      await interaction.reply({
+        content: `${radioVoiceChannel.toString()} is now set as the radio voice channel`,
         flags: MessageFlags.Ephemeral,
       });
     }

@@ -12,17 +12,21 @@ RUN corepack enable pnpm
 # Set working directory
 WORKDIR /app
 
-# Copy package files, config, and tsconfig (needed for prepare script)
+# Copy dependency manifests first so dependency installation remains cached
+# when only application source code changes.
 COPY package.json pnpm-lock.yaml tsconfig.json ./
 
-# Copy source code (needed for prepare script compilation)
+# Install JavaScript dependencies without lifecycle scripts. The source tree is
+# copied below, so source changes do not invalidate this expensive layer.
+RUN pnpm install --frozen-lockfile --ignore-scripts
+
+# Copy source and configuration after dependencies for better Docker caching.
 COPY json ./json
 COPY src ./src
 
-# Install dependencies and build native modules.
-# Needs to run run install in @discordjs/opus to trigger node-gyp build of native bindings,
-# due to a 404 error when pnpm tries to fetch prebuilt binaries for the current platform.
-RUN pnpm install --frozen-lockfile && \
+# Build native Opus bindings explicitly. This is rerun only when the builder
+# dependency layer changes or the image cache is intentionally invalidated.
+RUN \
     echo "=== Building @discordjs/opus native module ===" && \
     cd node_modules/@discordjs/opus && npm run install && \
     echo "=== ✓ Opus native module built successfully ===" && \
@@ -40,22 +44,26 @@ RUN apk add --no-cache ffmpeg
 # Set working directory
 WORKDIR /app
 
+# Create the non-root runtime user before copying application files so Docker
+# can assign ownership during COPY instead of recursively chowning node_modules.
+RUN addgroup -g 1001 -S djmtbot && \
+    adduser -S djmtbot -u 1001
+
 # Copy package files
-COPY package.json pnpm-lock.yaml ./
+COPY --chown=djmtbot:djmtbot package.json pnpm-lock.yaml ./
 
 # Copy node_modules with compiled native bindings from builder stage
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder --chown=djmtbot:djmtbot /app/node_modules ./node_modules
 
 # Copy compiled JavaScript from builder stage
-COPY --from=builder /app/dist ./dist
+COPY --from=builder --chown=djmtbot:djmtbot /app/dist ./dist
 
 # Copy JSON configuration files
-COPY json ./json
+COPY --chown=djmtbot:djmtbot json ./json
 
-# Create a non-root user for security
-RUN addgroup -g 1001 -S djmtbot && \
-    adduser -S djmtbot -u 1001 && \
-    chown -R djmtbot:djmtbot /app
+# Create the bind-mount target with the runtime user's ownership. Bind mounts
+# still use host permissions, but this handles non-mounted image usage.
+RUN mkdir -p /app/logs && chown djmtbot:djmtbot /app/logs
 
 # Switch to non-root user
 USER djmtbot

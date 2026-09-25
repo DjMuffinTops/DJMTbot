@@ -13,4 +13,5 @@ json/guilds/
 !.yarn/versions
 ignore/
 logs/
+scripts/
 *.tsbuildinfo

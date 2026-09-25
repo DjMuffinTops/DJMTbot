@@ -1,5 +1,6 @@
 import {
   ChatInputCommandInteraction,
+  ChannelType,
   GuildMember,
   Interaction,
   Message,
@@ -9,13 +10,26 @@ import {
   VoiceState,
   EmbedBuilder,
   GuildTextBasedChannel,
+  PermissionFlagsBits,
 } from 'discord.js';
 import {DisTube, Song} from 'distube';
+import {randomUUID} from 'crypto';
 import {ComponentCommands} from '../Constants/ComponentCommands';
 import {Component} from '../Component';
 import {ComponentNames} from '../Constants/ComponentNames';
 import {DJMTbot} from '../DJMTbot';
 import {logger} from '../Logger';
+import {
+  buildRadioNowPlayingEmbed,
+  buildRadioNowPlayingEmbedForSong,
+  fetchRadioNowPlaying,
+  isRadioStreamUrl,
+  RADIO_FALLBACK_URL,
+  RADIO_PRIMARY_URL,
+  RADIO_STATUS_URL,
+  RadioNowPlayingInfo,
+} from '../RadioNowPlaying';
+import defaultConfigJson from '../../json/defaultConfig.json';
 
 // Command builders
 const playCommand = new SlashCommandBuilder()
@@ -28,6 +42,52 @@ const playCommand = new SlashCommandBuilder()
       .setRequired(true),
   );
 
+const radioCommand = new SlashCommandBuilder()
+  .setName(ComponentCommands.RADIO)
+  .setDescription('Play DJMuffinTops radio')
+  .addStringOption(option =>
+    option.setName('station').setDescription('Radio station').setAutocomplete(true),
+  )
+  .addBooleanOption(option =>
+    option
+      .setName('silencemessages')
+      .setDescription('Disable periodic radio now-playing messages'),
+  );
+
+const defaultRadioStationName = 'DjMuffinTops Radio';
+const mandatoryRadioStationIds = new Set(['djmuffintops-radio', 'pmd-radio']);
+
+const removeRadioStationCommand = new SlashCommandBuilder()
+  .setName(ComponentCommands.RADIO_STATION_REMOVE)
+  .setDescription('Remove a radio station')
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption(option =>
+    option
+      .setName('station')
+      .setDescription('Station to remove')
+      .setRequired(true)
+      .setAutocomplete(true),
+  );
+
+const addRadioStationCommand = new SlashCommandBuilder()
+  .setName(ComponentCommands.RADIO_STATION_ADD)
+  .setDescription('Add or update a radio station')
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption(option => option.setName('name').setDescription('Station name').setRequired(true))
+  .addStringOption(option => option.setName('url').setDescription('Stream URL').setRequired(true))
+  .addStringOption(option => option.setName('publicurl').setDescription('Public browser page URL'));
+
+const defaultRadioStationCommand = new SlashCommandBuilder()
+  .setName(ComponentCommands.RADIO_STATION_DEFAULT)
+  .setDescription('Set the default radio station')
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption(option => option.setName('station').setDescription('Station').setRequired(true).setAutocomplete(true));
+
+const listRadioStationsCommand = new SlashCommandBuilder()
+  .setName(ComponentCommands.RADIO_STATION_LIST)
+  .setDescription('List radio stations')
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
 const skipCommand = new SlashCommandBuilder()
   .setName(ComponentCommands.SKIP)
   .setDescription('Skip the current song');
@@ -35,6 +95,10 @@ const skipCommand = new SlashCommandBuilder()
 const stopCommand = new SlashCommandBuilder()
   .setName(ComponentCommands.STOP)
   .setDescription('Stop playing and clear the queue');
+
+const leaveCommand = new SlashCommandBuilder()
+  .setName(ComponentCommands.LEAVE)
+  .setDescription('Stop, clear queue, and disconnect from voice channel');
 
 const pauseCommand = new SlashCommandBuilder()
   .setName(ComponentCommands.PAUSE)
@@ -93,15 +157,68 @@ const playFileCommand = new SlashCommandBuilder()
       .setRequired(true),
   );
 
-type MusicComponentSave = Record<string, unknown>;
+export interface RadioStation {
+  id: string;
+  name: string;
+  url: string;
+  publicUrl?: string;
+}
+
+export interface MusicComponentSave {
+  volume: number | null;
+  radioStations?: RadioStation[];
+  defaultRadioStationId?: string;
+}
+
+type RadioPollingState = {
+  previousTrackSnapshotKey: string | null;
+  previousNowPlayingMessageId: string | null;
+  previousVoiceStatus: string | null;
+  previousVoiceChannelId: string | null;
+};
+
+type RadioPollingOptions = {
+  textChannel?: GuildTextBasedChannel;
+  shouldSendMessages?: boolean;
+};
+
+type StopRadioPollingOptions = {
+  clearVoiceStatus?: boolean;
+};
+
+type RadioVoiceStatusUpdate = {
+  channelId: string;
+  status: string | null;
+};
 
 export class MusicComponent extends Component<MusicComponentSave> {
+  private readonly radioNowPlayingPollIntervalMs = 10000;
+  private readonly radioPrimaryUrl = RADIO_PRIMARY_URL;
+  private readonly radioFallbackUrl = RADIO_FALLBACK_URL;
+  private readonly radioStatusUrl = RADIO_STATUS_URL;
+  private volumePreference: number | null = null;
+  private radioStations: RadioStation[] = [];
+  private defaultStationId = '';
+  private radioPollInterval: NodeJS.Timeout | null = null;
+  private radioPollingState: RadioPollingState = {
+    previousTrackSnapshotKey: null,
+    previousNowPlayingMessageId: null,
+    previousVoiceStatus: null,
+    previousVoiceChannelId: null,
+  };
+
   name: ComponentNames = ComponentNames.MUSIC;
   commands = [
     playCommand,
+    radioCommand,
+    addRadioStationCommand,
+    defaultRadioStationCommand,
+    listRadioStationsCommand,
+    removeRadioStationCommand,
     playFileCommand,
     skipCommand,
     stopCommand,
+    leaveCommand,
     pauseCommand,
     resumeCommand,
     queueCommand,
@@ -115,26 +232,113 @@ export class MusicComponent extends Component<MusicComponentSave> {
     return DJMTbot.getInstance().distube;
   }
 
+  /** Persists user volume preference for this guild component instance. */
   getSaveData(): Promise<MusicComponentSave> {
-    return Promise.resolve({} as MusicComponentSave);
+    return Promise.resolve({
+      volume: this.volumePreference,
+      radioStations: this.radioStations,
+      defaultRadioStationId: this.defaultStationId,
+    });
   }
 
-  afterLoadJSON(_loadedObject: MusicComponentSave | undefined): Promise<void> {
+  /** Restores persisted volume preference and normalizes invalid values. */
+  afterLoadJSON(loadedObject: MusicComponentSave | undefined): Promise<void> {
+    const defaults = (
+      defaultConfigJson.componentData as {
+        MUSIC?: {radioStations?: RadioStation[]};
+      }
+    ).MUSIC?.radioStations || [];
+    const loaded = loadedObject?.radioStations || [];
+    // Guild-specific entries override the global defaults, including optional
+    // fields such as publicUrl.
+    // Global default stations are mandatory and are always restored for each
+    // guild, even if a guild configuration attempts to remove them.
+    this.radioStations = [...loaded, ...defaults].filter(
+      (station, index, stations) =>
+        station?.name && station?.url &&
+        stations.findIndex(item => item.name === station.name) === index,
+    );
+    this.defaultStationId =
+      loadedObject?.defaultRadioStationId &&
+      this.radioStations.some(station => station.id === loadedObject.defaultRadioStationId)
+        ? loadedObject.defaultRadioStationId
+        : this.radioStations[0]?.id || '';
+    if (
+      loadedObject &&
+      typeof loadedObject.volume === 'number' &&
+      loadedObject.volume >= 0 &&
+      loadedObject.volume <= 100
+    ) {
+      this.volumePreference = loadedObject.volume;
+    } else {
+      this.volumePreference = null;
+    }
+
     return Promise.resolve();
   }
 
+  /** Persists the current music component state to the guild configuration. */
+  private async saveMusicConfig(): Promise<void> {
+    await this.djmtGuild.saveJSON();
+  }
+
+  /** Adds or updates a named radio station. */
+  private async setStation(name: string, url: string, publicUrl?: string): Promise<void> {
+    const id = `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${randomUUID().slice(0, 6)}`;
+    this.radioStations.push({id, name, url, publicUrl: publicUrl || undefined});
+    await this.saveMusicConfig();
+  }
+
+  /** Removes a named radio station and reports whether it existed. */
+  private async removeStation(id: string): Promise<boolean> {
+    const index = this.radioStations.findIndex(station => station.id === id);
+    if (index < 0) return false;
+    this.radioStations.splice(index, 1);
+    await this.saveMusicConfig();
+    return true;
+  }
+
+  /**
+   * Initializes radio polling at startup when a radio voice status channel is configured.
+   */
   async onReady(): Promise<void> {
+    if (this.hasRadioVoiceChannel()) {
+      this.ensureRadioVoicePolling();
+    }
     return Promise.resolve();
+  }
+
+  /** Applies the saved volume preference to the currently active queue, if any. */
+  private applySavedVolumePreference(): void {
+    if (this.volumePreference === null) {
+      return;
+    }
+    const queue = this.distube.getQueue(this.djmtGuild.guildId);
+    try {
+      queue?.setVolume(this.volumePreference);
+      logger.info('Applied saved volume setting', {
+        guildId: this.djmtGuild.guildId,
+        volume: this.volumePreference,
+      });
+    } catch (error) {
+      logger.warn('Failed to apply saved volume setting', {
+        guildId: this.djmtGuild.guildId,
+        volume: this.volumePreference,
+        error,
+      });
+    }
   }
 
   onGuildMemberAdd(_member: GuildMember): Promise<void> {
     return Promise.resolve();
   }
 
+  /** No-op: this component does not process generic text messages. */
   onMessageCreate(_args: string[], _message: Message): Promise<void> {
     return Promise.resolve();
   }
 
+  /** No-op: this component currently only supports slash commands. */
   onMessageCreateWithGuildPrefix(
     _args: string[],
     _message: Message,
@@ -142,6 +346,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
     return Promise.resolve();
   }
 
+  /** No-op: message reactions are not used by music controls in this component. */
   onMessageReactionAdd(
     _messageReaction: MessageReaction,
     _user: User,
@@ -149,6 +354,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
     return Promise.resolve();
   }
 
+  /** No-op: message reactions are not used by music controls in this component. */
   onMessageReactionRemove(
     _messageReaction: MessageReaction,
     _user: User,
@@ -156,10 +362,12 @@ export class MusicComponent extends Component<MusicComponentSave> {
     return Promise.resolve();
   }
 
+  /** No-op: edited message content does not affect music state. */
   onMessageUpdate(_oldMessage: Message, _newMessage: Message): Promise<void> {
     return Promise.resolve();
   }
 
+  /** No-op: voice state updates are handled by DisTube internals for playback flow. */
   onVoiceStateUpdate(
     _oldState: VoiceState,
     _newState: VoiceState,
@@ -167,7 +375,23 @@ export class MusicComponent extends Component<MusicComponentSave> {
     return Promise.resolve();
   }
 
+  /** Routes slash commands owned by this component to their handler methods. */
   async onInteractionCreate(interaction: Interaction): Promise<void> {
+    if (interaction.isAutocomplete()) {
+      if (
+        interaction.commandName === ComponentCommands.RADIO ||
+        interaction.commandName === ComponentCommands.RADIO_STATION_DEFAULT ||
+        interaction.commandName === ComponentCommands.RADIO_STATION_REMOVE
+      ) {
+        const query = interaction.options.getString('station')?.toLowerCase() || '';
+        const choices = this.radioStations
+          .filter(station => station.name.toLowerCase().includes(query))
+          .slice(0, 25)
+          .map(station => ({name: station.name, value: station.id}));
+        await interaction.respond(choices);
+      }
+      return;
+    }
     if (!interaction.isChatInputCommand()) {
       return;
     }
@@ -178,6 +402,21 @@ export class MusicComponent extends Component<MusicComponentSave> {
       case ComponentCommands.PLAY:
         await this.playCmd(interaction);
         break;
+      case ComponentCommands.RADIO:
+        await this.radioCmd(interaction);
+        break;
+      case ComponentCommands.RADIO_STATION_ADD:
+        await this.addRadioStationCmd(interaction);
+        break;
+      case ComponentCommands.RADIO_STATION_DEFAULT:
+        await this.defaultRadioStationCmd(interaction);
+        break;
+      case ComponentCommands.RADIO_STATION_LIST:
+        await this.listRadioStationsCmd(interaction);
+        break;
+      case ComponentCommands.RADIO_STATION_REMOVE:
+        await this.removeRadioStationCmd(interaction);
+        break;
       case ComponentCommands.PLAYFILE:
         await this.playFileCmd(interaction);
         break;
@@ -186,6 +425,9 @@ export class MusicComponent extends Component<MusicComponentSave> {
         break;
       case ComponentCommands.STOP:
         await this.stopCmd(interaction);
+        break;
+      case ComponentCommands.LEAVE:
+        await this.leaveCmd(interaction);
         break;
       case ComponentCommands.PAUSE:
         await this.pauseCmd(interaction);
@@ -211,6 +453,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
     }
   }
 
+  /** Queues a track or URL and ensures saved volume is applied after queue creation. */
   private async playCmd(interaction: ChatInputCommandInteraction) {
     const member = interaction.member as GuildMember;
     const voiceChannel = member?.voice.channel;
@@ -218,7 +461,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
     if (!voiceChannel) {
       await interaction.reply({
         content: '❌ You must be in a voice channel to play music!',
-        ephemeral: true,
+        flags: ['Ephemeral'],
       });
       return;
     }
@@ -232,6 +475,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
         textChannel: interaction.channel as GuildTextBasedChannel,
         member: member,
       });
+      this.applySavedVolumePreference();
       logger.info('Playing music', {
         userId: interaction.member?.user.id,
         username: interaction.member?.user.username,
@@ -239,9 +483,527 @@ export class MusicComponent extends Component<MusicComponentSave> {
       });
       await interaction.editReply('🎵 Processing your request...');
     } catch (error) {
+      logger.error('Error playing music', {
+        userId: interaction.member?.user.id,
+        username: interaction.member?.user.username,
+        query: query,
+        error,
+      });
       await interaction.editReply(
         `❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
+    }
+  }
+
+  /**
+   * Plays the radio stream and starts the shared polling loop that powers
+   * text now-playing messages and optional voice channel status updates.
+   */
+  private async radioCmd(interaction: ChatInputCommandInteraction) {
+    const member = interaction.member as GuildMember;
+    const voiceChannel = member?.voice.channel;
+    const guildId = interaction.guildId;
+    const silenceMessages =
+      interaction.options.getBoolean('silencemessages') ?? false;
+    const stationId = interaction.options.getString('station') || this.defaultStationId;
+    const station = this.radioStations.find(station => station.id === stationId);
+    const stationName = station?.name || defaultRadioStationName;
+    const stationUrl = station?.url;
+
+    if (!guildId) {
+      await interaction.reply({
+        content: '❌ This command can only be used in a server.',
+        flags: ['Ephemeral'],
+      });
+      // Command is guild-only because radio state is stored per guild.
+      return;
+    }
+
+    if (!stationUrl) {
+      await interaction.reply({content: `❌ Unknown radio station: ${stationName}`, flags: ['Ephemeral']});
+      return;
+    }
+
+    if (!voiceChannel) {
+      await interaction.reply({
+        content: '❌ You must be in a voice channel to play music!',
+        flags: ['Ephemeral'],
+      });
+      // DisTube needs a joinable voice channel context to start playback.
+      return;
+    }
+    await interaction.deferReply({
+      flags: silenceMessages ? ['Ephemeral'] : undefined,
+    });
+
+    const playOptions = {
+      textChannel: interaction.channel as GuildTextBasedChannel,
+      member: member,
+    };
+
+    // Radio is a live source, so it should replace whatever is currently
+    // playing instead of being appended to the queue. Stopping the existing
+    // queue also clears any songs that were queued behind it.
+    const existingQueue = this.distube.getQueue(guildId);
+    if (existingQueue) {
+      try {
+        await existingQueue.stop();
+      } catch (error) {
+        logger.warn('Could not clear existing queue before starting radio', {
+          guildId,
+          error,
+        });
+      }
+    }
+    this.stopRadioNowPlayingPolling();
+
+    const streamAttempts = [{url: stationUrl, logMessage: `Playing radio station ${stationName}`}];
+
+    let lastError: unknown;
+
+    for (let i = 0; i < streamAttempts.length; i++) {
+      const streamAttempt = streamAttempts[i];
+
+      try {
+        await this.distube.play(voiceChannel, streamAttempt.url, playOptions);
+        this.applySavedVolumePreference();
+        if (interaction.channel || this.hasRadioVoiceChannel()) {
+          this.startRadioNowPlayingPolling({
+            textChannel: interaction.channel as
+              | GuildTextBasedChannel
+              | undefined,
+            shouldSendMessages: !silenceMessages,
+          });
+        }
+        logger.info(streamAttempt.logMessage, {
+          userId: interaction.member?.user.id,
+          username: interaction.member?.user.username,
+          url: streamAttempt.url,
+          silenceMessages,
+        });
+        if (silenceMessages) {
+          await interaction.editReply(
+            '🎵 Playing radio with now-playing messages silenced.',
+          );
+        } else {
+          await interaction.deleteReply();
+        }
+        return;
+      } catch (error) {
+        lastError = error;
+
+        if (i === 0) {
+          logger.warn('Radio stream failed', {
+            userId: interaction.member?.user.id,
+            username: interaction.member?.user.username,
+            stationName,
+            error,
+          });
+          continue;
+        }
+      }
+    }
+
+    logger.error('Radio stream failed', {
+      userId: interaction.member?.user.id,
+      username: interaction.member?.user.username,
+      stationName,
+      error: lastError,
+    });
+    await interaction.editReply(
+      `❌ Could not start radio stream. ${lastError instanceof Error ? lastError.message : 'Unknown error'}`,
+    );
+  }
+
+  /** Adds or updates a station using explicitly entered values. */
+  private async addRadioStationCmd(interaction: ChatInputCommandInteraction) {
+    if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
+      await interaction.reply({content: '❌ Administrator permission required.', flags: ['Ephemeral']});
+      return;
+    }
+    const name = interaction.options.getString('name', true);
+    const url = interaction.options.getString('url', true);
+    const publicUrl = interaction.options.getString('publicurl') || undefined;
+    if (!/^https?:\/\//i.test(url)) {
+      await interaction.reply({content: '❌ A valid HTTP(S) stream URL is required.', flags: ['Ephemeral']});
+      return;
+    }
+    await this.setStation(name, url, publicUrl);
+    await interaction.reply({content: `✅ Station ${name} saved.`, flags: ['Ephemeral']});
+  }
+
+  /** Selects the guild default station. */
+  private async defaultRadioStationCmd(interaction: ChatInputCommandInteraction) {
+    if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
+      await interaction.reply({content: '❌ Administrator permission required.', flags: ['Ephemeral']});
+      return;
+    }
+    const name = interaction.options.getString('station', true);
+    if (!this.radioStations.some(station => station.id === name)) {
+      await interaction.reply({content: `❌ Unknown station: ${name}`, flags: ['Ephemeral']});
+      return;
+    }
+    this.defaultStationId = name;
+    await this.saveMusicConfig();
+    await interaction.reply({content: `✅ Default station set to ${name}.`, flags: ['Ephemeral']});
+  }
+
+  /** Lists configured radio stations. */
+  private async listRadioStationsCmd(interaction: ChatInputCommandInteraction) {
+    if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
+      await interaction.reply({content: '❌ Administrator permission required.', flags: ['Ephemeral']});
+      return;
+    }
+    await interaction.reply({content: this.radioStations.map(station => `Name: ${station.name}\nPublic page: ${station.publicUrl || station.url}\nStream: ${station.url}`).join('\n\n') || 'No stations configured.', flags: ['Ephemeral']});
+  }
+
+  /** Handles administrator removal of a configured radio station. */
+  private async removeRadioStationCmd(interaction: ChatInputCommandInteraction) {
+    if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
+      await interaction.reply({content: '❌ Administrator permission required.', flags: ['Ephemeral']});
+      return;
+    }
+    const name = interaction.options.getString('station', true);
+    if (name === this.defaultStationId || mandatoryRadioStationIds.has(name)) {
+      await interaction.reply({content: '❌ This station is mandatory and cannot be removed.', flags: ['Ephemeral']});
+      return;
+    }
+    const removed = await this.removeStation(name);
+    await interaction.reply({content: removed ? `✅ Removed ${name}.` : `❌ Unknown station: ${name}`, flags: ['Ephemeral']});
+  }
+
+  /** Returns true when a radio voice status target channel has been configured. */
+  private hasRadioVoiceChannel(): boolean {
+    return this.djmtGuild.radioVoiceChannelId.length > 0;
+  }
+
+  /**
+   * Starts polling only if no polling interval is currently active.
+   * Used on startup and when a radio voice channel gets configured.
+   */
+  ensureRadioVoicePolling(): void {
+    if (this.radioPollInterval !== null) {
+      // Polling is already active; avoid creating a duplicate interval.
+      return;
+    }
+    this.startRadioNowPlayingPolling();
+  }
+
+  /**
+   * Stops polling when unsetting the radio voice channel, but only if
+   * the guild is not actively playing a radio stream.
+   */
+  stopPollingIfRadioInactive(): void {
+    const queue = this.distube.getQueue(this.djmtGuild.guildId);
+    const currentSong = queue?.songs[0];
+    const radioActive =
+      !!currentSong &&
+      this.radioStations.some(station =>
+        isRadioStreamUrl(currentSong.url, station.url, station.url),
+      );
+    if (!radioActive) {
+      this.stopRadioNowPlayingPolling();
+    }
+  }
+
+  /**
+   * Starts or refreshes the radio polling interval.
+   * Passing options in an object keeps call sites readable as behavior evolves.
+   */
+  private startRadioNowPlayingPolling(options: RadioPollingOptions = {}): void {
+    const {textChannel, shouldSendMessages = true} = options;
+
+    this.stopRadioNowPlayingPolling({clearVoiceStatus: false});
+
+    // Get now playing immediately
+    void this.pollAndSendRadioNowPlaying({textChannel, shouldSendMessages});
+
+    // Set up polling on an interval
+    this.radioPollInterval = setInterval(() => {
+      void this.pollAndSendRadioNowPlaying({textChannel, shouldSendMessages});
+    }, this.radioNowPlayingPollIntervalMs);
+  }
+
+  /**
+   * Clears the polling interval and in-memory state.
+   * Optionally clears any previously set voice channel status.
+   */
+  private stopRadioNowPlayingPolling(
+    options: StopRadioPollingOptions = {},
+  ): void {
+    const {clearVoiceStatus = true} = options;
+    const previousVoiceChannelId =
+      this.radioPollingState.previousVoiceChannelId;
+
+    if (this.radioPollInterval) {
+      clearInterval(this.radioPollInterval);
+      this.radioPollInterval = null;
+    }
+    this.resetRadioPollingState();
+
+    if (clearVoiceStatus && previousVoiceChannelId) {
+      void this.updateRadioVoiceChannelStatus({
+        channelId: previousVoiceChannelId,
+        status: null,
+      });
+    }
+  }
+
+  /** Resets in-memory radio polling cache used to detect track/status changes. */
+  private resetRadioPollingState(): void {
+    this.radioPollingState = {
+      previousTrackSnapshotKey: null,
+      previousNowPlayingMessageId: null,
+      previousVoiceStatus: null,
+      previousVoiceChannelId: null,
+    };
+  }
+
+  /**
+   * Polls the radio metadata endpoint, then updates outputs (text message and/or
+   * voice channel status) when a track or status change is detected.
+   */
+  private async pollAndSendRadioNowPlaying(
+    options: RadioPollingOptions = {},
+  ): Promise<void> {
+    const {textChannel, shouldSendMessages = true} = options;
+    const radioVoiceChannelId = this.djmtGuild.radioVoiceChannelId || undefined;
+
+    if (!textChannel && !radioVoiceChannelId) {
+      // No configured output targets left (no text channel and no voice status channel).
+      this.stopRadioNowPlayingPolling({clearVoiceStatus: false});
+      return;
+    }
+
+    try {
+      // Get the next state from the radio metadata endpoint
+      const statusUrl = this.getActiveRadioStatusUrl();
+      const nowPlaying = await fetchRadioNowPlaying({
+        primaryUrl: this.radioPrimaryUrl,
+        fallbackUrl: this.radioFallbackUrl,
+        statusUrl,
+      });
+
+      if (!nowPlaying) {
+        // Metadata endpoint returned no usable payload this cycle.
+        return;
+      }
+
+      // Next state snapshot key used for change detection between poll cycles.
+      // If this value is unchanged, we skip text and voice updates.
+      const nextTrackSnapshotKey = JSON.stringify({
+        title: nowPlaying.title,
+        artist: nowPlaying.artist,
+        rawTitle: nowPlaying.rawTitle,
+        listenUrl: nowPlaying.listenUrl,
+      });
+
+      // Get the previous state and its snapshot key to compare to
+      const {
+        previousTrackSnapshotKey,
+        previousNowPlayingMessageId,
+        previousVoiceStatus,
+        previousVoiceChannelId,
+      } = this.radioPollingState;
+
+      // Get the next voice status to compare to the previous voice status
+      const nextVoiceStatus = radioVoiceChannelId
+        ? this.buildRadioVoiceChannelStatus(nowPlaying)
+        : null;
+
+      // Check if voice status or track info has changed since the last poll
+      const voiceStatusChanged =
+        !!radioVoiceChannelId &&
+        (previousVoiceStatus !== nextVoiceStatus || // Status string changed
+          previousVoiceChannelId !== radioVoiceChannelId); // Voice channel target changed
+
+      // Check if track info has changed since the last poll by comparing snapshot keys
+      const trackChanged = previousTrackSnapshotKey !== nextTrackSnapshotKey;
+
+      if (!trackChanged && !voiceStatusChanged) {
+        // Nothing changed, so skip sends/writes until the next poll tick.
+        return;
+      }
+
+      let updatedNowPlayingMessageId = previousNowPlayingMessageId;
+
+      // Send a embed message to the text channel when the track changes and message sending is enabled
+      if (textChannel && shouldSendMessages && trackChanged) {
+        const embed = buildRadioNowPlayingEmbed(
+          nowPlaying,
+          this.getActiveRadioStationName(),
+          this.getActiveRadioStation()?.publicUrl,
+        );
+        const sentMessage = await textChannel.send({embeds: [embed]});
+
+        const previousMessageId = previousNowPlayingMessageId;
+        if (previousMessageId && previousMessageId !== sentMessage.id) {
+          await textChannel.messages
+            .fetch(previousMessageId)
+            .then(message => message.delete())
+            .catch(() => {});
+        }
+        // Cache the ID of the currently sent message for cleanup on the next cycle when the track changes again.
+        updatedNowPlayingMessageId = sentMessage.id;
+      }
+
+      // Update the voice channel status when it changes and a target channel is configured
+      if (radioVoiceChannelId && nextVoiceStatus && voiceStatusChanged) {
+        await this.updateRadioVoiceChannelStatus({
+          channelId: radioVoiceChannelId,
+          status: nextVoiceStatus,
+        });
+      }
+
+      // Update the cached state for the next cycle's change detection
+      this.radioPollingState = {
+        previousTrackSnapshotKey: nextTrackSnapshotKey,
+        previousNowPlayingMessageId: updatedNowPlayingMessageId,
+        previousVoiceStatus: nextVoiceStatus,
+        previousVoiceChannelId: radioVoiceChannelId ?? null,
+      };
+    } catch (error) {
+      logger.warn('Failed polling radio now-playing metadata', {
+        guildId: this.djmtGuild.guildId,
+        statusUrl: this.getActiveRadioStatusUrl(),
+        error,
+      });
+    }
+  }
+
+  /** Uses the currently playing station's AzuraCast metadata endpoint. */
+  /** Returns the AzuraCast metadata endpoint for the active station. */
+  private getActiveRadioStatusUrl(): string {
+    const queue = this.distube.getQueue(this.djmtGuild.guildId);
+    const currentUrl = queue?.songs[0]?.url;
+    const station = this.radioStations.find(item => item.url === currentUrl);
+    if (!station || station.id === this.defaultStationId) {
+      return this.radioStatusUrl;
+    }
+
+    try {
+      const parsed = new URL(station.url);
+      const listenIndex = parsed.pathname.split('/').indexOf('listen');
+      const stationId =
+        listenIndex >= 0 ? parsed.pathname.split('/')[listenIndex + 1] : null;
+      if (stationId) {
+        return `${parsed.origin}/api/nowplaying/${stationId}`;
+      }
+    } catch {
+      // Fall back to the configured default metadata endpoint.
+    }
+    return this.radioStatusUrl;
+  }
+
+  /** Returns the active station name or the configured default name. */
+  private getActiveRadioStationName(): string {
+    return this.getActiveRadioStation()?.name || defaultRadioStationName;
+  }
+
+  /** Finds the configured station matching the current queue stream. */
+  private getActiveRadioStation(): RadioStation | undefined {
+    const queue = this.distube.getQueue(this.djmtGuild.guildId);
+    const currentUrl = queue?.songs[0]?.url;
+    return this.radioStations.find(station =>
+      isRadioStreamUrl(currentUrl, station.url, station.url),
+    );
+  }
+
+  /** Returns the configured default station or a built-in stream fallback. */
+  private getDefaultRadioStation(): RadioStation {
+    return (
+      this.radioStations.find(
+        station => station.id === this.defaultStationId,
+      ) || {
+        id: this.defaultStationId,
+        name: defaultRadioStationName,
+        url: this.radioPrimaryUrl,
+      }
+    );
+  }
+
+  /** Refreshes the configured channel status using station metadata. */
+  private async refreshRadioStatusChannel(
+    station: RadioStation = this.getDefaultRadioStation(),
+  ): Promise<RadioNowPlayingInfo | null> {
+    const nowPlaying = await fetchRadioNowPlaying({
+      primaryUrl: station.url,
+      fallbackUrl: station.url,
+      statusUrl:
+        station.id === this.defaultStationId
+          ? this.radioStatusUrl
+          : this.getActiveRadioStatusUrl(),
+    });
+
+    if (nowPlaying && this.djmtGuild.radioVoiceChannelId) {
+      await this.updateRadioVoiceChannelStatus({
+        channelId: this.djmtGuild.radioVoiceChannelId,
+        status: this.buildRadioVoiceChannelStatus(nowPlaying),
+      });
+    }
+
+    return nowPlaying;
+  }
+
+  /**
+   * Builds a voice channel status string based on the currently playing radio track.
+   * @param nowPlaying The currently playing radio track info used to build the status string.
+   * @returns  A string to set as the voice channel status, truncated to 500 characters if needed.
+   */
+  private buildRadioVoiceChannelStatus(nowPlaying: {
+    title: string | null;
+    artist: string | null;
+    rawTitle: string | null;
+  }): string {
+    const status =
+      nowPlaying.title && nowPlaying.artist
+        ? `${nowPlaying.title} - ${nowPlaying.artist}`
+        : nowPlaying.title ||
+          nowPlaying.artist ||
+          nowPlaying.rawTitle ||
+          'DJMuffinTops Radio';
+
+    return status.length > 500 ? `${status.slice(0, 497)}...` : status;
+  }
+
+  /**
+   * Writes the current track summary into a guild voice channel status.
+   * Uses Discord's dedicated voice-status endpoint.
+   */
+  private async updateRadioVoiceChannelStatus(
+    params: RadioVoiceStatusUpdate,
+  ): Promise<void> {
+    const {channelId, status} = params;
+    const channel = this.djmtGuild.getGuildChannel(channelId);
+
+    if (
+      channel &&
+      channel.type !== ChannelType.GuildVoice &&
+      channel.type !== ChannelType.GuildStageVoice
+    ) {
+      logger.warn('Configured radio voice channel is not a voice channel', {
+        guildId: this.djmtGuild.guildId,
+        channelId,
+        channelType: channel.type,
+      });
+      // Bail out when config points to an unsupported channel type.
+      return;
+    }
+
+    try {
+      await DJMTbot.getInstance().client.rest.put(
+        `/channels/${channelId}/voice-status`,
+        {
+          body: {status: status ?? ''},
+        },
+      );
+    } catch (error) {
+      logger.warn('Failed updating radio voice channel status', {
+        guildId: this.djmtGuild.guildId,
+        channelId,
+        status,
+        error,
+      });
     }
   }
 
@@ -252,8 +1014,9 @@ export class MusicComponent extends Component<MusicComponentSave> {
     if (!voiceChannel) {
       await interaction.reply({
         content: '❌ You must be in a voice channel to play music!',
-        ephemeral: true,
+        flags: ['Ephemeral'],
       });
+      // File playback still requires the caller to provide the active voice context.
       return;
     }
 
@@ -269,8 +1032,9 @@ export class MusicComponent extends Component<MusicComponentSave> {
       await interaction.reply({
         content:
           '❌ Please upload a valid audio file (mp3, wav, ogg, flac, m4a, webm)',
-        ephemeral: true,
+        flags: ['Ephemeral'],
       });
+      // Reject unsupported files before we attempt to queue them.
       return;
     }
 
@@ -282,6 +1046,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
         textChannel: interaction.channel as GuildTextBasedChannel,
         member: member,
       });
+      this.applySavedVolumePreference();
       logger.info('Playing music from file', {
         userId: interaction.member?.user.id,
         username: interaction.member?.user.username,
@@ -289,12 +1054,19 @@ export class MusicComponent extends Component<MusicComponentSave> {
       });
       await interaction.editReply(`🎵 Playing file: **${attachment.name}**`);
     } catch (error) {
+      logger.error('Error playing music from file', {
+        userId: interaction.member?.user.id,
+        username: interaction.member?.user.username,
+        fileName: attachment.name,
+        error,
+      });
       await interaction.editReply(
         `❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }
 
+  /** Skips the current queue item when playback is active. */
   private async skipCmd(interaction: ChatInputCommandInteraction) {
     const queue = this.distube.getQueue(interaction.guildId!);
     if (!queue) {
@@ -302,6 +1074,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
         content: '❌ Nothing is playing!',
         flags: ['Ephemeral'],
       });
+      // Skip is only valid when a queue exists.
       return;
     }
 
@@ -316,6 +1089,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
     }
   }
 
+  /** Stops playback, clears queue state, and shuts down radio polling outputs. */
   private async stopCmd(interaction: ChatInputCommandInteraction) {
     const queue = this.distube.getQueue(interaction.guildId!);
     if (!queue) {
@@ -323,11 +1097,13 @@ export class MusicComponent extends Component<MusicComponentSave> {
         content: '❌ Nothing is playing!',
         flags: ['Ephemeral'],
       });
+      // Nothing to stop when no queue is active.
       return;
     }
 
     try {
-      await this.distube.stop(interaction.guildId!);
+      await queue.stop();
+      this.stopRadioNowPlayingPolling();
       await interaction.reply('⏹️ Stopped playing and cleared the queue');
     } catch (error) {
       await interaction.reply({
@@ -337,6 +1113,38 @@ export class MusicComponent extends Component<MusicComponentSave> {
     }
   }
 
+  /** Leaves the voice channel and clears playback state for this guild. */
+  private async leaveCmd(interaction: ChatInputCommandInteraction) {
+    const guildId = interaction.guildId;
+    if (!guildId) {
+      await interaction.reply({
+        content: '❌ This command can only be used in a server.',
+        flags: ['Ephemeral'],
+      });
+      // Leaving voice is a guild-scoped operation.
+      return;
+    }
+
+    const queue = this.distube.getQueue(guildId);
+
+    try {
+      if (queue) {
+        await queue.stop();
+      }
+      this.distube.voices.leave(guildId);
+      this.stopRadioNowPlayingPolling();
+      await interaction.reply(
+        '👋 Left the voice channel and cleared the queue',
+      );
+    } catch (error) {
+      await interaction.reply({
+        content: `❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        flags: ['Ephemeral'],
+      });
+    }
+  }
+
+  /** Pauses the active queue when playback is currently running. */
   private async pauseCmd(interaction: ChatInputCommandInteraction) {
     const queue = this.distube.getQueue(interaction.guildId!);
     if (!queue) {
@@ -344,6 +1152,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
         content: '❌ Nothing is playing!',
         flags: ['Ephemeral'],
       });
+      // Pause requires an active queue.
       return;
     }
 
@@ -352,13 +1161,15 @@ export class MusicComponent extends Component<MusicComponentSave> {
         content: '❌ The song is already paused!',
         flags: ['Ephemeral'],
       });
+      // Avoid duplicate pause calls against already-paused playback.
       return;
     }
 
-    await this.distube.pause(interaction.guildId!);
+    await queue.pause();
     await interaction.reply('⏸️ Paused the current song');
   }
 
+  /** Resumes the active queue when playback is currently paused. */
   private async resumeCmd(interaction: ChatInputCommandInteraction) {
     const queue = this.distube.getQueue(interaction.guildId!);
     if (!queue) {
@@ -366,6 +1177,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
         content: '❌ Nothing is playing!',
         flags: ['Ephemeral'],
       });
+      // Resume requires an active queue.
       return;
     }
 
@@ -374,13 +1186,15 @@ export class MusicComponent extends Component<MusicComponentSave> {
         content: '❌ The song is not paused!',
         flags: ['Ephemeral'],
       });
+      // If playback is already running, resume has no effect.
       return;
     }
 
-    await this.distube.resume(interaction.guildId!);
+    await queue.resume();
     await interaction.reply('▶️ Resumed the current song');
   }
 
+  /** Builds and returns an embed containing the current queue preview. */
   private async queueCmd(interaction: ChatInputCommandInteraction) {
     const queue = this.distube.getQueue(interaction.guildId!);
     if (!queue) {
@@ -388,6 +1202,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
         content: '❌ Nothing is playing!',
         flags: ['Ephemeral'],
       });
+      // Queue output depends on an existing playback queue.
       return;
     }
 
@@ -418,17 +1233,70 @@ export class MusicComponent extends Component<MusicComponentSave> {
     await interaction.reply({embeds: [embed]});
   }
 
+  /**
+   * Returns now-playing details for the active song.
+   * Uses radio metadata when the current stream is the configured DJMT radio.
+   */
   private async nowPlayingCmd(interaction: ChatInputCommandInteraction) {
     const queue = this.distube.getQueue(interaction.guildId!);
     if (!queue) {
       await interaction.reply({
         content: '❌ Nothing is playing!',
-        ephemeral: true,
+        flags: ['Ephemeral'],
       });
+      // No current track is available when queue is missing.
       return;
     }
 
+    await interaction.deferReply();
+
     const song = queue.songs[0];
+
+    try {
+      const activeStation = this.getActiveRadioStation();
+      if (activeStation) {
+        // `/nowplaying` is also an explicit refresh request for the configured
+        // radio status channel, not just a reply to the invoking user.
+        await this.refreshRadioStatusChannel(activeStation);
+        const radioNowPlaying = await fetchRadioNowPlaying({
+          primaryUrl: activeStation.url,
+          fallbackUrl: activeStation.url,
+          statusUrl: this.getActiveRadioStatusUrl(),
+        });
+        if (radioNowPlaying) {
+          await interaction.editReply({
+            embeds: [
+              buildRadioNowPlayingEmbed(
+                radioNowPlaying,
+                activeStation.name,
+                activeStation.publicUrl,
+              ),
+            ],
+          });
+          return;
+        }
+      } else if (this.djmtGuild.radioVoiceChannelId) {
+        await this.refreshRadioStatusChannel();
+      }
+      const radioEmbed = await buildRadioNowPlayingEmbedForSong(song.url, {
+        primaryUrl: this.radioPrimaryUrl,
+        fallbackUrl: this.radioFallbackUrl,
+        statusUrl: this.radioStatusUrl,
+      });
+      if (radioEmbed) {
+        await interaction.editReply({embeds: [radioEmbed]});
+        // Radio streams have dedicated metadata formatting; skip generic embed path.
+        return;
+      }
+    } catch (error) {
+      logger.warn('Failed to enrich now playing for radio stream', {
+        guildId: interaction.guildId,
+        songUrl: song.url,
+        statusUrl: this.radioStatusUrl,
+        error,
+      });
+    }
+
     const embed = new EmbedBuilder()
       .setColor('#0099ff')
       .setTitle('🎵 Now Playing')
@@ -456,31 +1324,49 @@ export class MusicComponent extends Component<MusicComponentSave> {
       )
       .setThumbnail(song.thumbnail ?? null);
 
-    await interaction.reply({embeds: [embed]});
+    await interaction.editReply({embeds: [embed]});
   }
 
+  /** Sets live queue volume or stores a preference when no queue exists yet. */
   private async volumeCmd(interaction: ChatInputCommandInteraction) {
-    const queue = this.distube.getQueue(interaction.guildId!);
-    if (!queue) {
+    const guildId = interaction.guildId;
+    if (!guildId) {
       await interaction.reply({
-        content: '❌ Nothing is playing!',
-        ephemeral: true,
+        content: '❌ This command can only be used in a server.',
+        flags: ['Ephemeral'],
       });
+      // Volume preferences are stored per guild.
       return;
     }
 
     const volume = interaction.options.getInteger('level', true);
-    this.distube.setVolume(interaction.guildId!, volume);
+    const queue = this.distube.getQueue(guildId);
+    if (!queue) {
+      this.volumePreference = volume;
+      await this.djmtGuild.saveJSON();
+      await interaction.reply({
+        content: `🔊 Saved volume at ${volume}%. I will apply it when music is queued.`,
+        flags: ['Ephemeral'],
+      });
+      // Persist preference now; it will be applied once playback starts.
+      return;
+    }
+
+    queue.setVolume(volume);
+    this.volumePreference = volume;
+    await this.djmtGuild.saveJSON();
     await interaction.reply(`🔊 Volume set to ${volume}%`);
   }
 
+  /** Sets repeat mode for the active queue. */
   private async loopCmd(interaction: ChatInputCommandInteraction) {
     const queue = this.distube.getQueue(interaction.guildId!);
     if (!queue) {
       await interaction.reply({
         content: '❌ Nothing is playing!',
-        ephemeral: true,
+        flags: ['Ephemeral'],
       });
+      // Loop mode only applies to an active queue.
       return;
     }
 
@@ -496,17 +1382,19 @@ export class MusicComponent extends Component<MusicComponentSave> {
       modeText = 'Queue';
     }
 
-    this.distube.setRepeatMode(interaction.guildId!, repeatMode);
+    queue.setRepeatMode(repeatMode);
     await interaction.reply(`🔁 Loop mode set to: ${modeText}`);
   }
 
+  /** Toggles DisTube autoplay for the active queue. */
   private async autoplayCmd(interaction: ChatInputCommandInteraction) {
     const queue = this.distube.getQueue(interaction.guildId!);
     if (!queue) {
       await interaction.reply({
         content: '❌ Nothing is playing!',
-        ephemeral: true,
+        flags: ['Ephemeral'],
       });
+      // Autoplay can only be toggled when queue state exists.
       return;
     }
 
