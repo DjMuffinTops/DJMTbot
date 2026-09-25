@@ -255,7 +255,7 @@ export function buildRadioNowPlayingEmbed(
   if (visitUrl) {
     // Keep the browser link at the bottom of the embed rather than placing
     // descriptive text over the main embed content.
-    addField('Public Page • Song Requests', `[${visitUrl}](${visitUrl})`, false);
+    addField('Public Page • Song Requests', visitUrl, false);
   }
   const embed = new EmbedBuilder()
     .setColor('#0099ff')
