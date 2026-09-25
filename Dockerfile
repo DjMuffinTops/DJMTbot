@@ -3,8 +3,9 @@
 # Stage 1: Build stage
 FROM node:24.13.1-alpine AS builder
 
-# Install FFmpeg, build tools, and opus development libraries for native modules
-RUN apk add --no-cache ffmpeg python3 make g++
+# Install FFmpeg for audio processing. Voice encoding uses the pure-JavaScript
+# opusscript fallback, so no native Opus build toolchain is required.
+RUN apk add --no-cache ffmpeg
 
 # Install pnpm
 RUN corepack enable pnpm
@@ -24,21 +25,13 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 COPY json ./json
 COPY src ./src
 
-# Build native Opus bindings explicitly. This is rerun only when the builder
-# dependency layer changes or the image cache is intentionally invalidated.
-RUN \
-    echo "=== Building @discordjs/opus native module ===" && \
-    cd node_modules/@discordjs/opus && npm run install && \
-    echo "=== ✓ Opus native module built successfully ===" && \
-    ls -lh $(find /app/node_modules/@discordjs/opus -name "*.node")
-
 # Build TypeScript code
 RUN pnpm build
 
 # Stage 2: Production stage
 FROM node:24.13.1-alpine
 
-# Install FFmpeg and opus runtime library for audio processing
+# Install FFmpeg for audio processing
 RUN apk add --no-cache ffmpeg
 
 # Set working directory
