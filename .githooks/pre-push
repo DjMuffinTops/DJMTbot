@@ -1,0 +1,12 @@
+#!/bin/sh
+
+echo "Running lint before push..."
+pnpm lint
+
+status=$?
+if [ "$status" -ne 0 ]; then
+  echo "Push blocked: lint failed. Fix the errors and try again."
+  exit "$status"
+fi
+
+echo "Lint passed."

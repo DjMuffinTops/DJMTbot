@@ -12,13 +12,12 @@ import {
   PermissionFlagsBits,
   SlashCommandBuilder,
   TextBasedChannel,
-  TextChannel,
   User,
   VoiceState,
 } from 'discord.js';
 import {ComponentNames} from '../Constants/ComponentNames';
 import {dayOfTheWeekConstants} from '../Constants/DayOfTheWeekConstants';
-import {isInteractionAdmin} from '../HelperFunctions';
+import {requireInteractionAdmin} from '../HelperFunctions';
 import {ComponentCommands} from '../Constants/ComponentCommands';
 
 const setDotwCommand = new SlashCommandBuilder();
@@ -126,24 +125,14 @@ export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> 
     }
     if (interaction.commandName === ComponentCommands.SET_DOTW) {
       // Admin only
-      if (!isInteractionAdmin(interaction)) {
-        await interaction.reply({
-          content: 'This command requires administrator permissions.',
-        });
-        return;
-      }
+      if (!(await requireInteractionAdmin(interaction))) return;
       await this.setDotwCmd(
         interaction.options.getChannel<ChannelType.GuildText>('channel', true),
         interaction,
       );
     } else if (interaction.commandName === ComponentCommands.PRINT_DOTW) {
       // Admin only
-      if (!isInteractionAdmin(interaction)) {
-        await interaction.reply({
-          content: 'This command requires administrator permissions.',
-        });
-        return;
-      }
+      if (!(await requireInteractionAdmin(interaction))) return;
       await this.printDotwChannels(interaction);
     }
   }
@@ -158,7 +147,7 @@ export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> 
       time: date.toLocaleTimeString(),
     });
     for (const channelId of this.dotwChannels) {
-      const channel = this.djmtGuild.getGuildChannel(channelId) as TextChannel;
+      const channel = this.djmtGuild.getGuildTextChannel(channelId);
       if (!channel) {
         logger.error('DOTW Job: Channel could not be found', {channelId});
       } else {
@@ -178,9 +167,7 @@ export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> 
   async pleasantEveningJob() {
     if (Math.random() < 0.4) {
       for (const channelId of this.dotwChannels) {
-        const channel = this.djmtGuild.getGuildChannel(
-          channelId,
-        ) as TextChannel;
+        const channel = this.djmtGuild.getGuildTextChannel(channelId);
         if (!channel) {
           logger.error('PleasantEveningJob: Could not find channel', {
             channelId,

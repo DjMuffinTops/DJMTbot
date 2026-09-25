@@ -4,7 +4,6 @@ import {
   AttachmentBuilder,
   MessageFlags,
   MessageReaction,
-  TextChannel,
   User,
   VoiceState,
   Collection,
@@ -19,7 +18,11 @@ import {
 import {Component} from '../Component';
 import {logger} from '../Logger';
 import {ComponentCommands} from '../Constants/ComponentCommands';
-import {isInteractionAdmin} from '../HelperFunctions';
+import {
+  formatChannelMentions,
+  requireInteractionAdmin,
+  toggleId,
+} from '../HelperFunctions';
 import {ComponentNames} from '../Constants/ComponentNames';
 
 const bruhCommand = new SlashCommandBuilder();
@@ -115,12 +118,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
       await this.bruhCmd(interaction);
     } else if (interaction.commandName === ComponentCommands.SET_BRUH) {
       // Admin only
-      if (!isInteractionAdmin(interaction)) {
-        await interaction.reply(
-          'This command requires administrator permissions.',
-        );
-        return;
-      }
+      if (!(await requireInteractionAdmin(interaction))) return;
       await this.setBruhCmd(
         interaction.options.getChannel<ChannelType.GuildText>('channel', true),
         interaction,
@@ -128,22 +126,12 @@ export class BruhComponent extends Component<BruhComponentSave> {
       await this.cacheAllBruhMessages(interaction);
     } else if (interaction.commandName === ComponentCommands.PRINT_BRUH) {
       // Admin only
-      if (!isInteractionAdmin(interaction)) {
-        await interaction.reply(
-          'This command requires administrator permissions.',
-        );
-        return;
-      }
+      if (!(await requireInteractionAdmin(interaction))) return;
       await this.printBruhInfo(interaction);
     } else if (interaction.commandName === ComponentCommands.BRUH_RECACHE) {
-      await interaction.deferReply({flags: MessageFlags.Ephemeral});
       // Admin only
-      if (!isInteractionAdmin(interaction)) {
-        await interaction.reply(
-          'This command requires administrator permissions.',
-        );
-        return;
-      }
+      if (!(await requireInteractionAdmin(interaction))) return;
+      await interaction.deferReply({flags: MessageFlags.Ephemeral});
       await this.cacheAllBruhMessages(interaction);
     }
   }
@@ -167,8 +155,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
     interaction: ChatInputCommandInteraction,
   ) {
     // Remove the channel if it's already in the list
-    if (this.bruhChannels?.includes(bruhChannel.id)) {
-      this.bruhChannels.splice(this.bruhChannels.indexOf(bruhChannel.id), 1);
+    if (!toggleId(this.bruhChannels, bruhChannel.id)) {
       await this.djmtGuild.saveJSON();
       // await updateConfig(gConfig, message);
       await interaction.reply({
@@ -187,11 +174,8 @@ export class BruhComponent extends Component<BruhComponentSave> {
   }
 
   private async printBruhInfo(interaction: ChatInputCommandInteraction) {
-    let channelString = '';
     if (this.bruhChannels && this.bruhChannels?.length > 0) {
-      this.bruhChannels.forEach((channelId: string) => {
-        channelString += `<#${channelId}> `;
-      });
+      const channelString = formatChannelMentions(this.bruhChannels);
       await interaction.reply({
         content: `Bruh Channel: ${channelString}`,
         flags: MessageFlags.Ephemeral,
@@ -257,9 +241,13 @@ export class BruhComponent extends Component<BruhComponentSave> {
                 );
               }
               if (channelId) {
-                const foundChannel = this.djmtGuild.getGuildChannel(
-                  channelId,
-                ) as TextChannel;
+                const foundChannel =
+                  this.djmtGuild.getGuildTextChannel(channelId);
+                if (!foundChannel) {
+                  throw new Error(
+                    `Bruh source channel unavailable: ${channelId}`,
+                  );
+                }
                 const searchMessage =
                   await foundChannel.messages.fetch(messageId);
                 msgContent = searchMessage.content;
@@ -347,10 +335,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
   ) {
     this.messageCache = [];
     for (const bruhChannelId of this.bruhChannels) {
-      const channel: TextChannel | undefined =
-        this.djmtGuild.guild?.channels?.cache?.get(
-          bruhChannelId,
-        ) as TextChannel; // get the channel object
+      const channel = this.djmtGuild.getGuildTextChannel(bruhChannelId);
       let last_id = '';
       let messages: Collection<string, Message> | undefined;
       do {

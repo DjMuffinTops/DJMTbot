@@ -15,10 +15,16 @@ import DailyRotateFile from 'winston-daily-rotate-file';
 
 const {combine, timestamp, errors, json, colorize, printf} = winston.format;
 
+winston.addColors({
+  error: 'red',
+  warn: 'yellow',
+  info: 'brightBlue',
+  debug: 'brightBlue',
+});
+
 // If true, pretty print metadata in logs.
 const prettyLogs = process.env.PRETTY_LOGS === 'true';
 const consoleFormat = combine(
-  colorize(),
   timestamp({format: 'YYYY-MM-DD HH:mm:ss'}),
   printf(({timestamp, level, message, ...meta}) => {
     let output = `[${String(timestamp)}] ${level}: ${String(message)}`;
@@ -31,6 +37,7 @@ const consoleFormat = combine(
     }
     return output;
   }),
+  colorize({all: true}),
 );
 
 const fileFormat = combine(timestamp(), errors({stack: true}), json());

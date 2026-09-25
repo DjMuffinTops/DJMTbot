@@ -98,19 +98,26 @@ export class DynamicVoiceChannels extends Component<DynamicVoiceChannelsSave> {
     if (_loadedObject) {
       this.markedVoiceChannels = _loadedObject.markedRootVoiceChannelIds
         .map(rootChannelSave => {
-          const voiceChannel: DynamicVoiceChannel =
-            this.djmtGuild.getGuildChannel(
-              rootChannelSave.channelId,
-            ) as DynamicVoiceChannel;
-          if (voiceChannel) {
-            voiceChannel.root = true;
-            voiceChannel.rootsMaxChildren = rootChannelSave.maxChildren;
-            voiceChannel.parentChannel = undefined;
-            voiceChannel.childChannel = undefined;
+          const voiceChannel = this.djmtGuild.getGuildVoiceChannel(
+            rootChannelSave.channelId,
+          );
+          if (!voiceChannel) {
+            logger.warn('[DynamicVoiceChannels] Could not load root channel', {
+              channelId: rootChannelSave.channelId,
+            });
+            return undefined;
           }
-          return voiceChannel;
+          const dynamicVoiceChannel = voiceChannel as DynamicVoiceChannel;
+          dynamicVoiceChannel.root = true;
+          dynamicVoiceChannel.rootsMaxChildren = rootChannelSave.maxChildren;
+          dynamicVoiceChannel.parentChannel = undefined;
+          dynamicVoiceChannel.childChannel = undefined;
+          return dynamicVoiceChannel;
         })
-        .filter(dynamicChannel => dynamicChannel);
+        .filter(
+          (dynamicChannel): dynamicChannel is DynamicVoiceChannel =>
+            dynamicChannel !== undefined,
+        );
     }
     return Promise.resolve();
   }

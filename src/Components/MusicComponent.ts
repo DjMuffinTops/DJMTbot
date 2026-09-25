@@ -1,6 +1,5 @@
 import {
   ChatInputCommandInteraction,
-  ChannelType,
   GuildMember,
   Interaction,
   Message,
@@ -10,11 +9,28 @@ import {
   VoiceState,
   EmbedBuilder,
   GuildTextBasedChannel,
+  VoiceBasedChannel,
   PermissionFlagsBits,
 } from 'discord.js';
 import {DisTube, Song} from 'distube';
 import {randomUUID} from 'crypto';
 import {ComponentCommands} from '../Constants/ComponentCommands';
+import {requireInteractionAdmin} from '../HelperFunctions';
+
+function getInteractionTextChannel(
+  interaction: ChatInputCommandInteraction,
+): GuildTextBasedChannel | undefined {
+  const channel = interaction.channel;
+  return channel && channel.isTextBased() && !channel.isDMBased()
+    ? channel
+    : undefined;
+}
+
+interface MusicCommandContext {
+  member: GuildMember;
+  voiceChannel: VoiceBasedChannel;
+  textChannel: GuildTextBasedChannel;
+}
 import {Component} from '../Component';
 import {ComponentNames} from '../Constants/ComponentNames';
 import {DJMTbot} from '../DJMTbot';
@@ -46,7 +62,10 @@ const radioCommand = new SlashCommandBuilder()
   .setName(ComponentCommands.RADIO)
   .setDescription('Play DJMuffinTops radio')
   .addStringOption(option =>
-    option.setName('station').setDescription('Radio station').setAutocomplete(true),
+    option
+      .setName('station')
+      .setDescription('Radio station')
+      .setAutocomplete(true),
   )
   .addBooleanOption(option =>
     option
@@ -73,15 +92,27 @@ const addRadioStationCommand = new SlashCommandBuilder()
   .setName(ComponentCommands.RADIO_STATION_ADD)
   .setDescription('Add or update a radio station')
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-  .addStringOption(option => option.setName('name').setDescription('Station name').setRequired(true))
-  .addStringOption(option => option.setName('url').setDescription('Stream URL').setRequired(true))
-  .addStringOption(option => option.setName('publicurl').setDescription('Public browser page URL'));
+  .addStringOption(option =>
+    option.setName('name').setDescription('Station name').setRequired(true),
+  )
+  .addStringOption(option =>
+    option.setName('url').setDescription('Stream URL').setRequired(true),
+  )
+  .addStringOption(option =>
+    option.setName('publicurl').setDescription('Public browser page URL'),
+  );
 
 const defaultRadioStationCommand = new SlashCommandBuilder()
   .setName(ComponentCommands.RADIO_STATION_DEFAULT)
   .setDescription('Set the default radio station')
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-  .addStringOption(option => option.setName('station').setDescription('Station').setRequired(true).setAutocomplete(true));
+  .addStringOption(option =>
+    option
+      .setName('station')
+      .setDescription('Station')
+      .setRequired(true)
+      .setAutocomplete(true),
+  );
 
 const listRadioStationsCommand = new SlashCommandBuilder()
   .setName(ComponentCommands.RADIO_STATION_LIST)
@@ -243,11 +274,12 @@ export class MusicComponent extends Component<MusicComponentSave> {
 
   /** Restores persisted volume preference and normalizes invalid values. */
   afterLoadJSON(loadedObject: MusicComponentSave | undefined): Promise<void> {
-    const defaults = (
-      defaultConfigJson.componentData as {
-        MUSIC?: {radioStations?: RadioStation[]};
-      }
-    ).MUSIC?.radioStations || [];
+    const defaults =
+      (
+        defaultConfigJson.componentData as {
+          MUSIC?: {radioStations?: RadioStation[]};
+        }
+      ).MUSIC?.radioStations || [];
     const loaded = loadedObject?.radioStations || [];
     // Guild-specific entries override the global defaults, including optional
     // fields such as publicUrl.
@@ -255,12 +287,15 @@ export class MusicComponent extends Component<MusicComponentSave> {
     // guild, even if a guild configuration attempts to remove them.
     this.radioStations = [...loaded, ...defaults].filter(
       (station, index, stations) =>
-        station?.name && station?.url &&
+        station?.name &&
+        station?.url &&
         stations.findIndex(item => item.name === station.name) === index,
     );
     this.defaultStationId =
       loadedObject?.defaultRadioStationId &&
-      this.radioStations.some(station => station.id === loadedObject.defaultRadioStationId)
+      this.radioStations.some(
+        station => station.id === loadedObject.defaultRadioStationId,
+      )
         ? loadedObject.defaultRadioStationId
         : this.radioStations[0]?.id || '';
     if (
@@ -283,8 +318,15 @@ export class MusicComponent extends Component<MusicComponentSave> {
   }
 
   /** Adds or updates a named radio station. */
-  private async setStation(name: string, url: string, publicUrl?: string): Promise<void> {
-    const id = `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${randomUUID().slice(0, 6)}`;
+  private async setStation(
+    name: string,
+    url: string,
+    publicUrl?: string,
+  ): Promise<void> {
+    const id = `${name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')}-${randomUUID().slice(0, 6)}`;
     this.radioStations.push({id, name, url, publicUrl: publicUrl || undefined});
     await this.saveMusicConfig();
   }
@@ -383,7 +425,8 @@ export class MusicComponent extends Component<MusicComponentSave> {
         interaction.commandName === ComponentCommands.RADIO_STATION_DEFAULT ||
         interaction.commandName === ComponentCommands.RADIO_STATION_REMOVE
       ) {
-        const query = interaction.options.getString('station')?.toLowerCase() || '';
+        const query =
+          interaction.options.getString('station')?.toLowerCase() || '';
         const choices = this.radioStations
           .filter(station => station.name.toLowerCase().includes(query))
           .slice(0, 25)
@@ -453,18 +496,37 @@ export class MusicComponent extends Component<MusicComponentSave> {
     }
   }
 
-  /** Queues a track or URL and ensures saved volume is applied after queue creation. */
-  private async playCmd(interaction: ChatInputCommandInteraction) {
-    const member = interaction.member as GuildMember;
-    const voiceChannel = member?.voice.channel;
+  private async getMusicCommandContext(
+    interaction: ChatInputCommandInteraction,
+  ): Promise<MusicCommandContext | undefined> {
+    if (!interaction.guild || !(interaction.member instanceof GuildMember)) {
+      await interaction.reply({
+        content: '❌ This command can only be used in a server.',
+        flags: ['Ephemeral'],
+      });
+      return undefined;
+    }
 
-    if (!voiceChannel) {
+    const member = interaction.member;
+    const voiceChannel = member.voice.channel;
+    const textChannel = getInteractionTextChannel(interaction);
+
+    if (!voiceChannel || !textChannel) {
       await interaction.reply({
         content: '❌ You must be in a voice channel to play music!',
         flags: ['Ephemeral'],
       });
-      return;
+      return undefined;
     }
+
+    return {member, voiceChannel, textChannel};
+  }
+
+  /** Queues a track or URL and ensures saved volume is applied after queue creation. */
+  private async playCmd(interaction: ChatInputCommandInteraction) {
+    const context = await this.getMusicCommandContext(interaction);
+    if (!context) return;
+    const {member, voiceChannel, textChannel} = context;
 
     const query = interaction.options.getString('query', true);
 
@@ -472,7 +534,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
 
     try {
       await this.distube.play(voiceChannel, query, {
-        textChannel: interaction.channel as GuildTextBasedChannel,
+        textChannel,
         member: member,
       });
       this.applySavedVolumePreference();
@@ -500,13 +562,17 @@ export class MusicComponent extends Component<MusicComponentSave> {
    * text now-playing messages and optional voice channel status updates.
    */
   private async radioCmd(interaction: ChatInputCommandInteraction) {
-    const member = interaction.member as GuildMember;
-    const voiceChannel = member?.voice.channel;
+    const context = await this.getMusicCommandContext(interaction);
+    if (!context) return;
+    const {member, voiceChannel, textChannel} = context;
     const guildId = interaction.guildId;
     const silenceMessages =
       interaction.options.getBoolean('silencemessages') ?? false;
-    const stationId = interaction.options.getString('station') || this.defaultStationId;
-    const station = this.radioStations.find(station => station.id === stationId);
+    const stationId =
+      interaction.options.getString('station') || this.defaultStationId;
+    const station = this.radioStations.find(
+      station => station.id === stationId,
+    );
     const stationName = station?.name || defaultRadioStationName;
     const stationUrl = station?.url;
 
@@ -520,24 +586,19 @@ export class MusicComponent extends Component<MusicComponentSave> {
     }
 
     if (!stationUrl) {
-      await interaction.reply({content: `❌ Unknown radio station: ${stationName}`, flags: ['Ephemeral']});
+      await interaction.reply({
+        content: `❌ Unknown radio station: ${stationName}`,
+        flags: ['Ephemeral'],
+      });
       return;
     }
 
-    if (!voiceChannel) {
-      await interaction.reply({
-        content: '❌ You must be in a voice channel to play music!',
-        flags: ['Ephemeral'],
-      });
-      // DisTube needs a joinable voice channel context to start playback.
-      return;
-    }
     await interaction.deferReply({
       flags: silenceMessages ? ['Ephemeral'] : undefined,
     });
 
     const playOptions = {
-      textChannel: interaction.channel as GuildTextBasedChannel,
+      textChannel,
       member: member,
     };
 
@@ -557,7 +618,9 @@ export class MusicComponent extends Component<MusicComponentSave> {
     }
     this.stopRadioNowPlayingPolling();
 
-    const streamAttempts = [{url: stationUrl, logMessage: `Playing radio station ${stationName}`}];
+    const streamAttempts = [
+      {url: stationUrl, logMessage: `Playing radio station ${stationName}`},
+    ];
 
     let lastError: unknown;
 
@@ -567,11 +630,9 @@ export class MusicComponent extends Component<MusicComponentSave> {
       try {
         await this.distube.play(voiceChannel, streamAttempt.url, playOptions);
         this.applySavedVolumePreference();
-        if (interaction.channel || this.hasRadioVoiceChannel()) {
+        if (textChannel || this.hasRadioVoiceChannel()) {
           this.startRadioNowPlayingPolling({
-            textChannel: interaction.channel as
-              | GuildTextBasedChannel
-              | undefined,
+            textChannel,
             shouldSendMessages: !silenceMessages,
           });
         }
@@ -617,59 +678,78 @@ export class MusicComponent extends Component<MusicComponentSave> {
 
   /** Adds or updates a station using explicitly entered values. */
   private async addRadioStationCmd(interaction: ChatInputCommandInteraction) {
-    if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
-      await interaction.reply({content: '❌ Administrator permission required.', flags: ['Ephemeral']});
-      return;
-    }
+    if (!(await requireInteractionAdmin(interaction))) return;
     const name = interaction.options.getString('name', true);
     const url = interaction.options.getString('url', true);
     const publicUrl = interaction.options.getString('publicurl') || undefined;
     if (!/^https?:\/\//i.test(url)) {
-      await interaction.reply({content: '❌ A valid HTTP(S) stream URL is required.', flags: ['Ephemeral']});
+      await interaction.reply({
+        content: '❌ A valid HTTP(S) stream URL is required.',
+        flags: ['Ephemeral'],
+      });
       return;
     }
     await this.setStation(name, url, publicUrl);
-    await interaction.reply({content: `✅ Station ${name} saved.`, flags: ['Ephemeral']});
+    await interaction.reply({
+      content: `✅ Station ${name} saved.`,
+      flags: ['Ephemeral'],
+    });
   }
 
   /** Selects the guild default station. */
-  private async defaultRadioStationCmd(interaction: ChatInputCommandInteraction) {
-    if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
-      await interaction.reply({content: '❌ Administrator permission required.', flags: ['Ephemeral']});
-      return;
-    }
+  private async defaultRadioStationCmd(
+    interaction: ChatInputCommandInteraction,
+  ) {
+    if (!(await requireInteractionAdmin(interaction))) return;
     const name = interaction.options.getString('station', true);
     if (!this.radioStations.some(station => station.id === name)) {
-      await interaction.reply({content: `❌ Unknown station: ${name}`, flags: ['Ephemeral']});
+      await interaction.reply({
+        content: `❌ Unknown station: ${name}`,
+        flags: ['Ephemeral'],
+      });
       return;
     }
     this.defaultStationId = name;
     await this.saveMusicConfig();
-    await interaction.reply({content: `✅ Default station set to ${name}.`, flags: ['Ephemeral']});
+    await interaction.reply({
+      content: `✅ Default station set to ${name}.`,
+      flags: ['Ephemeral'],
+    });
   }
 
   /** Lists configured radio stations. */
   private async listRadioStationsCmd(interaction: ChatInputCommandInteraction) {
-    if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
-      await interaction.reply({content: '❌ Administrator permission required.', flags: ['Ephemeral']});
-      return;
-    }
-    await interaction.reply({content: this.radioStations.map(station => `Name: ${station.name}\nPublic page: ${station.publicUrl || station.url}\nStream: ${station.url}`).join('\n\n') || 'No stations configured.', flags: ['Ephemeral']});
+    if (!(await requireInteractionAdmin(interaction))) return;
+    await interaction.reply({
+      content:
+        this.radioStations
+          .map(
+            station =>
+              `Name: ${station.name}\nPublic page: ${station.publicUrl || station.url}\nStream: ${station.url}`,
+          )
+          .join('\n\n') || 'No stations configured.',
+      flags: ['Ephemeral'],
+    });
   }
 
   /** Handles administrator removal of a configured radio station. */
-  private async removeRadioStationCmd(interaction: ChatInputCommandInteraction) {
-    if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
-      await interaction.reply({content: '❌ Administrator permission required.', flags: ['Ephemeral']});
-      return;
-    }
+  private async removeRadioStationCmd(
+    interaction: ChatInputCommandInteraction,
+  ) {
+    if (!(await requireInteractionAdmin(interaction))) return;
     const name = interaction.options.getString('station', true);
     if (name === this.defaultStationId || mandatoryRadioStationIds.has(name)) {
-      await interaction.reply({content: '❌ This station is mandatory and cannot be removed.', flags: ['Ephemeral']});
+      await interaction.reply({
+        content: '❌ This station is mandatory and cannot be removed.',
+        flags: ['Ephemeral'],
+      });
       return;
     }
     const removed = await this.removeStation(name);
-    await interaction.reply({content: removed ? `✅ Removed ${name}.` : `❌ Unknown station: ${name}`, flags: ['Ephemeral']});
+    await interaction.reply({
+      content: removed ? `✅ Removed ${name}.` : `❌ Unknown station: ${name}`,
+      flags: ['Ephemeral'],
+    });
   }
 
   /** Returns true when a radio voice status target channel has been configured. */
@@ -974,19 +1054,13 @@ export class MusicComponent extends Component<MusicComponentSave> {
     params: RadioVoiceStatusUpdate,
   ): Promise<void> {
     const {channelId, status} = params;
-    const channel = this.djmtGuild.getGuildChannel(channelId);
+    const channel = this.djmtGuild.getGuildVoiceBasedChannel(channelId);
 
-    if (
-      channel &&
-      channel.type !== ChannelType.GuildVoice &&
-      channel.type !== ChannelType.GuildStageVoice
-    ) {
-      logger.warn('Configured radio voice channel is not a voice channel', {
+    if (!channel) {
+      logger.warn('Configured radio voice channel is unavailable', {
         guildId: this.djmtGuild.guildId,
         channelId,
-        channelType: channel.type,
       });
-      // Bail out when config points to an unsupported channel type.
       return;
     }
 
@@ -1008,17 +1082,9 @@ export class MusicComponent extends Component<MusicComponentSave> {
   }
 
   private async playFileCmd(interaction: ChatInputCommandInteraction) {
-    const member = interaction.member as GuildMember;
-    const voiceChannel = member?.voice.channel;
-
-    if (!voiceChannel) {
-      await interaction.reply({
-        content: '❌ You must be in a voice channel to play music!',
-        flags: ['Ephemeral'],
-      });
-      // File playback still requires the caller to provide the active voice context.
-      return;
-    }
+    const context = await this.getMusicCommandContext(interaction);
+    if (!context) return;
+    const {member, voiceChannel, textChannel} = context;
 
     const attachment = interaction.options.getAttachment('file', true);
 
@@ -1043,7 +1109,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
     try {
       // Use the Discord CDN URL to play the file
       await this.distube.play(voiceChannel, attachment.url, {
-        textChannel: interaction.channel as GuildTextBasedChannel,
+        textChannel,
         member: member,
       });
       this.applySavedVolumePreference();

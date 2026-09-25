@@ -1,4 +1,11 @@
-import {Guild, GuildBasedChannel, TextChannel} from 'discord.js';
+import {
+  ChannelType,
+  Guild,
+  GuildBasedChannel,
+  StageChannel,
+  TextChannel,
+  VoiceChannel,
+} from 'discord.js';
 
 /**
  * Manages channel access for a Discord guild.
@@ -36,9 +43,27 @@ export class GuildChannelManager {
    * @returns The TextChannel if found and is a valid text channel, undefined otherwise
    * @private
    */
-  private getTextChannel(channelId: string): TextChannel | undefined {
+  getTextChannel(channelId: string): TextChannel | undefined {
     const channel = this.getGuildChannel(channelId);
-    return channel?.isTextBased() ? (channel as TextChannel) : undefined;
+    return channel?.type === ChannelType.GuildText ? channel : undefined;
+  }
+
+  getVoiceChannel(channelId: string): VoiceChannel | undefined {
+    const channel = this.getGuildChannel(channelId);
+    return channel?.type === ChannelType.GuildVoice ? channel : undefined;
+  }
+
+  getVoiceBasedChannel(
+    channelId: string,
+  ): VoiceChannel | StageChannel | undefined {
+    const channel = this.getGuildChannel(channelId);
+    if (
+      channel?.type === ChannelType.GuildVoice ||
+      channel?.type === ChannelType.GuildStageVoice
+    ) {
+      return channel;
+    }
+    return undefined;
   }
 
   /**

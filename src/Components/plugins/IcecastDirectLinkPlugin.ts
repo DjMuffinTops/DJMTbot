@@ -39,6 +39,9 @@ export class IcecastDirectLinkPlugin extends DirectLinkPlugin {
         headers: {Range: 'bytes=0-0'},
       });
       // Discard the body immediately — we only needed the response headers.
+      // Undici emits an AbortError when the body is destroyed, so consume the
+      // error before closing the response instead of letting it crash Node.
+      body.on('error', () => {});
       body.destroy();
 
       if (

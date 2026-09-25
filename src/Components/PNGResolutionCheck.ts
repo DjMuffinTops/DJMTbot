@@ -103,9 +103,7 @@ export class PNGResolutionCheck extends Component<PNGResolutionCheckSave> {
       for (const key of Array.from(loadedObject.channels.keys())) {
         const value = loadedObject.channels.get(key);
         if (value) {
-          const channel = this.djmtGuild.getGuildChannel(
-            value.channel,
-          ) as TextChannel;
+          const channel = this.djmtGuild.getGuildTextChannel(value.channel);
           if (!channel) {
             logger.error('[PNGResolutionCheck] Could not load value', {value});
             continue;

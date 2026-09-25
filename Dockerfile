@@ -5,7 +5,7 @@ FROM node:24.13.1-alpine AS builder
 
 # Install FFmpeg for audio processing. Voice encoding uses the pure-JavaScript
 # opusscript fallback, so no native Opus build toolchain is required.
-RUN apk add --no-cache ffmpeg
+RUN apk add --no-cache ffmpeg yt-dlp
 
 # Install pnpm
 RUN corepack enable pnpm
@@ -32,7 +32,7 @@ RUN pnpm build
 FROM node:24.13.1-alpine
 
 # Install FFmpeg for audio processing
-RUN apk add --no-cache ffmpeg
+RUN apk add --no-cache ffmpeg yt-dlp
 
 # Set working directory
 WORKDIR /app

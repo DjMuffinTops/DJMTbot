@@ -13,7 +13,10 @@ import {
   PermissionFlagsBits,
 } from 'discord.js';
 import {ComponentCommands} from '../Constants/ComponentCommands';
-import {isInteractionAdmin, JSONStringifyReplacer} from '../HelperFunctions';
+import {
+  requireInteractionAdmin,
+  JSONStringifyReplacer,
+} from '../HelperFunctions';
 import {ComponentNames} from '../Constants/ComponentNames';
 import {DateTime} from 'luxon';
 
@@ -101,13 +104,7 @@ export class ConfigComponent extends Component<ConfigComponentSave> {
 
   async exportConfig(interaction: ChatInputCommandInteraction) {
     // Admin only
-    if (!isInteractionAdmin(interaction)) {
-      await interaction.reply({
-        content: 'This command requires administrator permissions.',
-        flags: MessageFlags.Ephemeral,
-      });
-      return;
-    }
+    if (!(await requireInteractionAdmin(interaction))) return;
     const jsonString = `${JSON.stringify(
       {[this.djmtGuild.guildId]: this.djmtGuild.getSaveData()},
       JSONStringifyReplacer,
@@ -126,13 +123,7 @@ export class ConfigComponent extends Component<ConfigComponentSave> {
 
   async resetConfig(interaction: ChatInputCommandInteraction) {
     // Admin only
-    if (!isInteractionAdmin(interaction)) {
-      await interaction.reply({
-        content: 'This command requires administrator permissions.',
-        flags: MessageFlags.Ephemeral,
-      });
-      return;
-    }
+    if (!(await requireInteractionAdmin(interaction))) return;
     await this.djmtGuild.resetJSON();
     await interaction.reply({
       content: 'Reset my guild config to default settings.',

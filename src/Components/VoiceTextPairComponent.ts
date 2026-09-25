@@ -66,6 +66,24 @@ interface VoiceTextPairLegacy {
   textChannel: {id: string};
 }
 
+function isLegacyVoiceTextPair(value: unknown): value is VoiceTextPairLegacy {
+  if (!value || typeof value !== 'object') return false;
+  const pair = value as Partial<VoiceTextPairLegacy>;
+  return (
+    typeof pair.voiceChannel?.id === 'string' &&
+    typeof pair.textChannel?.id === 'string'
+  );
+}
+
+function isSavedVoiceTextPair(value: unknown): value is VoiceTextPairSave {
+  if (!value || typeof value !== 'object') return false;
+  const pair = value as Partial<VoiceTextPairSave>;
+  return (
+    typeof pair.voiceChannelId === 'string' &&
+    typeof pair.textChannelId === 'string'
+  );
+}
+
 export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave> {
   name: ComponentNames = ComponentNames.VOICE_TEXT_PAIR;
   voiceTextPairs: VoiceTextPair[] = [];
@@ -94,63 +112,56 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
         return Promise.resolve();
       }
 
-      for (const pair of loadedObject.voiceTextPairs) {
+      for (const pair of loadedObject.voiceTextPairs as unknown[]) {
         try {
           let voiceChannel: VoiceChannel;
           let textChannel: TextChannel;
 
           // Check if this is the new format (just IDs) or old format (full objects)
-          if ('voiceChannelId' in pair && 'textChannelId' in pair) {
+          if (isSavedVoiceTextPair(pair)) {
             // New format: IDs only
-            const voiceCh = this.djmtGuild.guild.channels.cache.get(
+            const voiceCh = this.djmtGuild.getGuildVoiceChannel(
               pair.voiceChannelId,
             );
-            const textCh = this.djmtGuild.guild.channels.cache.get(
+            const textCh = this.djmtGuild.getGuildTextChannel(
               pair.textChannelId,
             );
 
-            if (
-              !voiceCh ||
-              voiceCh.type !== ChannelType.GuildVoice ||
-              !textCh ||
-              textCh.type !== ChannelType.GuildText
-            ) {
+            if (!voiceCh || !textCh) {
               logger.error(
                 `[VoiceTextPair] Failed to load voice-text pair: voice=${pair.voiceChannelId}, text=${pair.textChannelId}`,
               );
               continue;
             }
 
-            voiceChannel = voiceCh as VoiceChannel;
-            textChannel = textCh as TextChannel;
-          } else {
+            voiceChannel = voiceCh;
+            textChannel = textCh;
+          } else if (isLegacyVoiceTextPair(pair)) {
             // Old format: full objects
-            const legacyPair = pair as unknown as VoiceTextPairLegacy;
-            const voiceCh = this.djmtGuild.guild.channels.cache.get(
+            const legacyPair = pair;
+            const voiceCh = this.djmtGuild.getGuildVoiceChannel(
               legacyPair.voiceChannel.id,
             );
-            const textCh = this.djmtGuild.guild.channels.cache.get(
+            const textCh = this.djmtGuild.getGuildTextChannel(
               legacyPair.textChannel.id,
             );
 
-            if (
-              !voiceCh ||
-              voiceCh.type !== ChannelType.GuildVoice ||
-              !textCh ||
-              textCh.type !== ChannelType.GuildText
-            ) {
+            if (!voiceCh || !textCh) {
               logger.error(
                 `[VoiceTextPair] Failed to migrate voice-text pair: voice=${legacyPair.voiceChannel.id}, text=${legacyPair.textChannel.id}`,
               );
               continue;
             }
 
-            voiceChannel = voiceCh as VoiceChannel;
-            textChannel = textCh as TextChannel;
+            voiceChannel = voiceCh;
+            textChannel = textCh;
 
             logger.info(
               `[VoiceTextPair] Migrated voice-text pair from old format: ${voiceChannel.name} <-> ${textChannel.name}`,
             );
+          } else {
+            logger.error('[VoiceTextPair] Invalid saved pair format', {pair});
+            continue;
           }
 
           this.voiceTextPairs.push({voiceChannel, textChannel});

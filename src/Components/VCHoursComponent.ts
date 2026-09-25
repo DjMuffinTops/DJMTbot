@@ -175,12 +175,12 @@ export class VCHoursComponent extends Component<VCHoursComponentSave> {
     ).voiceTextPairs;
     // For each channel pair
     for (const pair of vcChannelPairs) {
-      const voiceChannel = this.djmtGuild.getGuildChannel(
+      const voiceChannel = this.djmtGuild.getGuildVoiceChannel(
         pair.voiceChannel.id,
-      ) as VoiceChannel;
-      const textChannel = this.djmtGuild.getGuildChannel(
+      );
+      const textChannel = this.djmtGuild.getGuildTextChannel(
         pair.textChannel.id,
-      ) as TextChannel;
+      );
       if (!voiceChannel || !textChannel) {
         logger.error('[VCRemindersJob] Could not find channels', {
           voiceChannelId: pair.voiceChannel.id,

@@ -67,7 +67,7 @@ export class MediaChannelComponent extends Component<MediaComponentSave> {
   afterLoadJSON(_loadedObject: MediaComponentSave | undefined): Promise<void> {
     if (_loadedObject) {
       for (const c of _loadedObject.channels) {
-        const channel = this.djmtGuild.getGuildChannel(c) as TextChannel;
+        const channel = this.djmtGuild.getGuildTextChannel(c);
         if (!channel) {
           logger.error('MediaChannelCheck: could not load channel', {
             channelId: c,
