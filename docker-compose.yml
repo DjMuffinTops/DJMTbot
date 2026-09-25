@@ -1,0 +1,71 @@
+services:
+  djmtbot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: djmtbot:latest
+    container_name: djmtbot
+    restart: unless-stopped
+
+    # Environment variables from .env file
+    env_file:
+      - .env
+
+    # Persist JSON configuration and logs.
+    # The host logs/ directory must be writable by UID 1001 (djmtbot).
+    volumes:
+      - ./json:/app/json
+      - ./logs:/app/logs
+
+    # Resource limits (adjust as needed)
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+    # Logging configuration
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+
+  djmtbot-dev:
+    profiles:
+      - dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    image: djmtbot:dev
+    container_name: djmtbot-dev
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    command: pnpm start
+
+    volumes:
+      - ./json:/app/json
+      - ./logs:/app/logs
+
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./src
+          target: /app/src
+        - action: sync+restart
+          path: ./tsconfig.json
+          target: /app/tsconfig.json
+        - action: sync+restart
+          path: ./json
+          target: /app/json
+        - action: rebuild
+          path: ./package.json
+        - action: rebuild
+          path: ./pnpm-lock.yaml
