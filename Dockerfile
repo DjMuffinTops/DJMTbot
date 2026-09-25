@@ -55,6 +55,7 @@ COPY json ./json
 # Create a non-root user for security
 RUN addgroup -g 1001 -S djmtbot && \
     adduser -S djmtbot -u 1001 && \
+    mkdir -p /app/logs && \
     chown -R djmtbot:djmtbot /app
 
 # Switch to non-root user

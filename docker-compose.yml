@@ -11,7 +11,8 @@ services:
     env_file:
       - .env
 
-    # Persist JSON configuration and logs
+    # Persist JSON configuration and logs.
+    # The host logs/ directory must be writable by UID 1001 (djmtbot).
     volumes:
       - ./json:/app/json
       - ./logs:/app/logs
