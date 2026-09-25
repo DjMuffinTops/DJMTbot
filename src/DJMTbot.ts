@@ -128,7 +128,12 @@ export class DJMTbot {
         }
         logger.info('DJMTbot is ready!');
       })().catch((err: unknown) =>
-        logger.error('ClientReady handler error', {error: err}),
+        logger.error('ClientReady handler error', {
+          error:
+            err instanceof Error
+              ? {name: err.name, message: err.message, stack: err.stack}
+              : err,
+        }),
       );
     });
 

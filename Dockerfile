@@ -12,17 +12,21 @@ RUN corepack enable pnpm
 # Set working directory
 WORKDIR /app
 
-# Copy package files, config, and tsconfig (needed for prepare script)
+# Copy dependency manifests first so dependency installation remains cached
+# when only application source code changes.
 COPY package.json pnpm-lock.yaml tsconfig.json ./
 
-# Copy source code (needed for prepare script compilation)
+# Install JavaScript dependencies without lifecycle scripts. The source tree is
+# copied below, so source changes do not invalidate this expensive layer.
+RUN pnpm install --frozen-lockfile --ignore-scripts
+
+# Copy source and configuration after dependencies for better Docker caching.
 COPY json ./json
 COPY src ./src
 
-# Install dependencies and build native modules.
-# Needs to run run install in @discordjs/opus to trigger node-gyp build of native bindings,
-# due to a 404 error when pnpm tries to fetch prebuilt binaries for the current platform.
-RUN pnpm install --frozen-lockfile && \
+# Build native Opus bindings explicitly. This is rerun only when the builder
+# dependency layer changes or the image cache is intentionally invalidated.
+RUN \
     echo "=== Building @discordjs/opus native module ===" && \
     cd node_modules/@discordjs/opus && npm run install && \
     echo "=== ✓ Opus native module built successfully ===" && \

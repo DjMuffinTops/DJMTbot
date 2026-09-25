@@ -510,6 +510,7 @@ export class DJMTGuild {
     this.configManager.radioVoiceChannelId = value;
   }
 
+
   /**
    * Gets the mod alerts channel ID for this guild.
    * Delegates to configManager.

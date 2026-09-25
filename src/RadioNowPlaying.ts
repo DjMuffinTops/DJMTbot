@@ -216,6 +216,8 @@ export async function fetchRadioNowPlaying(
 
 export function buildRadioNowPlayingEmbed(
   nowPlaying: RadioNowPlayingInfo,
+  stationName = 'DjMuffinTops Radio',
+  publicUrl?: string,
 ): EmbedBuilder {
   const fields: {name: string; value: string; inline: boolean}[] = [];
   const addField = (name: string, value: string | null, inline = true) => {
@@ -249,19 +251,18 @@ export function buildRadioNowPlayingEmbed(
     'Track Number',
     nowPlaying.metadataPayload.tracknumber || nowPlaying.metadataPayload.track,
   );
-  addField('Mount', nowPlaying.mountPath);
-
+  const visitUrl = publicUrl || nowPlaying.listenUrl;
+  if (visitUrl) {
+    // Keep the browser link at the bottom of the embed rather than placing
+    // descriptive text over the main embed content.
+    addField('Public Page • Song Requests', `[${visitUrl}](${visitUrl})`, false);
+  }
   const embed = new EmbedBuilder()
     .setColor('#0099ff')
-    .setTitle('📻 DjMuffinTops Radio')
-    .setFooter({text: `${nowPlaying.listenUrl}`});
+    .setTitle(`📻 ${stationName}`);
 
   if (fields.length > 0) {
     embed.addFields(fields);
-  }
-
-  if (nowPlaying.listenUrl) {
-    embed.setURL(nowPlaying.listenUrl);
   }
 
   return embed;

@@ -49,6 +49,8 @@ export const ComponentCommands = {
   CAT_FACT: 'catfact',
   PLAY: 'play',
   RADIO: 'radio',
+  RADIO_STATION: 'radio-station',
+  RADIO_STATION_REMOVE: 'radio-station-remove',
   RADIO_NOWPLAYING: 'radionowplaying',
   PLAYFILE: 'playfile',
   SKIP: 'skip',
