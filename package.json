@@ -22,7 +22,7 @@
     "docker:rebuild:watch": "docker compose --profile dev build djmtbot-dev && docker compose --profile dev up --watch djmtbot-dev",
     "docker:logs": "docker compose logs -f djmtbot",
     "docker:down": "docker compose down",
-    "prepare": "pnpm compile",
+    "prepare": "pnpm compile && git config core.hooksPath .githooks",
     "pretest": "pnpm compile",
     "posttest": "pnpm lint"
   },
