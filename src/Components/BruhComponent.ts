@@ -19,7 +19,11 @@ import {
 import {Component} from '../Component';
 import {logger} from '../Logger';
 import {ComponentCommands} from '../Constants/ComponentCommands';
-import {requireInteractionAdmin} from '../HelperFunctions';
+import {
+  formatChannelMentions,
+  requireInteractionAdmin,
+  toggleId,
+} from '../HelperFunctions';
 import {ComponentNames} from '../Constants/ComponentNames';
 
 const bruhCommand = new SlashCommandBuilder();
@@ -126,9 +130,9 @@ export class BruhComponent extends Component<BruhComponentSave> {
       if (!(await requireInteractionAdmin(interaction))) return;
       await this.printBruhInfo(interaction);
     } else if (interaction.commandName === ComponentCommands.BRUH_RECACHE) {
-      await interaction.deferReply({flags: MessageFlags.Ephemeral});
       // Admin only
       if (!(await requireInteractionAdmin(interaction))) return;
+      await interaction.deferReply({flags: MessageFlags.Ephemeral});
       await this.cacheAllBruhMessages(interaction);
     }
   }
@@ -152,8 +156,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
     interaction: ChatInputCommandInteraction,
   ) {
     // Remove the channel if it's already in the list
-    if (this.bruhChannels?.includes(bruhChannel.id)) {
-      this.bruhChannels.splice(this.bruhChannels.indexOf(bruhChannel.id), 1);
+    if (!toggleId(this.bruhChannels, bruhChannel.id)) {
       await this.djmtGuild.saveJSON();
       // await updateConfig(gConfig, message);
       await interaction.reply({
@@ -172,11 +175,8 @@ export class BruhComponent extends Component<BruhComponentSave> {
   }
 
   private async printBruhInfo(interaction: ChatInputCommandInteraction) {
-    let channelString = '';
     if (this.bruhChannels && this.bruhChannels?.length > 0) {
-      this.bruhChannels.forEach((channelId: string) => {
-        channelString += `<#${channelId}> `;
-      });
+      const channelString = formatChannelMentions(this.bruhChannels);
       await interaction.reply({
         content: `Bruh Channel: ${channelString}`,
         flags: MessageFlags.Ephemeral,

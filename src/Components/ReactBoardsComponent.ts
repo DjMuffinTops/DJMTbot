@@ -18,6 +18,7 @@ import {
 import {ComponentNames} from '../Constants/ComponentNames';
 import {ComponentCommands} from '../Constants/ComponentCommands';
 import {DJMTbot} from '../DJMTbot';
+import {formatChannelMentions, toggleId} from '../HelperFunctions';
 
 const setAutoReactCommand = new SlashCommandBuilder();
 setAutoReactCommand.setName(ComponentCommands.SET_AUTO_REACT);
@@ -513,11 +514,8 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
   }
 
   async printStartCmd(interaction: ChatInputCommandInteraction) {
-    let channelString = '';
     if (this.starChannels?.length > 0) {
-      this.starChannels.forEach((channelId: string) => {
-        channelString += `<#${channelId}> `;
-      });
+      const channelString = formatChannelMentions(this.starChannels);
       await interaction.reply({
         content: `Star Channels: ${channelString}`,
         flags: MessageFlags.Ephemeral,
@@ -543,8 +541,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
       });
       return;
     }
-    if (this.starChannels?.includes(channelId)) {
-      this.starChannels.splice(this.starChannels.indexOf(channelId), 1);
+    if (!toggleId(this.starChannels, channelId)) {
       await this.djmtGuild.saveJSON();
       await interaction.reply({
         content: `Removed ${channel.toString()} from the star channels list!`,
@@ -554,7 +551,6 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
       if (!this.starChannels) {
         this.starChannels = [];
       }
-      this.starChannels.push(channelId);
       await this.djmtGuild.saveJSON();
       await interaction.reply({
         content: `Added ${channel.toString()} to the star channels list!`,

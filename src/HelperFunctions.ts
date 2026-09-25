@@ -41,6 +41,20 @@ export function getGuildMembersRoles(member: GuildMember): Role[] {
   return member.roles.cache.map(role => role);
 }
 
+export function formatChannelMentions(channelIds: string[]): string {
+  return channelIds.map(channelId => `<#${channelId}>`).join(' ');
+}
+
+export function toggleId(ids: string[], id: string): boolean {
+  const index = ids.indexOf(id);
+  if (index === -1) {
+    ids.push(id);
+    return true;
+  }
+  ids.splice(index, 1);
+  return false;
+}
+
 export function getCensoredMessageReplyOptions(
   message: Message,
 ): MessageReplyOptions {
