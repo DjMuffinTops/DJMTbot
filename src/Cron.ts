@@ -1,4 +1,4 @@
-import cron, {ScheduledTask, ScheduleOptions} from 'node-cron';
+import cron, {ScheduledTask, TaskOptions} from 'node-cron';
 
 export class Cron {
   private static instance: Cron;
@@ -13,7 +13,7 @@ export class Cron {
   schedule(
     cronExpression: string,
     func: () => void,
-    options?: ScheduleOptions,
+    options?: TaskOptions,
   ): ScheduledTask {
     return Cron.instance.schedule(cronExpression, func, options);
   }
