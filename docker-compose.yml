@@ -6,16 +6,16 @@ services:
     image: djmtbot:latest
     container_name: djmtbot
     restart: unless-stopped
-    
+
     # Environment variables from .env file
     env_file:
       - .env
-    
-    # Optional: Mount JSON config for persistence
+
+    # Persist JSON configuration and logs
     volumes:
       - ./json:/app/json
       - ./logs:/app/logs
-    
+
     # Resource limits (adjust as needed)
     deploy:
       resources:
@@ -25,21 +25,13 @@ services:
         reservations:
           cpus: '0.5'
           memory: 256M
-    
-    # Healthcheck (optional - adjust if you have a health endpoint)
-    # healthcheck:
-    #   test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health')"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
-    #   start_period: 40s
-    
+
     # Logging configuration
     logging:
-      driver: "json-file"
+      driver: json-file
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: 10m
+        max-file: '3'
 
   djmtbot-dev:
     profiles:
