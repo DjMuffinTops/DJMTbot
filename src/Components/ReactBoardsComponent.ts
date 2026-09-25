@@ -278,7 +278,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
       return;
     }
     const channelId = channel.id;
-    const foundChannel = this.djmtGuild.getGuildChannel(channelId);
+    const foundChannel = this.djmtGuild.getGuildTextChannel(channelId);
     if (!foundChannel) {
       await interaction.reply({
         content: 'The given channel is invalid!',
@@ -356,7 +356,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
     );
     const channelId = channel.id;
     const foundEmote = DJMTbot.getInstance().client.emojis.cache.get(emoteId);
-    const foundTextChannel = this.djmtGuild.getGuildChannel(channelId);
+    const foundTextChannel = this.djmtGuild.getGuildTextChannel(channelId);
     if (!foundEmote || !foundTextChannel) {
       await interaction.reply({
         content: 'The given channel or emote is invalid!',
@@ -454,9 +454,17 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
         reactMapValue?.channelId
       ) {
         const message = await reaction.message.fetch();
-        const destinationChannel = this.djmtGuild.getGuildChannel(
+        const destinationChannel = this.djmtGuild.getGuildTextChannel(
           reactMapValue.channelId,
-        ) as TextChannel;
+        );
+        if (!destinationChannel) {
+          logger.warn('Could not find starboard destination channel', {
+            guildId: this.djmtGuild.guildId,
+            channelId: reactMapValue.channelId,
+            messageId: message.id,
+          });
+          return;
+        }
         const embed = new EmbedBuilder();
         const msgAttachments = [...message.attachments.values()];
         embed
@@ -527,7 +535,7 @@ export class ReactBoardsComponent extends Component<ReactBoardSave> {
     interaction: ChatInputCommandInteraction,
   ) {
     const channelId = channel.id;
-    const foundChannel = this.djmtGuild.getGuildChannel(channelId);
+    const foundChannel = this.djmtGuild.getGuildTextChannel(channelId);
     if (!foundChannel) {
       await interaction.reply({
         content: 'The given channel is invalid!',

@@ -158,7 +158,7 @@ export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> 
       time: date.toLocaleTimeString(),
     });
     for (const channelId of this.dotwChannels) {
-      const channel = this.djmtGuild.getGuildChannel(channelId) as TextChannel;
+      const channel = this.djmtGuild.getGuildTextChannel(channelId);
       if (!channel) {
         logger.error('DOTW Job: Channel could not be found', {channelId});
       } else {
@@ -178,9 +178,7 @@ export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> 
   async pleasantEveningJob() {
     if (Math.random() < 0.4) {
       for (const channelId of this.dotwChannels) {
-        const channel = this.djmtGuild.getGuildChannel(
-          channelId,
-        ) as TextChannel;
+        const channel = this.djmtGuild.getGuildTextChannel(channelId);
         if (!channel) {
           logger.error('PleasantEveningJob: Could not find channel', {
             channelId,

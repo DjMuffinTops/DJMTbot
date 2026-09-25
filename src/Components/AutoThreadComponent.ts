@@ -99,10 +99,8 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
         const value: AutoThreadEntrySave | undefined =
           _loadedObject.channels.get(key);
         if (value) {
-          const channel = this.djmtGuild.getGuildChannel(
-            value.channel,
-          ) as TextChannel;
-          if (!channel || channel.type !== ChannelType.GuildText) {
+          const channel = this.djmtGuild.getGuildTextChannel(value.channel);
+          if (!channel) {
             logger.error('[AutoThread] Could not load value', {value});
             continue;
           }

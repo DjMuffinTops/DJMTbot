@@ -15,6 +15,15 @@ import {
 import {DisTube, Song} from 'distube';
 import {randomUUID} from 'crypto';
 import {ComponentCommands} from '../Constants/ComponentCommands';
+
+function getInteractionTextChannel(
+  interaction: ChatInputCommandInteraction,
+): GuildTextBasedChannel | undefined {
+  const channel = interaction.channel;
+  return channel && channel.isTextBased() && !channel.isDMBased()
+    ? channel
+    : undefined;
+}
 import {Component} from '../Component';
 import {ComponentNames} from '../Constants/ComponentNames';
 import {DJMTbot} from '../DJMTbot';
@@ -484,8 +493,9 @@ export class MusicComponent extends Component<MusicComponentSave> {
   private async playCmd(interaction: ChatInputCommandInteraction) {
     const member = interaction.member as GuildMember;
     const voiceChannel = member?.voice.channel;
+    const textChannel = getInteractionTextChannel(interaction);
 
-    if (!voiceChannel) {
+    if (!voiceChannel || !textChannel) {
       await interaction.reply({
         content: '❌ You must be in a voice channel to play music!',
         flags: ['Ephemeral'],
@@ -499,7 +509,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
 
     try {
       await this.distube.play(voiceChannel, query, {
-        textChannel: interaction.channel as GuildTextBasedChannel,
+        textChannel,
         member: member,
       });
       this.applySavedVolumePreference();
@@ -529,6 +539,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
   private async radioCmd(interaction: ChatInputCommandInteraction) {
     const member = interaction.member as GuildMember;
     const voiceChannel = member?.voice.channel;
+    const textChannel = getInteractionTextChannel(interaction);
     const guildId = interaction.guildId;
     const silenceMessages =
       interaction.options.getBoolean('silencemessages') ?? false;
@@ -557,7 +568,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
       return;
     }
 
-    if (!voiceChannel) {
+    if (!voiceChannel || !textChannel) {
       await interaction.reply({
         content: '❌ You must be in a voice channel to play music!',
         flags: ['Ephemeral'],
@@ -570,7 +581,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
     });
 
     const playOptions = {
-      textChannel: interaction.channel as GuildTextBasedChannel,
+      textChannel,
       member: member,
     };
 
@@ -602,11 +613,9 @@ export class MusicComponent extends Component<MusicComponentSave> {
       try {
         await this.distube.play(voiceChannel, streamAttempt.url, playOptions);
         this.applySavedVolumePreference();
-        if (interaction.channel || this.hasRadioVoiceChannel()) {
+        if (textChannel || this.hasRadioVoiceChannel()) {
           this.startRadioNowPlayingPolling({
-            textChannel: interaction.channel as
-              | GuildTextBasedChannel
-              | undefined,
+            textChannel,
             shouldSendMessages: !silenceMessages,
           });
         }
@@ -1060,19 +1069,13 @@ export class MusicComponent extends Component<MusicComponentSave> {
     params: RadioVoiceStatusUpdate,
   ): Promise<void> {
     const {channelId, status} = params;
-    const channel = this.djmtGuild.getGuildChannel(channelId);
+    const channel = this.djmtGuild.getGuildVoiceBasedChannel(channelId);
 
-    if (
-      channel &&
-      channel.type !== ChannelType.GuildVoice &&
-      channel.type !== ChannelType.GuildStageVoice
-    ) {
-      logger.warn('Configured radio voice channel is not a voice channel', {
+    if (!channel) {
+      logger.warn('Configured radio voice channel is unavailable', {
         guildId: this.djmtGuild.guildId,
         channelId,
-        channelType: channel.type,
       });
-      // Bail out when config points to an unsupported channel type.
       return;
     }
 
@@ -1096,8 +1099,9 @@ export class MusicComponent extends Component<MusicComponentSave> {
   private async playFileCmd(interaction: ChatInputCommandInteraction) {
     const member = interaction.member as GuildMember;
     const voiceChannel = member?.voice.channel;
+    const textChannel = getInteractionTextChannel(interaction);
 
-    if (!voiceChannel) {
+    if (!voiceChannel || !textChannel) {
       await interaction.reply({
         content: '❌ You must be in a voice channel to play music!',
         flags: ['Ephemeral'],
@@ -1129,7 +1133,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
     try {
       // Use the Discord CDN URL to play the file
       await this.distube.play(voiceChannel, attachment.url, {
-        textChannel: interaction.channel as GuildTextBasedChannel,
+        textChannel,
         member: member,
       });
       this.applySavedVolumePreference();

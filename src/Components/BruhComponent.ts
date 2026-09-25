@@ -257,9 +257,12 @@ export class BruhComponent extends Component<BruhComponentSave> {
                 );
               }
               if (channelId) {
-                const foundChannel = this.djmtGuild.getGuildChannel(
+                const foundChannel = this.djmtGuild.getGuildTextChannel(
                   channelId,
-                ) as TextChannel;
+                );
+                if (!foundChannel) {
+                  throw new Error(`Bruh source channel unavailable: ${channelId}`);
+                }
                 const searchMessage =
                   await foundChannel.messages.fetch(messageId);
                 msgContent = searchMessage.content;
@@ -347,10 +350,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
   ) {
     this.messageCache = [];
     for (const bruhChannelId of this.bruhChannels) {
-      const channel: TextChannel | undefined =
-        this.djmtGuild.guild?.channels?.cache?.get(
-          bruhChannelId,
-        ) as TextChannel; // get the channel object
+      const channel = this.djmtGuild.getGuildTextChannel(bruhChannelId);
       let last_id = '';
       let messages: Collection<string, Message> | undefined;
       do {
