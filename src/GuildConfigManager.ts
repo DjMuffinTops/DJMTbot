@@ -340,13 +340,33 @@ export class GuildConfigManager {
 
   // ============ Configuration Property Accessors ============
 
+  private getStoredValue<T>(key: string, fallback: T): T {
+    return (this.propertyStorage.get(key) as T | undefined) ?? fallback;
+  }
+
+  private setChannelId(
+    key: string,
+    value: string | undefined,
+    update: (value: string | undefined) => void,
+  ): void {
+    if (value !== undefined && !this.isValidChannelId(value)) {
+      logger.warn(`${key} provided an invalid channel ID`, {
+        channelId: value,
+        guildId: this.guildId,
+      });
+      return;
+    }
+
+    this.propertyStorage.set(key, value ?? '');
+    update(value);
+    void this.saveJSON();
+  }
+
   /**
    * Gets the debug mode setting.
    */
   get debugMode(): boolean {
-    return (
-      (this.propertyStorage.get('debugMode') as boolean) ?? this._debugMode
-    );
+    return this.getStoredValue('debugMode', this._debugMode);
   }
 
   /**
@@ -362,7 +382,7 @@ export class GuildConfigManager {
    * Gets the command prefix.
    */
   get prefix(): string {
-    return (this.propertyStorage.get('prefix') as string) ?? this._prefix;
+    return this.getStoredValue('prefix', this._prefix);
   }
 
   /**
@@ -378,11 +398,7 @@ export class GuildConfigManager {
    * Gets the debug channel ID.
    */
   get debugChannelId(): string {
-    return (
-      (this.propertyStorage.get('debugChannelId') as string) ??
-      this._debugChannelId ??
-      ''
-    );
+    return this.getStoredValue('debugChannelId', this._debugChannelId ?? '');
   }
 
   /**
@@ -390,26 +406,18 @@ export class GuildConfigManager {
    * Pass undefined to unset the channel.
    */
   set debugChannelId(value: string | undefined) {
-    if (value === undefined || this.isValidChannelId(value)) {
-      this.propertyStorage.set('debugChannelId', value ?? '');
-      this._debugChannelId = value;
-      void this.saveJSON();
-    } else {
-      logger.warn('Invalid debugChannelId provided', {
-        channelId: value,
-        guildId: this.guildId,
-      });
-    }
+    this.setChannelId('debugChannelId', value, next => {
+      this._debugChannelId = next;
+    });
   }
 
   /**
    * Gets the radio voice channel ID.
    */
   get radioVoiceChannelId(): string {
-    return (
-      (this.propertyStorage.get('radioVoiceChannelId') as string) ??
-      this._radioVoiceChannelId ??
-      ''
+    return this.getStoredValue(
+      'radioVoiceChannelId',
+      this._radioVoiceChannelId ?? '',
     );
   }
 
@@ -418,26 +426,18 @@ export class GuildConfigManager {
    * Pass undefined to unset the channel.
    */
   set radioVoiceChannelId(value: string | undefined) {
-    if (value === undefined || this.isValidChannelId(value)) {
-      this.propertyStorage.set('radioVoiceChannelId', value ?? '');
-      this._radioVoiceChannelId = value;
-      void this.saveJSON();
-    } else {
-      logger.warn('Invalid radioVoiceChannelId provided', {
-        channelId: value,
-        guildId: this.guildId,
-      });
-    }
+    this.setChannelId('radioVoiceChannelId', value, next => {
+      this._radioVoiceChannelId = next;
+    });
   }
 
   /**
    * Gets the mod alerts channel ID.
    */
   get modAlertsChannelId(): string {
-    return (
-      (this.propertyStorage.get('modAlertsChannelId') as string) ??
-      this._modAlertsChannelId ??
-      ''
+    return this.getStoredValue(
+      'modAlertsChannelId',
+      this._modAlertsChannelId ?? '',
     );
   }
 
@@ -446,26 +446,18 @@ export class GuildConfigManager {
    * Pass undefined to unset the channel.
    */
   set modAlertsChannelId(value: string | undefined) {
-    if (value === undefined || this.isValidChannelId(value)) {
-      this.propertyStorage.set('modAlertsChannelId', value ?? '');
-      this._modAlertsChannelId = value;
-      void this.saveJSON();
-    } else {
-      logger.warn('Invalid modAlertsChannelId provided', {
-        channelId: value,
-        guildId: this.guildId,
-      });
-    }
+    this.setChannelId('modAlertsChannelId', value, next => {
+      this._modAlertsChannelId = next;
+    });
   }
 
   /**
    * Gets the mod logging channel ID.
    */
   get modLoggingChannelId(): string {
-    return (
-      (this.propertyStorage.get('modLoggingChannelId') as string) ??
-      this._modLoggingChannelId ??
-      ''
+    return this.getStoredValue(
+      'modLoggingChannelId',
+      this._modLoggingChannelId ?? '',
     );
   }
 
@@ -474,15 +466,8 @@ export class GuildConfigManager {
    * Pass undefined to unset the channel.
    */
   set modLoggingChannelId(value: string | undefined) {
-    if (value === undefined || this.isValidChannelId(value)) {
-      this.propertyStorage.set('modLoggingChannelId', value ?? '');
-      this._modLoggingChannelId = value;
-      void this.saveJSON();
-    } else {
-      logger.warn('Invalid modLoggingChannelId provided', {
-        channelId: value,
-        guildId: this.guildId,
-      });
-    }
+    this.setChannelId('modLoggingChannelId', value, next => {
+      this._modLoggingChannelId = next;
+    });
   }
 }
