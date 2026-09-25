@@ -12,7 +12,6 @@ import {
   PermissionFlagsBits,
   SlashCommandBuilder,
   TextBasedChannel,
-  TextChannel,
   User,
   VoiceState,
 } from 'discord.js';

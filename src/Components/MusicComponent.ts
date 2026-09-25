@@ -1,6 +1,5 @@
 import {
   ChatInputCommandInteraction,
-  ChannelType,
   GuildMember,
   Interaction,
   Message,

@@ -127,9 +127,7 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
               pair.textChannelId,
             );
 
-            if (
-              !voiceCh || !textCh
-            ) {
+            if (!voiceCh || !textCh) {
               logger.error(
                 `[VoiceTextPair] Failed to load voice-text pair: voice=${pair.voiceChannelId}, text=${pair.textChannelId}`,
               );
@@ -148,9 +146,7 @@ export class VoiceTextPairComponent extends Component<VoiceTextPairComponentSave
               legacyPair.textChannel.id,
             );
 
-            if (
-              !voiceCh || !textCh
-            ) {
+            if (!voiceCh || !textCh) {
               logger.error(
                 `[VoiceTextPair] Failed to migrate voice-text pair: voice=${legacyPair.voiceChannel.id}, text=${legacyPair.textChannel.id}`,
               );

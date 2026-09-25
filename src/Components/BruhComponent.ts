@@ -4,7 +4,6 @@ import {
   AttachmentBuilder,
   MessageFlags,
   MessageReaction,
-  TextChannel,
   User,
   VoiceState,
   Collection,
@@ -242,11 +241,12 @@ export class BruhComponent extends Component<BruhComponentSave> {
                 );
               }
               if (channelId) {
-                const foundChannel = this.djmtGuild.getGuildTextChannel(
-                  channelId,
-                );
+                const foundChannel =
+                  this.djmtGuild.getGuildTextChannel(channelId);
                 if (!foundChannel) {
-                  throw new Error(`Bruh source channel unavailable: ${channelId}`);
+                  throw new Error(
+                    `Bruh source channel unavailable: ${channelId}`,
+                  );
                 }
                 const searchMessage =
                   await foundChannel.messages.fetch(messageId);
