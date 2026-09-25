@@ -7,11 +7,13 @@
 		"MUSIC": {
 			"radioStations": [
 				{
+					"id": "djmuffintops-radio",
 					"name": "DjMuffinTops Radio",
 					"url": "https://radio.djmuffintops.com/listen/radio/radio.mp3",
 					"publicUrl": "https://radio.djmuffintops.com/public/radio"
 				},
 				{
+					"id": "pmd-radio",
 					"name": "PMD Radio",
 					"url": "https://radio.djmuffintops.com/listen/pmd/radio.mp3",
 					"publicUrl": "https://radio.djmuffintops.com/public/pmd"

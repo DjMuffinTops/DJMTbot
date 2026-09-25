@@ -13,6 +13,7 @@ import {
   PermissionFlagsBits,
 } from 'discord.js';
 import {DisTube, Song} from 'distube';
+import {randomUUID} from 'crypto';
 import {ComponentCommands} from '../Constants/ComponentCommands';
 import {Component} from '../Component';
 import {ComponentNames} from '../Constants/ComponentNames';
@@ -54,20 +55,7 @@ const radioCommand = new SlashCommandBuilder()
   );
 
 const defaultRadioStationName = 'DjMuffinTops Radio';
-
-const radioStationCommand = new SlashCommandBuilder()
-  .setName(ComponentCommands.RADIO_STATION)
-  .setDescription('Manage radio stations')
-  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-  .addStringOption(option =>
-    option.setName('action').setDescription('Action').setRequired(true).addChoices(
-      {name: 'Set', value: 'set'},
-      {name: 'List', value: 'list'},
-    ),
-  )
-  .addStringOption(option => option.setName('name').setDescription('Station name'))
-  .addStringOption(option => option.setName('url').setDescription('Stream URL'))
-  .addStringOption(option => option.setName('publicurl').setDescription('Public browser page URL'));
+const mandatoryRadioStationIds = new Set(['djmuffintops-radio', 'pmd-radio']);
 
 const removeRadioStationCommand = new SlashCommandBuilder()
   .setName(ComponentCommands.RADIO_STATION_REMOVE)
@@ -80,6 +68,25 @@ const removeRadioStationCommand = new SlashCommandBuilder()
       .setRequired(true)
       .setAutocomplete(true),
   );
+
+const addRadioStationCommand = new SlashCommandBuilder()
+  .setName(ComponentCommands.RADIO_STATION_ADD)
+  .setDescription('Add or update a radio station')
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption(option => option.setName('name').setDescription('Station name').setRequired(true))
+  .addStringOption(option => option.setName('url').setDescription('Stream URL').setRequired(true))
+  .addStringOption(option => option.setName('publicurl').setDescription('Public browser page URL'));
+
+const defaultRadioStationCommand = new SlashCommandBuilder()
+  .setName(ComponentCommands.RADIO_STATION_DEFAULT)
+  .setDescription('Set the default radio station')
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption(option => option.setName('station').setDescription('Station').setRequired(true).setAutocomplete(true));
+
+const listRadioStationsCommand = new SlashCommandBuilder()
+  .setName(ComponentCommands.RADIO_STATION_LIST)
+  .setDescription('List radio stations')
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 const skipCommand = new SlashCommandBuilder()
   .setName(ComponentCommands.SKIP)
@@ -151,6 +158,7 @@ const playFileCommand = new SlashCommandBuilder()
   );
 
 export interface RadioStation {
+  id: string;
   name: string;
   url: string;
   publicUrl?: string;
@@ -159,6 +167,7 @@ export interface RadioStation {
 export interface MusicComponentSave {
   volume: number | null;
   radioStations?: RadioStation[];
+  defaultRadioStationId?: string;
 }
 
 type RadioPollingState = {
@@ -189,6 +198,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
   private readonly radioStatusUrl = RADIO_STATUS_URL;
   private volumePreference: number | null = null;
   private radioStations: RadioStation[] = [];
+  private defaultStationId = '';
   private radioPollInterval: NodeJS.Timeout | null = null;
   private radioPollingState: RadioPollingState = {
     previousTrackSnapshotKey: null,
@@ -201,7 +211,9 @@ export class MusicComponent extends Component<MusicComponentSave> {
   commands = [
     playCommand,
     radioCommand,
-    radioStationCommand,
+    addRadioStationCommand,
+    defaultRadioStationCommand,
+    listRadioStationsCommand,
     removeRadioStationCommand,
     playFileCommand,
     skipCommand,
@@ -225,6 +237,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
     return Promise.resolve({
       volume: this.volumePreference,
       radioStations: this.radioStations,
+      defaultRadioStationId: this.defaultStationId,
     });
   }
 
@@ -238,11 +251,18 @@ export class MusicComponent extends Component<MusicComponentSave> {
     const loaded = loadedObject?.radioStations || [];
     // Guild-specific entries override the global defaults, including optional
     // fields such as publicUrl.
+    // Global default stations are mandatory and are always restored for each
+    // guild, even if a guild configuration attempts to remove them.
     this.radioStations = [...loaded, ...defaults].filter(
       (station, index, stations) =>
         station?.name && station?.url &&
         stations.findIndex(item => item.name === station.name) === index,
     );
+    this.defaultStationId =
+      loadedObject?.defaultRadioStationId &&
+      this.radioStations.some(station => station.id === loadedObject.defaultRadioStationId)
+        ? loadedObject.defaultRadioStationId
+        : this.radioStations[0]?.id || '';
     if (
       loadedObject &&
       typeof loadedObject.volume === 'number' &&
@@ -264,17 +284,14 @@ export class MusicComponent extends Component<MusicComponentSave> {
 
   /** Adds or updates a named radio station. */
   private async setStation(name: string, url: string, publicUrl?: string): Promise<void> {
-    const existing = this.radioStations.find(station => station.name === name);
-    if (existing) {
-      existing.url = url;
-      existing.publicUrl = publicUrl || undefined;
-    } else this.radioStations.push({name, url, publicUrl: publicUrl || undefined});
+    const id = `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${randomUUID().slice(0, 6)}`;
+    this.radioStations.push({id, name, url, publicUrl: publicUrl || undefined});
     await this.saveMusicConfig();
   }
 
   /** Removes a named radio station and reports whether it existed. */
-  private async removeStation(name: string): Promise<boolean> {
-    const index = this.radioStations.findIndex(station => station.name === name);
+  private async removeStation(id: string): Promise<boolean> {
+    const index = this.radioStations.findIndex(station => station.id === id);
     if (index < 0) return false;
     this.radioStations.splice(index, 1);
     await this.saveMusicConfig();
@@ -363,13 +380,14 @@ export class MusicComponent extends Component<MusicComponentSave> {
     if (interaction.isAutocomplete()) {
       if (
         interaction.commandName === ComponentCommands.RADIO ||
+        interaction.commandName === ComponentCommands.RADIO_STATION_DEFAULT ||
         interaction.commandName === ComponentCommands.RADIO_STATION_REMOVE
       ) {
         const query = interaction.options.getString('station')?.toLowerCase() || '';
-        const choices = this.radioStations.map(station => station.name)
-          .filter(name => name.toLowerCase().includes(query))
+        const choices = this.radioStations
+          .filter(station => station.name.toLowerCase().includes(query))
           .slice(0, 25)
-          .map(name => ({name, value: name}));
+          .map(station => ({name: station.name, value: station.id}));
         await interaction.respond(choices);
       }
       return;
@@ -387,8 +405,14 @@ export class MusicComponent extends Component<MusicComponentSave> {
       case ComponentCommands.RADIO:
         await this.radioCmd(interaction);
         break;
-      case ComponentCommands.RADIO_STATION:
-        await this.radioStationCmd(interaction);
+      case ComponentCommands.RADIO_STATION_ADD:
+        await this.addRadioStationCmd(interaction);
+        break;
+      case ComponentCommands.RADIO_STATION_DEFAULT:
+        await this.defaultRadioStationCmd(interaction);
+        break;
+      case ComponentCommands.RADIO_STATION_LIST:
+        await this.listRadioStationsCmd(interaction);
         break;
       case ComponentCommands.RADIO_STATION_REMOVE:
         await this.removeRadioStationCmd(interaction);
@@ -481,9 +505,10 @@ export class MusicComponent extends Component<MusicComponentSave> {
     const guildId = interaction.guildId;
     const silenceMessages =
       interaction.options.getBoolean('silencemessages') ?? false;
-    const stationName =
-      interaction.options.getString('station') || defaultRadioStationName;
-    const stationUrl = this.radioStations.find(station => station.name === stationName)?.url;
+    const stationId = interaction.options.getString('station') || this.defaultStationId;
+    const station = this.radioStations.find(station => station.id === stationId);
+    const stationName = station?.name || defaultRadioStationName;
+    const stationUrl = station?.url;
 
     if (!guildId) {
       await interaction.reply({
@@ -590,39 +615,46 @@ export class MusicComponent extends Component<MusicComponentSave> {
     );
   }
 
-  /** Handles administrator radio station creation, updates, and listing. */
-  private async radioStationCmd(interaction: ChatInputCommandInteraction) {
+  /** Adds or updates a station using explicitly entered values. */
+  private async addRadioStationCmd(interaction: ChatInputCommandInteraction) {
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
       await interaction.reply({content: '❌ Administrator permission required.', flags: ['Ephemeral']});
       return;
     }
-    const action = interaction.options.getString('action', true);
-    const name = interaction.options.getString('name');
-    if (action === 'list') {
-      await interaction.reply({
-        content:
-          this.radioStations
-            .map(
-              station =>
-                `Name: ${station.name}\nPublic page: ${station.publicUrl || station.url}\nStream: ${station.url}`,
-            )
-            .join('\n\n') || 'No stations configured.',
-        flags: ['Ephemeral'],
-      });
-      return;
-    }
-    if (!name) {
-      await interaction.reply({content: '❌ A station name is required.', flags: ['Ephemeral']});
-      return;
-    }
-    const url = interaction.options.getString('url');
+    const name = interaction.options.getString('name', true);
+    const url = interaction.options.getString('url', true);
     const publicUrl = interaction.options.getString('publicurl') || undefined;
-    if (!url || !/^https?:\/\//i.test(url)) {
+    if (!/^https?:\/\//i.test(url)) {
       await interaction.reply({content: '❌ A valid HTTP(S) stream URL is required.', flags: ['Ephemeral']});
       return;
     }
     await this.setStation(name, url, publicUrl);
     await interaction.reply({content: `✅ Station ${name} saved.`, flags: ['Ephemeral']});
+  }
+
+  /** Selects the guild default station. */
+  private async defaultRadioStationCmd(interaction: ChatInputCommandInteraction) {
+    if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
+      await interaction.reply({content: '❌ Administrator permission required.', flags: ['Ephemeral']});
+      return;
+    }
+    const name = interaction.options.getString('station', true);
+    if (!this.radioStations.some(station => station.id === name)) {
+      await interaction.reply({content: `❌ Unknown station: ${name}`, flags: ['Ephemeral']});
+      return;
+    }
+    this.defaultStationId = name;
+    await this.saveMusicConfig();
+    await interaction.reply({content: `✅ Default station set to ${name}.`, flags: ['Ephemeral']});
+  }
+
+  /** Lists configured radio stations. */
+  private async listRadioStationsCmd(interaction: ChatInputCommandInteraction) {
+    if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
+      await interaction.reply({content: '❌ Administrator permission required.', flags: ['Ephemeral']});
+      return;
+    }
+    await interaction.reply({content: this.radioStations.map(station => `Name: ${station.name}\nPublic page: ${station.publicUrl || station.url}\nStream: ${station.url}`).join('\n\n') || 'No stations configured.', flags: ['Ephemeral']});
   }
 
   /** Handles administrator removal of a configured radio station. */
@@ -632,8 +664,8 @@ export class MusicComponent extends Component<MusicComponentSave> {
       return;
     }
     const name = interaction.options.getString('station', true);
-    if (name === defaultRadioStationName) {
-      await interaction.reply({content: `❌ ${defaultRadioStationName} cannot be removed.`, flags: ['Ephemeral']});
+    if (name === this.defaultStationId || mandatoryRadioStationIds.has(name)) {
+      await interaction.reply({content: '❌ This station is mandatory and cannot be removed.', flags: ['Ephemeral']});
       return;
     }
     const removed = await this.removeStation(name);
@@ -845,7 +877,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
     const queue = this.distube.getQueue(this.djmtGuild.guildId);
     const currentUrl = queue?.songs[0]?.url;
     const station = this.radioStations.find(item => item.url === currentUrl);
-    if (!station || station.name === defaultRadioStationName) {
+    if (!station || station.id === this.defaultStationId) {
       return this.radioStatusUrl;
     }
 
@@ -881,8 +913,9 @@ export class MusicComponent extends Component<MusicComponentSave> {
   private getDefaultRadioStation(): RadioStation {
     return (
       this.radioStations.find(
-        station => station.name === defaultRadioStationName,
+        station => station.id === this.defaultStationId,
       ) || {
+        id: this.defaultStationId,
         name: defaultRadioStationName,
         url: this.radioPrimaryUrl,
       }
@@ -897,7 +930,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
       primaryUrl: station.url,
       fallbackUrl: station.url,
       statusUrl:
-        station.name === defaultRadioStationName
+        station.id === this.defaultStationId
           ? this.radioStatusUrl
           : this.getActiveRadioStatusUrl(),
     });
