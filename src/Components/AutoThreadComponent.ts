@@ -15,7 +15,7 @@ import {
   VoiceState,
 } from 'discord.js';
 import {ComponentNames} from '../Constants/ComponentNames';
-import {isInteractionAdmin, mapKeys} from '../HelperFunctions';
+import {requireInteractionAdmin, mapKeys} from '../HelperFunctions';
 import {ComponentCommands} from '../Constants/ComponentCommands';
 
 const setAutoThreadCommand = new SlashCommandBuilder();
@@ -171,23 +171,11 @@ export class AutoThreadComponent extends Component<AutoThreadComponentSave> {
     }
     if (interaction.commandName === ComponentCommands.PRINT_AUTO_THREAD) {
       // Admin only
-      if (!isInteractionAdmin(interaction)) {
-        await interaction.reply({
-          content: 'This command requires administrator permissions.',
-          flags: MessageFlags.Ephemeral,
-        });
-        return;
-      }
+      if (!(await requireInteractionAdmin(interaction))) return;
       await this.printAutoThread(interaction);
     } else if (interaction.commandName === ComponentCommands.SET_AUTO_THREAD) {
       // Admin only
-      if (!isInteractionAdmin(interaction)) {
-        await interaction.reply({
-          content: 'This command requires administrator permissions.',
-          flags: MessageFlags.Ephemeral,
-        });
-        return;
-      }
+      if (!(await requireInteractionAdmin(interaction))) return;
       await this.addOrRemoveChannel(
         interaction.options.getChannel<ChannelType.GuildText>('channel', true),
         interaction.options.getString('prefix', true),

@@ -19,7 +19,7 @@ import {
 import {Component} from '../Component';
 import {logger} from '../Logger';
 import {ComponentCommands} from '../Constants/ComponentCommands';
-import {isInteractionAdmin} from '../HelperFunctions';
+import {requireInteractionAdmin} from '../HelperFunctions';
 import {ComponentNames} from '../Constants/ComponentNames';
 
 const bruhCommand = new SlashCommandBuilder();
@@ -115,12 +115,7 @@ export class BruhComponent extends Component<BruhComponentSave> {
       await this.bruhCmd(interaction);
     } else if (interaction.commandName === ComponentCommands.SET_BRUH) {
       // Admin only
-      if (!isInteractionAdmin(interaction)) {
-        await interaction.reply(
-          'This command requires administrator permissions.',
-        );
-        return;
-      }
+      if (!(await requireInteractionAdmin(interaction))) return;
       await this.setBruhCmd(
         interaction.options.getChannel<ChannelType.GuildText>('channel', true),
         interaction,
@@ -128,22 +123,12 @@ export class BruhComponent extends Component<BruhComponentSave> {
       await this.cacheAllBruhMessages(interaction);
     } else if (interaction.commandName === ComponentCommands.PRINT_BRUH) {
       // Admin only
-      if (!isInteractionAdmin(interaction)) {
-        await interaction.reply(
-          'This command requires administrator permissions.',
-        );
-        return;
-      }
+      if (!(await requireInteractionAdmin(interaction))) return;
       await this.printBruhInfo(interaction);
     } else if (interaction.commandName === ComponentCommands.BRUH_RECACHE) {
       await interaction.deferReply({flags: MessageFlags.Ephemeral});
       // Admin only
-      if (!isInteractionAdmin(interaction)) {
-        await interaction.reply(
-          'This command requires administrator permissions.',
-        );
-        return;
-      }
+      if (!(await requireInteractionAdmin(interaction))) return;
       await this.cacheAllBruhMessages(interaction);
     }
   }

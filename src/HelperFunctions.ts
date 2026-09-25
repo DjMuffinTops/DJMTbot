@@ -1,5 +1,6 @@
 import {
   Channel,
+  ChatInputCommandInteraction,
   GuildMember,
   Interaction,
   Message,
@@ -22,6 +23,18 @@ export function isInteractionAdmin(interaction: Interaction) {
   return interaction.memberPermissions?.has(
     PermissionsBitField.Flags.Administrator,
   );
+}
+
+export async function requireInteractionAdmin(
+  interaction: ChatInputCommandInteraction,
+): Promise<boolean> {
+  if (isInteractionAdmin(interaction)) return true;
+
+  await interaction.reply({
+    content: 'This command requires administrator permissions.',
+    flags: ['Ephemeral'],
+  });
+  return false;
 }
 
 export function getGuildMembersRoles(member: GuildMember): Role[] {

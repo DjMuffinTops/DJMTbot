@@ -18,7 +18,7 @@ import {
 } from 'discord.js';
 import {ComponentNames} from '../Constants/ComponentNames';
 import {dayOfTheWeekConstants} from '../Constants/DayOfTheWeekConstants';
-import {isInteractionAdmin} from '../HelperFunctions';
+import {requireInteractionAdmin} from '../HelperFunctions';
 import {ComponentCommands} from '../Constants/ComponentCommands';
 
 const setDotwCommand = new SlashCommandBuilder();
@@ -126,24 +126,14 @@ export class DayOfTheWeekComponent extends Component<DayOfTheWeekComponentSave> 
     }
     if (interaction.commandName === ComponentCommands.SET_DOTW) {
       // Admin only
-      if (!isInteractionAdmin(interaction)) {
-        await interaction.reply({
-          content: 'This command requires administrator permissions.',
-        });
-        return;
-      }
+      if (!(await requireInteractionAdmin(interaction))) return;
       await this.setDotwCmd(
         interaction.options.getChannel<ChannelType.GuildText>('channel', true),
         interaction,
       );
     } else if (interaction.commandName === ComponentCommands.PRINT_DOTW) {
       // Admin only
-      if (!isInteractionAdmin(interaction)) {
-        await interaction.reply({
-          content: 'This command requires administrator permissions.',
-        });
-        return;
-      }
+      if (!(await requireInteractionAdmin(interaction))) return;
       await this.printDotwChannels(interaction);
     }
   }

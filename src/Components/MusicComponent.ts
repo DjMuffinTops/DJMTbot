@@ -16,6 +16,7 @@ import {
 import {DisTube, Song} from 'distube';
 import {randomUUID} from 'crypto';
 import {ComponentCommands} from '../Constants/ComponentCommands';
+import {requireInteractionAdmin} from '../HelperFunctions';
 
 function getInteractionTextChannel(
   interaction: ChatInputCommandInteraction,
@@ -678,15 +679,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
 
   /** Adds or updates a station using explicitly entered values. */
   private async addRadioStationCmd(interaction: ChatInputCommandInteraction) {
-    if (
-      !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)
-    ) {
-      await interaction.reply({
-        content: '❌ Administrator permission required.',
-        flags: ['Ephemeral'],
-      });
-      return;
-    }
+    if (!(await requireInteractionAdmin(interaction))) return;
     const name = interaction.options.getString('name', true);
     const url = interaction.options.getString('url', true);
     const publicUrl = interaction.options.getString('publicurl') || undefined;
@@ -708,15 +701,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
   private async defaultRadioStationCmd(
     interaction: ChatInputCommandInteraction,
   ) {
-    if (
-      !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)
-    ) {
-      await interaction.reply({
-        content: '❌ Administrator permission required.',
-        flags: ['Ephemeral'],
-      });
-      return;
-    }
+    if (!(await requireInteractionAdmin(interaction))) return;
     const name = interaction.options.getString('station', true);
     if (!this.radioStations.some(station => station.id === name)) {
       await interaction.reply({
@@ -735,15 +720,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
 
   /** Lists configured radio stations. */
   private async listRadioStationsCmd(interaction: ChatInputCommandInteraction) {
-    if (
-      !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)
-    ) {
-      await interaction.reply({
-        content: '❌ Administrator permission required.',
-        flags: ['Ephemeral'],
-      });
-      return;
-    }
+    if (!(await requireInteractionAdmin(interaction))) return;
     await interaction.reply({
       content:
         this.radioStations
@@ -760,15 +737,7 @@ export class MusicComponent extends Component<MusicComponentSave> {
   private async removeRadioStationCmd(
     interaction: ChatInputCommandInteraction,
   ) {
-    if (
-      !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)
-    ) {
-      await interaction.reply({
-        content: '❌ Administrator permission required.',
-        flags: ['Ephemeral'],
-      });
-      return;
-    }
+    if (!(await requireInteractionAdmin(interaction))) return;
     const name = interaction.options.getString('station', true);
     if (name === this.defaultStationId || mandatoryRadioStationIds.has(name)) {
       await interaction.reply({
