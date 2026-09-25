@@ -6,6 +6,8 @@ import {
   AttachmentBuilder,
   MessageReaction,
   TextChannel,
+  StageChannel,
+  VoiceChannel,
   User,
   VoiceState,
   Interaction,
@@ -429,6 +431,20 @@ export class DJMTGuild {
    */
   getGuildChannel(channelId: string): GuildBasedChannel | undefined {
     return this.channelManager.getGuildChannel(channelId);
+  }
+
+  getGuildTextChannel(channelId: string): TextChannel | undefined {
+    return this.channelManager.getTextChannel(channelId);
+  }
+
+  getGuildVoiceChannel(channelId: string): VoiceChannel | undefined {
+    return this.channelManager.getVoiceChannel(channelId);
+  }
+
+  getGuildVoiceBasedChannel(
+    channelId: string,
+  ): VoiceChannel | StageChannel | undefined {
+    return this.channelManager.getVoiceBasedChannel(channelId);
   }
 
   getModAlertsChannel(): TextChannel | undefined {
