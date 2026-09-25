@@ -13,18 +13,26 @@ import {logger} from './Logger';
 
 export const MEDIA_LINK_REGEX: RegExp = /(https?:\/\/[^\s]+)/; // not great but should work for all but weird edge cases
 
-export function isMessageAdmin(message: Message) {
+/** Returns whether the message author has the Administrator permission. */
+export function isMessageAdmin(message: Message): boolean | undefined {
   return message?.member?.permissions.has(
     PermissionsBitField.Flags.Administrator,
   );
 }
 
-export function isInteractionAdmin(interaction: Interaction) {
+/** Returns whether an interaction member has the Administrator permission. */
+export function isInteractionAdmin(
+  interaction: Interaction,
+): boolean | undefined {
   return interaction.memberPermissions?.has(
     PermissionsBitField.Flags.Administrator,
   );
 }
 
+/**
+ * Ensures an interaction is made by an administrator and sends a standard
+ * ephemeral denial response when it is not.
+ */
 export async function requireInteractionAdmin(
   interaction: ChatInputCommandInteraction,
 ): Promise<boolean> {
@@ -37,14 +45,20 @@ export async function requireInteractionAdmin(
   return false;
 }
 
+/** Returns all roles currently assigned to a guild member. */
 export function getGuildMembersRoles(member: GuildMember): Role[] {
   return member.roles.cache.map(role => role);
 }
 
+/** Formats channel IDs as space-separated Discord channel mentions. */
 export function formatChannelMentions(channelIds: string[]): string {
   return channelIds.map(channelId => `<#${channelId}>`).join(' ');
 }
 
+/**
+ * Adds an ID when absent or removes it when present.
+ * @returns true when the ID was added, false when it was removed.
+ */
 export function toggleId(ids: string[], id: string): boolean {
   const index = ids.indexOf(id);
   if (index === -1) {
@@ -55,6 +69,7 @@ export function toggleId(ids: string[], id: string): boolean {
   return false;
 }
 
+/** Builds reply options that censor message text and attachment filenames. */
 export function getCensoredMessageReplyOptions(
   message: Message,
 ): MessageReplyOptions {
@@ -71,9 +86,10 @@ export function getCensoredMessageReplyOptions(
   };
 }
 /**
- * Converts a Text Channel mention string to only the channel id
- * ex: <$1234> -> 1234
- * @param channelMention A String in the format of a Text Channel Mention
+ * Converts a text-channel mention into its channel ID.
+ * @param channelMention A string in the format `<#1234>`.
+ * @returns The channel ID contained in the mention.
+ * @throws If the value is not a valid channel mention.
  */
 export function channelMentionToChannelId(channelMention: string): string {
   if (channelMention.startsWith('<#') && channelMention.endsWith('>')) {
@@ -85,9 +101,10 @@ export function channelMentionToChannelId(channelMention: string): string {
 }
 
 /**
- * Fetches a channel with the given channel id. Also accepts text channel mention format <#00000000>.
- * (Mentions
- * @param channelId The channel id or the channel mention string
+ * Fetches a channel by ID. Text-channel mentions such as `<#1234>` are also accepted.
+ * @param channelId The channel ID or a text-channel mention.
+ * @returns The fetched channel, or null when Discord cannot resolve it.
+ * @throws If the supplied ID is not numeric.
  */
 export async function channelIdToChannel(
   channelId: string,
@@ -104,6 +121,7 @@ export async function channelIdToChannel(
   return await DJMTbot.getInstance().client.channels.fetch(id);
 }
 
+/** Creates a new map by preserving keys and transforming each value. */
 export function mapKeys<T, V, U>(
   m: Map<T, V>,
   fn: (this: void, v: V) => U,
@@ -119,6 +137,7 @@ type SerializedMap = {
   value: Array<readonly [unknown, unknown]>;
 };
 
+/** Determines whether a JSON value has the serialized Map representation. */
 function isSerializedMap(v: unknown): v is SerializedMap {
   return (
     typeof v === 'object' &&
@@ -128,6 +147,7 @@ function isSerializedMap(v: unknown): v is SerializedMap {
   );
 }
 
+/** JSON replacer that serializes Map instances as tagged objects. */
 export function JSONStringifyReplacer(key: string, value: unknown): unknown {
   if (value instanceof Map) {
     return {
@@ -138,6 +158,7 @@ export function JSONStringifyReplacer(key: string, value: unknown): unknown {
   return value;
 }
 
+/** JSON reviver that reconstructs Maps serialized by JSONStringifyReplacer. */
 export function JSONStringifyReviver(key: string, value: unknown): unknown {
   if (isSerializedMap(value)) {
     return new Map(value.value as Iterable<readonly [unknown, unknown]>);
