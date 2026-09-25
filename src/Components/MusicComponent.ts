@@ -10,6 +10,7 @@ import {
   VoiceState,
   EmbedBuilder,
   GuildTextBasedChannel,
+  VoiceBasedChannel,
   PermissionFlagsBits,
 } from 'discord.js';
 import {DisTube, Song} from 'distube';
@@ -23,6 +24,12 @@ function getInteractionTextChannel(
   return channel && channel.isTextBased() && !channel.isDMBased()
     ? channel
     : undefined;
+}
+
+interface MusicCommandContext {
+  member: GuildMember;
+  voiceChannel: VoiceBasedChannel;
+  textChannel: GuildTextBasedChannel;
 }
 import {Component} from '../Component';
 import {ComponentNames} from '../Constants/ComponentNames';
@@ -489,10 +496,19 @@ export class MusicComponent extends Component<MusicComponentSave> {
     }
   }
 
-  /** Queues a track or URL and ensures saved volume is applied after queue creation. */
-  private async playCmd(interaction: ChatInputCommandInteraction) {
-    const member = interaction.member as GuildMember;
-    const voiceChannel = member?.voice.channel;
+  private async getMusicCommandContext(
+    interaction: ChatInputCommandInteraction,
+  ): Promise<MusicCommandContext | undefined> {
+    if (!interaction.guild || !(interaction.member instanceof GuildMember)) {
+      await interaction.reply({
+        content: '❌ This command can only be used in a server.',
+        flags: ['Ephemeral'],
+      });
+      return undefined;
+    }
+
+    const member = interaction.member;
+    const voiceChannel = member.voice.channel;
     const textChannel = getInteractionTextChannel(interaction);
 
     if (!voiceChannel || !textChannel) {
@@ -500,8 +516,17 @@ export class MusicComponent extends Component<MusicComponentSave> {
         content: '❌ You must be in a voice channel to play music!',
         flags: ['Ephemeral'],
       });
-      return;
+      return undefined;
     }
+
+    return {member, voiceChannel, textChannel};
+  }
+
+  /** Queues a track or URL and ensures saved volume is applied after queue creation. */
+  private async playCmd(interaction: ChatInputCommandInteraction) {
+    const context = await this.getMusicCommandContext(interaction);
+    if (!context) return;
+    const {member, voiceChannel, textChannel} = context;
 
     const query = interaction.options.getString('query', true);
 
@@ -537,9 +562,9 @@ export class MusicComponent extends Component<MusicComponentSave> {
    * text now-playing messages and optional voice channel status updates.
    */
   private async radioCmd(interaction: ChatInputCommandInteraction) {
-    const member = interaction.member as GuildMember;
-    const voiceChannel = member?.voice.channel;
-    const textChannel = getInteractionTextChannel(interaction);
+    const context = await this.getMusicCommandContext(interaction);
+    if (!context) return;
+    const {member, voiceChannel, textChannel} = context;
     const guildId = interaction.guildId;
     const silenceMessages =
       interaction.options.getBoolean('silencemessages') ?? false;
@@ -568,14 +593,6 @@ export class MusicComponent extends Component<MusicComponentSave> {
       return;
     }
 
-    if (!voiceChannel || !textChannel) {
-      await interaction.reply({
-        content: '❌ You must be in a voice channel to play music!',
-        flags: ['Ephemeral'],
-      });
-      // DisTube needs a joinable voice channel context to start playback.
-      return;
-    }
     await interaction.deferReply({
       flags: silenceMessages ? ['Ephemeral'] : undefined,
     });
@@ -1097,18 +1114,9 @@ export class MusicComponent extends Component<MusicComponentSave> {
   }
 
   private async playFileCmd(interaction: ChatInputCommandInteraction) {
-    const member = interaction.member as GuildMember;
-    const voiceChannel = member?.voice.channel;
-    const textChannel = getInteractionTextChannel(interaction);
-
-    if (!voiceChannel || !textChannel) {
-      await interaction.reply({
-        content: '❌ You must be in a voice channel to play music!',
-        flags: ['Ephemeral'],
-      });
-      // File playback still requires the caller to provide the active voice context.
-      return;
-    }
+    const context = await this.getMusicCommandContext(interaction);
+    if (!context) return;
+    const {member, voiceChannel, textChannel} = context;
 
     const attachment = interaction.options.getAttachment('file', true);
 
