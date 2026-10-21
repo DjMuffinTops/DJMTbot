@@ -173,6 +173,13 @@ export async function fetchRadioNowPlaying(
     method: 'GET',
   });
 
+  // Prevent an aborted response stream from crashing the process.
+  body.on('error', error => {
+    logger.debug('Radio now-playing response stream ended with an error', {
+      error,
+    });
+  });
+
   if (statusCode !== 200) {
     body.destroy();
     throw new Error(`AzuraCast now-playing endpoint returned ${statusCode}`);
