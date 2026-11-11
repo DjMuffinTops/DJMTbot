@@ -51,6 +51,8 @@ interface EveryoneSpamTimeoutSave {
   permittedRoleIds: string[];
 }
 
+const EVERYONE_PING = '@everyone';
+const HERE_PING = '@here';
 const TIMEOUT_DURATION_MS = 28 * 24 * 60 * 60 * 1000; // The maximum timeout duration on discord is 28 days
 
 export class EveryoneSpamTimeout extends Component<EveryoneSpamTimeoutSave> {
@@ -116,7 +118,15 @@ export class EveryoneSpamTimeout extends Component<EveryoneSpamTimeoutSave> {
     return Promise.resolve();
   }
 
-  onMessageUpdate(_oldMessage: Message, _newMessage: Message): Promise<void> {
+  onMessageUpdate(_oldMessage: Message, newMessage: Message): Promise<void> {
+    try {
+      void this.handleEveryoneSpam(newMessage);
+    } catch (error) {
+      logger.error('Error in EveryoneSpamTimeout.onMessageUpdate', {
+        guildId: this.djmtGuild.guildId,
+        error,
+      });
+    }
     return Promise.resolve();
   }
 
@@ -183,9 +193,10 @@ export class EveryoneSpamTimeout extends Component<EveryoneSpamTimeoutSave> {
     }
 
     // Does the message contain an @everyone or @here ping?
-    // Only act on an actual Discord everyone/here mention. Do not match the
-    // literal text in quoted or informational messages.
-    const hasEveryoneOrHerePing = message.mentions.everyone;
+    const hasEveryoneOrHerePing =
+      message.mentions.everyone ||
+      message.content.includes(EVERYONE_PING) ||
+      message.content.includes(HERE_PING);
 
     // If it doesn't have either don't do anything
     if (!hasEveryoneOrHerePing) {
